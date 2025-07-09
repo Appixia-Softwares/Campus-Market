@@ -4,10 +4,10 @@ import { useCallback, useState, useEffect } from "react"
 import { useDropzone } from "react-dropzone"
 import { Upload, X, Loader2, CheckCircle2, UploadCloud } from "lucide-react"
 import Image from "next/image"
-import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { uploadFileToStorage } from "@/lib/firebase"
 
 interface ImageUploadProps {
   value: string[]
@@ -21,116 +21,44 @@ export function ImageUpload({ value, onChange, onRemove, productId, maxFiles = 8
   const { toast } = useToast()
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({})
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  // Check authentication status on component mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser()
-      setIsAuthenticated(!!user)
-      if (error) {
-        console.error('Auth check error:', error)
-      }
-    }
-    checkAuth()
-  }, [])
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!acceptedFiles?.length) return
-
-    // Check if adding new files would exceed the limit
     if (value.length + acceptedFiles.length > maxFiles) {
-          toast({
-            title: "Too many images",
+      toast({
+        title: "Too many images",
         description: `You can upload up to ${maxFiles} images. You already have ${value.length} images.`,
-            variant: "destructive",
-          })
-          return
-        }
-
-        setIsUploading(true)
+        variant: "destructive",
+      })
+      return
+    }
+    setIsUploading(true)
     const newUrls: string[] = []
-    const newProgress: Record<string, number> = {}
-
     try {
       for (let i = 0; i < acceptedFiles.length; i++) {
         const file = acceptedFiles[i]
         const fileExt = file.name.split('.').pop()
         const fileName = `${productId || 'temp'}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-        const filePath = `${fileName}`
-
-          // Initialize progress for this file
-        newProgress[file.name] = 0
-        setUploadProgress(prev => ({
-          ...prev,
-          ...newProgress
-        }))
-
-        const { error: uploadError, data } = await supabase.storage
-          .from('product-images')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-                upsert: false
-              })
-
-            if (uploadError) {
-          console.error('Error uploading image:', uploadError)
-              toast({
-            title: "Upload failed",
-            description: `Failed to upload ${file.name}. Please try again.`,
-                variant: "destructive",
-              })
-              continue
-            }
-
-            const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(filePath)
-
-            // If we have a product ID, create a record in the product_images table
-            if (productId) {
-              const { error: insertError } = await supabase
-                .from('product_images')
-                .insert({
-                  product_id: productId,
-                  url: publicUrl,
-                  alt_text: file.name,
-                  is_primary: value.length === 0,
-                  sort_order: value.length
-                })
-
-              if (insertError) {
-                console.error('Error creating product image record:', insertError)
-            // Delete the uploaded file if we can't create the record
-            await supabase.storage.from('product-images').remove([filePath])
-                toast({
-                  title: "Error",
-                  description: "Failed to save image details. Please try again.",
-                  variant: "destructive",
-                })
-                continue
-              }
-            }
-
+        // Upload to Firebase Storage
+        const publicUrl = await uploadFileToStorage(fileName, file)
         newUrls.push(publicUrl)
       }
-
       onChange([...value, ...newUrls])
-            toast({
-              title: "Success",
+      toast({
+        title: "Success",
         description: `Successfully uploaded ${newUrls.length} image${newUrls.length > 1 ? 's' : ''}`,
-            })
-          } catch (error) {
-            console.error('Error in upload process:', error)
-            toast({
+      })
+    } catch (error) {
+      console.error('Error in upload process:', error)
+      toast({
         title: "Upload failed",
         description: "An error occurred while uploading. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsUploading(false)
-          setUploadProgress({})
-      }
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploading(false)
+      setUploadProgress({})
+    }
   }, [value, onChange, productId, maxFiles, toast])
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
@@ -140,7 +68,7 @@ export function ImageUpload({ value, onChange, onRemove, productId, maxFiles = 8
     },
     maxSize: 5 * 1024 * 1024,
     multiple: true,
-    disabled: isUploading || !isAuthenticated
+    disabled: isUploading
   })
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {

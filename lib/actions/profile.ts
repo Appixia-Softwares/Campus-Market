@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { uploadFileToStorage } from '@/lib/firebase'
 
 export async function getUserProfile(userId?: string) {
   const supabase = createServerClient()
@@ -62,45 +63,17 @@ export async function updateUserProfile(formData: FormData) {
   // Handle avatar upload
   const avatar = formData.get("avatar") as File
   let avatarUrl = null
-
   if (avatar && avatar.size > 0) {
-    const { data: storageData, error: storageError } = await supabase.storage
-      .from("avatars")
-      .upload(`${session.user.id}/${Date.now()}-${avatar.name}`, avatar, {
-        upsert: true,
-      })
-
-    if (storageError) {
-      return { error: storageError.message }
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("avatars").getPublicUrl(storageData.path)
-
-    avatarUrl = publicUrl
+    const filePath = `${session.user.id}/${Date.now()}-${avatar.name}`;
+    avatarUrl = await uploadFileToStorage(filePath, avatar);
   }
 
   // Handle verification document upload
   const verificationDoc = formData.get("verificationDocument") as File
   let verificationDocUrl = null
-
   if (verificationDoc && verificationDoc.size > 0) {
-    const { data: storageData, error: storageError } = await supabase.storage
-      .from("verification-documents")
-      .upload(`${session.user.id}/${Date.now()}-${verificationDoc.name}`, verificationDoc, {
-        upsert: true,
-      })
-
-    if (storageError) {
-      return { error: storageError.message }
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("verification-documents").getPublicUrl(storageData.path)
-
-    verificationDocUrl = publicUrl
+    const filePath = `${session.user.id}/${Date.now()}-${verificationDoc.name}`;
+    verificationDocUrl = await uploadFileToStorage(filePath, verificationDoc);
   }
 
   // Update profile

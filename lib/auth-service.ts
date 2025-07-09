@@ -1,5 +1,12 @@
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged as firebaseOnAuthStateChanged,
+  User as FirebaseUser,
+} from 'firebase/auth';
 
 export interface User {
   id: string;
@@ -24,14 +31,16 @@ export interface User {
 // Sign in with email and password
 export const signIn = async (email: string, password: string) => {
   try {
-    // Get user data from Firestore
-    const userDoc = await getDoc(doc(db, 'users', email));
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+    // Get user profile from Firestore
+    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
     const userData = userDoc.data() as User;
-
     return {
       user: {
         ...userData,
-        id: email,
+        id: firebaseUser.uid,
+        email: firebaseUser.email || '',
       },
     };
   } catch (error) {
@@ -43,10 +52,12 @@ export const signIn = async (email: string, password: string) => {
 // Sign up with email and password
 export const signUp = async (email: string, password: string, userData: Partial<User>) => {
   try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
     // Create user document in Firestore with all collected data
     const user: User = {
-      id: email,
-      email,
+      id: firebaseUser.uid,
+      email: firebaseUser.email || '',
       ...userData,
       status: 'active',
       role: 'student',
@@ -56,9 +67,7 @@ export const signUp = async (email: string, password: string, userData: Partial<
       created_at: new Date(),
       updated_at: new Date(),
     };
-
-    await setDoc(doc(db, 'users', email), user);
-
+    await setDoc(doc(db, 'users', firebaseUser.uid), user);
     return {
       user,
     };
@@ -71,7 +80,7 @@ export const signUp = async (email: string, password: string, userData: Partial<
 // Sign out
 export const signOut = async () => {
   try {
-    // Implement sign out logic
+    await firebaseSignOut(auth);
   } catch (error) {
     console.error('Error signing out:', error);
     throw error;
@@ -81,13 +90,14 @@ export const signOut = async () => {
 // Get current user
 export const getCurrentUser = async () => {
   try {
-    // Get user data from Firestore
-    const userDoc = await getDoc(doc(db, 'users', email));
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) return null;
+    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
     const userData = userDoc.data() as User;
-
     return {
       ...userData,
-      id: email,
+      id: firebaseUser.uid,
+      email: firebaseUser.email || '',
     };
   } catch (error) {
     console.error('Error getting current user:', error);
@@ -98,12 +108,10 @@ export const getCurrentUser = async () => {
 // Update user profile
 export const updateProfile = async (userId: string, data: Partial<User>) => {
   try {
-    // Update user document in Firestore
     await updateDoc(doc(db, 'users', userId), {
       ...data,
       updated_at: new Date(),
     });
-
     return true;
   } catch (error) {
     console.error('Error updating profile:', error);
@@ -113,10 +121,18 @@ export const updateProfile = async (userId: string, data: Partial<User>) => {
 
 // Subscribe to auth state changes
 export const onAuthStateChanged = (callback: (user: User | null) => void) => {
-  // Implement subscribe to auth state changes logic
-  return {
-    unsubscribe: () => {
-      // Implement unsubscribe logic
+  const unsubscribe = firebaseOnAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+    if (firebaseUser) {
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      const userData = userDoc.data() as User;
+      callback({
+        ...userData,
+        id: firebaseUser.uid,
+        email: firebaseUser.email || '',
+      });
+    } else {
+      callback(null);
     }
-  };
+  });
+  return { unsubscribe };
 }; 

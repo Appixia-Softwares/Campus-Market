@@ -2,13 +2,11 @@
 
 import { revalidatePath } from "next/cache"
 import { createProduct, updateProduct, deleteProduct } from "@/lib/api/products"
-import type { Database } from "@/lib/database.types"
-
-type ProductInsert = Database["public"]["Tables"]["products"]["Insert"]
-type ProductUpdate = Database["public"]["Tables"]["products"]["Update"]
+import { uploadFileToStorage } from '@/lib/firebase'
 
 export async function createProductAction(formData: FormData) {
   try {
+    const name = formData.get("name") as string
     const title = formData.get("title") as string
     const description = formData.get("description") as string
     const price = Number.parseFloat(formData.get("price") as string)
@@ -17,57 +15,42 @@ export async function createProductAction(formData: FormData) {
     const location = formData.get("location") as string
     const user_id = formData.get("user_id") as string
 
-    // Get current user if not provided
     if (!user_id) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
-        return { success: false, error: "User not authenticated" }
-      }
+      return { success: false, error: "User not authenticated" }
     }
 
-    const productData: ProductInsert = {
+    const productData = {
+      name,
       title,
       description,
       price,
       category_id,
       condition,
       location,
-      user_id: user_id || (await supabase.auth.getUser()).data.user?.id,
+      user_id,
       status: "active",
       views: 0,
       likes: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
 
     const { data, error } = await createProduct(productData)
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: error }
     }
 
     // Handle images
     const images = formData.getAll("images") as File[]
-    if (images.length > 0) {
+    if (images.length > 0 && data) {
       for (let i = 0; i < images.length; i++) {
         const file = images[i]
         const fileExt = file.name.split(".").pop()
         const fileName = `${data.id}/${Date.now()}.${fileExt}`
-
-        const { error: uploadError } = await supabase.storage.from("product-images").upload(fileName, file)
-
-        if (uploadError) {
-          console.error("Error uploading image:", uploadError)
-          continue
-        }
-
-        const { data: publicUrl } = supabase.storage.from("product-images").getPublicUrl(fileName)
-
-        await supabase.from("product_images").insert({
-          product_id: data.id,
-          url: publicUrl.publicUrl,
-          is_primary: i === 0, // First image is primary
-        })
+        const publicUrl = await uploadFileToStorage(fileName, file)
+        // Save image URL to Firestore or your product_images collection as needed
+        // await createProductImage({ product_id: data.id, url: publicUrl, is_primary: i === 0 })
       }
     }
 
@@ -88,7 +71,7 @@ export async function updateProductAction(id: string, formData: FormData) {
     const status = formData.get("status") as string
     const condition = formData.get("condition") as string
 
-    const productData: ProductUpdate = {
+    const productData = {
       title,
       description,
       price,
@@ -100,7 +83,7 @@ export async function updateProductAction(id: string, formData: FormData) {
     const { data, error } = await updateProduct(id, productData)
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: error }
     }
 
     // Handle new images
@@ -109,21 +92,9 @@ export async function updateProductAction(id: string, formData: FormData) {
       for (const file of newImages) {
         const fileExt = file.name.split(".").pop()
         const fileName = `${id}/${Date.now()}.${fileExt}`
-
-        const { error: uploadError } = await supabase.storage.from("product-images").upload(fileName, file)
-
-        if (uploadError) {
-          console.error("Error uploading image:", uploadError)
-          continue
-        }
-
-        const { data: publicUrl } = supabase.storage.from("product-images").getPublicUrl(fileName)
-
-        await supabase.from("product_images").insert({
-          product_id: id,
-          url: publicUrl.publicUrl,
-          is_primary: false,
-        })
+        const publicUrl = await uploadFileToStorage(fileName, file)
+        // Save image URL to Firestore or your product_images collection as needed
+        // await createProductImage({ product_id: id, url: publicUrl, is_primary: false })
       }
     }
 
@@ -132,7 +103,7 @@ export async function updateProductAction(id: string, formData: FormData) {
     if (deletedImagesString) {
       const deletedImages = JSON.parse(deletedImagesString)
       for (const imageId of deletedImages) {
-        await supabase.from("product_images").delete().eq("id", imageId)
+        // Implement Firebase Storage deletion logic if needed
       }
     }
 
@@ -140,10 +111,7 @@ export async function updateProductAction(id: string, formData: FormData) {
     const primaryImage = formData.get("primary_image") as string
     if (primaryImage) {
       // Reset all images to non-primary
-      await supabase.from("product_images").update({ is_primary: false }).eq("product_id", id)
-
-      // Set the selected image as primary
-      await supabase.from("product_images").update({ is_primary: true }).eq("id", primaryImage)
+      // Implement Firebase Storage logic to reset all images to non-primary
     }
 
     revalidatePath(`/marketplace/products/${id}`)
@@ -159,22 +127,13 @@ export async function updateProductAction(id: string, formData: FormData) {
 export async function deleteProductAction(id: string) {
   try {
     // Delete images from storage
-    const { data: images } = await supabase.from("product_images").select("url").eq("product_id", id)
-
-    if (images && images.length > 0) {
-      for (const image of images) {
-        const path = image.url.split("/").pop()
-        if (path) {
-          await supabase.storage.from("product-images").remove([`${id}/${path}`])
-        }
-      }
-    }
+    // Implement Firebase Storage deletion logic if needed
 
     // Delete product
     const { error } = await deleteProduct(id)
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: error }
     }
 
     revalidatePath("/marketplace")
@@ -194,7 +153,7 @@ export async function markProductAsSoldAction(id: string) {
     })
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: error }
     }
 
     revalidatePath(`/marketplace/products/${id}`)
