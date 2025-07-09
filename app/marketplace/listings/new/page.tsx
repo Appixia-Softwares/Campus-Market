@@ -30,12 +30,12 @@ import {
   AlertCircle,
   MessageSquare,
 } from "lucide-react"
-import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore"
+import { collection, query, where, orderBy, getDocs, addDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { uploadFileToStorage } from '@/lib/firebase'
 
 interface Category {
   id: string
@@ -247,57 +247,45 @@ export default function NewListingPage() {
 
     try {
       // Create product
-      const { data: product, error: productError } = await supabase
-        .from("products")
-        .insert({
-          title: formData.title,
-          description: formData.description,
-          price: Number.parseFloat(formData.price),
-          original_price: formData.original_price ? Number.parseFloat(formData.original_price) : null,
-          category_id: formData.category_id,
-          condition: formData.condition as any,
-          seller_id: user.id,
-          brand: formData.brand || null,
-          model: formData.model || null,
-          pickup_location: formData.pickup_location,
-          delivery_available: formData.delivery_available,
-          delivery_fee: formData.delivery_fee ? Number.parseFloat(formData.delivery_fee) : 0,
-          university_id: formData.university_id || user.university_id,
-          price_negotiable: formData.price_negotiable,
-          status: "active",
-        })
-        .select()
-        .single()
-
-      if (productError) throw productError
+      const productRef = await addDoc(collection(db, 'products'), {
+        title: formData.title,
+        description: formData.description,
+        price: Number.parseFloat(formData.price),
+        original_price: formData.original_price ? Number.parseFloat(formData.original_price) : null,
+        category_id: formData.category_id,
+        condition: formData.condition as any,
+        seller_id: user.id,
+        brand: formData.brand || null,
+        model: formData.model || null,
+        pickup_location: formData.pickup_location,
+        delivery_available: formData.delivery_available,
+        delivery_fee: formData.delivery_fee ? Number.parseFloat(formData.delivery_fee) : 0,
+        university_id: formData.university_id || user.university_id,
+        price_negotiable: formData.price_negotiable,
+        user_id: user?.id,
+        created_at: new Date().toISOString(),
+        status: "active",
+      });
+      const productId = productRef.id;
 
       // Upload images with progress
       if (images.length > 0) {
         for (let i = 0; i < images.length; i++) {
           const file = images[i]
-          const fileName = `${product.id}/${Date.now()}-${i}.${file.name.split(".").pop()}`
-
-          const { error: uploadError } = await supabase.storage.from("product-images").upload(fileName, file)
-
-          if (uploadError) throw uploadError
-
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from("product-images").getPublicUrl(fileName)
-
-          await supabase.from("product_images").insert({
-            product_id: product.id,
+          const fileExt = file.name.split('.').pop()
+          const fileName = `${productId}/${Date.now()}-${i}.${fileExt}`
+          const publicUrl = await uploadFileToStorage(fileName, file)
+          await addDoc(collection(db, 'product_images'), {
+            product_id: productId,
             url: publicUrl,
             is_primary: i === 0,
-            sort_order: i,
           })
-
           setUploadProgress(((i + 1) / images.length) * 100)
         }
       }
 
       toast.success("Product listed successfully!")
-      router.push(`/marketplace/products/${product.id}`)
+      router.push(`/marketplace/products/${productId}`)
     } catch (error) {
       console.error("Error creating listing:", error)
       toast.error("Failed to create listing")

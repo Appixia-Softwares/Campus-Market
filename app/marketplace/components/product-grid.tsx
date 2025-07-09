@@ -11,12 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, MapPin, Clock, Eye, Truck, Phone, MessageCircle, Share2, MoreVertical } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { formatDistanceToNow } from "date-fns"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Timestamp } from "firebase/firestore"
+import { db } from '@/lib/firebase'
+import { doc, setDoc, getDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore'
 
 interface ProductGridProps {
   products: any[]
@@ -52,25 +53,25 @@ export function ProductGrid({
   const toggleFavorite = async (productId: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-
     if (!user) {
       toast.error("Please log in to save favorites")
       return
     }
-
     setLoadingFavorites((prev) => [...prev, productId])
-
     try {
-      const { error } = await supabase.rpc("toggle_product_like", {
-        product_id: productId,
-        user_id: user.id,
-      })
-
-      if (error) throw error
-
-      setFavorites((prev) => (prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]))
-
-      toast.success(favorites.includes(productId) ? "Removed from favorites" : "Added to favorites")
+      const favRef = doc(db, 'user_favorites', `${user.id}_${productId}`)
+      const favSnap = await getDoc(favRef)
+      if (favSnap.exists()) {
+        // Remove favorite
+        await setDoc(favRef, {}, { merge: false }) // Or use deleteDoc if you want to delete
+        setFavorites((prev) => prev.filter((id) => id !== productId))
+        toast.success("Removed from favorites")
+      } else {
+        // Add favorite
+        await setDoc(favRef, { user_id: user.id, product_id: productId })
+        setFavorites((prev) => [...prev, productId])
+        toast.success("Added to favorites")
+      }
     } catch (error) {
       console.error("Error toggling favorite:", error)
       toast.error("Failed to update favorites")
@@ -118,47 +119,40 @@ export function ProductGrid({
   const startConversation = async (product: any, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-
     if (!user) {
       toast.error("Please log in to message sellers")
       return
     }
-
     if (product.seller_id === user.id) {
       toast.error("You cannot message yourself")
       return
     }
-
     try {
       // Check if conversation exists
-      const { data: existingConversation } = await supabase
-        .from("conversations")
-        .select("id")
-        .or(
-          `and(participant_1_id.eq.${user.id},participant_2_id.eq.${product.seller_id}),and(participant_1_id.eq.${product.seller_id},participant_2_id.eq.${user.id})`,
-        )
-        .eq("product_id", product.id)
-        .single()
-
-      if (existingConversation) {
-        window.location.href = `/messages/${existingConversation.id}`
+      const conversationsQuery = query(
+        collection(db, 'conversations'),
+        where('product_id', '==', product.id),
+        where('participants', 'array-contains', user.id)
+      )
+      const snapshot = await getDocs(conversationsQuery)
+      let conversationId = null
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data()
+        if (data.participants.includes(product.seller_id)) {
+          conversationId = docSnap.id
+        }
+      })
+      if (conversationId) {
+        window.location.href = `/messages/${conversationId}`
         return
       }
-
       // Create new conversation
-      const { data: newConversation, error } = await supabase
-        .from("conversations")
-        .insert({
-          participant_1_id: user.id,
-          participant_2_id: product.seller_id,
-          product_id: product.id,
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      window.location.href = `/messages/${newConversation.id}`
+      const newConversationRef = await addDoc(collection(db, 'conversations'), {
+        participants: [user.id, product.seller_id],
+        product_id: product.id,
+        created_at: new Date(),
+      })
+      window.location.href = `/messages/${newConversationRef.id}`
     } catch (error) {
       console.error("Error starting conversation:", error)
       toast.error("Failed to start conversation")

@@ -15,7 +15,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { signUp, getUniversities, signIn } from "@/lib/api/auth"
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
-import { supabase } from "@/lib/supabase"
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 interface University {
   id: string
@@ -164,9 +166,18 @@ export default function SignupPage() {
     }
 
     try {
-      console.log("Debug - Starting signup process")
-      const { data, error: signUpError } = await signUp(formData.email, formData.password, {
+      const auth = getAuth()
+      // Create user with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password)
+      const user = userCredential.user
+
+      // Optionally update display name
+      await updateProfile(user, { displayName: formData.fullName })
+
+      // Save additional user info in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
         full_name: formData.fullName,
+        email: formData.email,
         university_id: formData.university,
         student_id: formData.studentId,
         phone: formData.phone ? `+263${formData.phone.replace(/\s/g, "")}` : undefined,
@@ -178,61 +189,16 @@ export default function SignupPage() {
         verified: false,
         phone_verified: false,
         email_verified: false,
+        created_at: new Date().toISOString(),
       })
 
-      if (signUpError) {
-        console.error("Debug - Signup error:", signUpError)
-        setError(signUpError.message || "Failed to create account. Please try again.")
-        return
-      }
-
-      console.log("Debug - Signup successful, attempting sign in")
-      // Sign in the user after successful signup
-      const { data: signInData, error: signInError } = await signIn(formData.email, formData.password)
-
-      if (signInError) {
-        console.error("Debug - Sign in error:", signInError)
-        toast({
-          title: "Account created!",
-          description: "Please check your email to confirm your account.",
-          variant: "default",
-        })
-        router.push("/login?message=Please check your email to confirm your account")
-        return
-      }
-
-      console.log("Debug - Sign in successful, waiting for session")
-      // Wait for session to be set
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Verify session is set
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      if (!session) {
-        console.error("Debug - No session found after sign in")
-        toast({
-          title: "Account created!",
-          description: "Please sign in to continue.",
-          variant: "default",
-        })
-        router.push("/login?message=Please sign in to continue")
-        return
-      }
-
-      console.log("Debug - Session verified, redirecting to dashboard")
       toast({
         title: "Account created!",
-        description: "Welcome to Campus Marketplace!",
+        description: "Please check your email to confirm your account.",
         variant: "default",
       })
-
-      // Redirect to dashboard or the original destination
-      const searchParams = new URLSearchParams(window.location.search)
-      const redirectTo = searchParams.get("redirectTo") || "/dashboard"
-      router.push(redirectTo)
+      router.push("/login?message=Please check your email to confirm your account")
     } catch (err: any) {
-      console.error("Debug - Unexpected error:", err)
       setError(err.message || "Failed to create account. Please try again.")
     } finally {
       setIsLoading(false)
