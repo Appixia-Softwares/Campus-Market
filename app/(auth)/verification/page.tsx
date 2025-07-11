@@ -24,6 +24,7 @@ import {
   Mail,
   AlertTriangle,
   Info,
+  Loader2,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/components/ui/use-toast"
@@ -65,6 +66,14 @@ export default function VerificationPage() {
   // Email Verification
   const [emailVerificationSent, setEmailVerificationSent] = useState(false)
   const [emailVerified, setEmailVerified] = useState(false)
+  const [checkingEmailStatus, setCheckingEmailStatus] = useState(false);
+
+  // Add a state for payment status for ID verification
+  const [idPaymentComplete, setIdPaymentComplete] = useState(false);
+
+  // Add state for selfie file and preview
+  const [selfieFile, setSelfieFile] = useState<File | null>(null);
+  const [selfiePreview, setSelfiePreview] = useState<string>("");
 
   useEffect(() => {
     if (user) {
@@ -118,6 +127,24 @@ export default function VerificationPage() {
     }
     reader.readAsDataURL(file)
   }
+
+  // Handler for selfie upload
+  const handleSelfieUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file type", description: "Please upload an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Image must be less than 10MB", variant: "destructive" });
+      return;
+    }
+    setSelfieFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setSelfiePreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const submitStudentIdVerification = async () => {
     if (!user || !studentIdFile || !studentIdNumber.trim()) {
@@ -247,6 +274,31 @@ export default function VerificationPage() {
     }
   }
 
+  // Add a handler to check verification status
+  const checkEmailVerificationStatus = async () => {
+    if (!auth.currentUser) return;
+    setCheckingEmailStatus(true);
+    try {
+      await auth.currentUser.reload();
+      setEmailVerified(auth.currentUser.emailVerified);
+      toast({
+        title: auth.currentUser.emailVerified ? "Email verified!" : "Not verified yet",
+        description: auth.currentUser.emailVerified
+          ? "Your email address has been verified."
+          : "Please check your inbox and click the verification link.",
+        variant: auth.currentUser.emailVerified ? "default" : "destructive",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to check verification status.",
+        variant: "destructive",
+      });
+    } finally {
+      setCheckingEmailStatus(false);
+    }
+  };
+
   const getVerificationProgress = () => {
     let completed = 0
     const total = 3
@@ -309,186 +361,93 @@ export default function VerificationPage() {
         </div>
 
         {/* Verification Tabs */}
-        <Tabs defaultValue="student-id" className="space-y-6">
+        <Tabs defaultValue="email" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="student-id" className="flex items-center gap-2">
-              <GraduationCap className="h-4 w-4" />
-              Student ID
-              {user?.verified && <CheckCircle className="h-4 w-4 text-green-500" />}
+            <TabsTrigger value="email" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Email
+              {user?.email_verified && <CheckCircle className="h-4 w-4 text-green-500" />}
             </TabsTrigger>
             <TabsTrigger value="phone" className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
               Phone
               {user?.phone_verified && <CheckCircle className="h-4 w-4 text-green-500" />}
             </TabsTrigger>
-            <TabsTrigger value="email" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Email
-              {user?.email_verified && <CheckCircle className="h-4 w-4 text-green-500" />}
+            <TabsTrigger value="id" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              ID Verification
+              {user?.verified && <CheckCircle className="h-4 w-4 text-green-500" />}
             </TabsTrigger>
           </TabsList>
 
-          {/* Student ID Verification */}
-          <TabsContent value="student-id">
+          {/* Email Verification (Mandatory) */}
+          <TabsContent value="email">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5" />
-                  Student ID Verification
-                  {(() => {
-                    const status = getVerificationStatus("student_id")
-                    if (status) {
-                      const Icon = status.icon
-                      return (
-                        <Badge variant="outline" className="ml-auto">
-                          <Icon className={`h-3 w-3 mr-1 ${status.color}`} />
-                          {status.text}
-                        </Badge>
-                      )
-                    }
-                    return null
-                  })()}
+                  <Mail className="h-5 w-5" />
+                  Email Verification
+                  {user?.email_verified && (
+                    <Badge variant="outline" className="ml-auto">
+                      <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                      Verified
+                    </Badge>
+                  )}
                 </CardTitle>
-                <CardDescription>Upload a clear photo of your student ID to verify your student status</CardDescription>
+                <CardDescription>
+                  Verify your email address to secure your account and receive important notifications
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {user?.verified ? (
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
+                {!user?.email_verified && (
+                  <Alert variant="destructive">
                     <AlertDescription>
-                      Your student ID has been verified! You now have a verified badge on your profile.
+                      <b>Email verification is required to access your dashboard.</b>
                     </AlertDescription>
                   </Alert>
+                )}
+                {user?.email_verified ? (
+                  <Alert>
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>Your email address {user.email} has been verified!</AlertDescription>
+                  </Alert>
                 ) : (
-                  <>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Student ID Number</Label>
-                        <Input
-                          placeholder="e.g., H230001A"
-                          value={studentIdNumber}
-                          onChange={(e) => setStudentIdNumber(e.target.value)}
-                          disabled={submitting}
-                        />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{user?.email}</p>
+                        <p className="text-sm text-muted-foreground">Your registered email address</p>
                       </div>
-
-                      <div className="space-y-2">
-                        <Label>Upload Student ID Photo</Label>
-                        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
-                          {studentIdPreview ? (
-                            <div className="space-y-4">
-                              <img
-                                src={studentIdPreview || "/placeholder.svg"}
-                                alt="Student ID preview"
-                                className="max-w-full h-48 object-contain mx-auto rounded-lg"
-                              />
-                              <div className="text-center">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => {
-                                    setStudentIdFile(null)
-                                    setStudentIdPreview("")
-                                  }}
-                                  disabled={submitting}
-                                >
-                                  Remove
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-center space-y-4">
-                              <Camera className="h-12 w-12 text-muted-foreground mx-auto" />
-                              <div>
-                                <p className="text-sm font-medium">Upload your student ID</p>
-                                <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
-                              </div>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleStudentIdUpload}
-                                className="hidden"
-                                id="student-id-upload"
-                                disabled={submitting}
-                              />
-                              <label htmlFor="student-id-upload">
-                                <Button variant="outline" className="cursor-pointer" disabled={submitting}>
-                                  <Upload className="h-4 w-4 mr-2" />
-                                  Choose File
-                                </Button>
-                              </label>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Additional Notes (Optional)</Label>
-                        <Textarea
-                          placeholder="Any additional information that might help with verification..."
-                          value={additionalNotes}
-                          onChange={(e) => setAdditionalNotes(e.target.value)}
-                          disabled={submitting}
-                          rows={3}
-                        />
-                      </div>
-
-                      <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertDescription>
-                          Make sure your student ID is clearly visible and readable. Cover any sensitive information
-                          except your name, photo, and student number.
-                        </AlertDescription>
-                      </Alert>
-
-                      <Button
-                        onClick={submitStudentIdVerification}
-                        disabled={!studentIdFile || !studentIdNumber.trim() || submitting}
-                        className="w-full"
-                      >
-                        {uploading ? "Uploading..." : submitting ? "Submitting..." : "Submit for Verification"}
+                      {!emailVerificationSent ? (
+                        <Button onClick={resendEmailVerification}>Send Verification</Button>
+                      ) : (
+                        <Badge variant="outline">Email Sent</Badge>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={checkEmailVerificationStatus} disabled={checkingEmailStatus} variant="outline">
+                        {checkingEmailStatus ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : null}
+                        Check Verification Status
                       </Button>
                     </div>
-                  </>
-                )}
-
-                {/* Previous Requests */}
-                {verificationRequests.filter((r) => r.verification_type === "student_id").length > 0 && (
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Previous Requests</h4>
-                    {verificationRequests
-                      .filter((r) => r.verification_type === "student_id")
-                      .map((request) => (
-                        <Card key={request.id} className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium">
-                                Submitted {new Date(request.submitted_at).toLocaleDateString()}
-                              </p>
-                              {request.reviewer_notes && (
-                                <p className="text-xs text-muted-foreground mt-1">{request.reviewer_notes}</p>
-                              )}
-                            </div>
-                            <Badge
-                              variant={
-                                request.status === "approved"
-                                  ? "default"
-                                  : request.status === "rejected"
-                                    ? "destructive"
-                                    : "secondary"
-                              }
-                            >
-                              {request.status}
-                            </Badge>
-                          </div>
-                        </Card>
-                      ))}
+                    {emailVerificationSent && (
+                      <Alert>
+                        <Mail className="h-4 w-4" />
+                        <AlertDescription>
+                          We've sent a verification link to your email. Please check your inbox and click the link to
+                          verify your email address.
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Phone Verification */}
+          {/* Phone Verification (Mandatory) */}
           <TabsContent value="phone">
             <Card>
               <CardHeader>
@@ -502,15 +461,19 @@ export default function VerificationPage() {
                     </Badge>
                   )}
                 </CardTitle>
-                <CardDescription>Verify your phone number to enable SMS notifications and build trust</CardDescription>
+                <CardDescription>
+                  Verify your phone number to enable SMS notifications and build trust
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {user?.phone_verified ? (
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>Your phone number {user.phone} has been verified!</AlertDescription>
+                {!user?.phone_verified && (
+                  <Alert variant="destructive">
+                    <AlertDescription>
+                      <b>Phone verification is required to access your dashboard.</b>
+                    </AlertDescription>
                   </Alert>
-                ) : user?.phone ? (
+                )}
+                {user?.phone ? (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
@@ -559,53 +522,206 @@ export default function VerificationPage() {
             </Card>
           </TabsContent>
 
-          {/* Email Verification */}
-          <TabsContent value="email">
+          {/* ID Verification (Optional, Paid) */}
+          <TabsContent value="id">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
-                  Email Verification
-                  {user?.email_verified && (
+                  <Shield className="h-5 w-5" />
+                  ID Verification (Optional)
+                  {user?.verified && (
                     <Badge variant="outline" className="ml-auto">
                       <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
-                      Verified
+                      Verified Badge
                     </Badge>
                   )}
                 </CardTitle>
                 <CardDescription>
-                  Verify your email address to secure your account and receive important notifications
+                  Get a green verified badge by uploading your Student or Government ID and completing payment.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {user?.email_verified ? (
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>Your email address {user.email} has been verified!</AlertDescription>
-                  </Alert>
-                ) : (
+                {!idPaymentComplete ? (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{user?.email}</p>
-                        <p className="text-sm text-muted-foreground">Your registered email address</p>
-                      </div>
-                      {!emailVerificationSent ? (
-                        <Button onClick={resendEmailVerification}>Send Verification</Button>
-                      ) : (
-                        <Badge variant="outline">Email Sent</Badge>
-                      )}
-                    </div>
-
-                    {emailVerificationSent && (
-                      <Alert>
-                        <Mail className="h-4 w-4" />
-                        <AlertDescription>
-                          We've sent a verification link to your email. Please check your inbox and click the link to
-                          verify your email address.
-                        </AlertDescription>
-                      </Alert>
+                    <Alert>
+                      <AlertDescription>
+                        <b>This step is optional and paid.</b> Complete payment to unlock ID verification and get a green verified tick on your profile.
+                      </AlertDescription>
+                    </Alert>
+                    <Button onClick={() => setIdPaymentComplete(true)} className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600">
+                      Pay &amp; Get Verified Badge
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {/* Role-based ID verification UI */}
+                    {user?.role === 'student' ? (
+                      <>
+                        <Alert>
+                          <AlertDescription>
+                            <b>Student ID Verification</b><br />
+                            Please upload a clear photo of your official Student ID card. Make sure your name, photo, and student number are visible.<br />
+                            <span className="text-xs text-muted-foreground">For extra security, also upload a selfie holding your student ID.</span>
+                          </AlertDescription>
+                        </Alert>
+                        {/* Student ID upload (reuse existing logic) */}
+                        <div className="space-y-2">
+                          <Label>Student ID Photo</Label>
+                          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                            {studentIdPreview ? (
+                              <div className="space-y-4">
+                                <img src={studentIdPreview || "/placeholder.svg"} alt="Student ID preview" className="max-w-full h-48 object-contain mx-auto rounded-lg" />
+                                <div className="text-center">
+                                  <Button variant="outline" onClick={() => { setStudentIdFile(null); setStudentIdPreview(""); }} disabled={submitting}>Remove</Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center space-y-4">
+                                <Camera className="h-12 w-12 text-muted-foreground mx-auto" />
+                                <div>
+                                  <p className="text-sm font-medium">Upload your student ID</p>
+                                  <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
+                                </div>
+                                <input type="file" accept="image/*" onChange={handleStudentIdUpload} className="hidden" id="student-id-upload" disabled={submitting} />
+                                <label htmlFor="student-id-upload">
+                                  <Button variant="outline" className="cursor-pointer" disabled={submitting}>
+                                    <Upload className="h-4 w-4 mr-2" />Choose File
+                                  </Button>
+                                </label>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {/* Selfie upload */}
+                        <div className="space-y-2">
+                          <Label>Selfie with Student ID</Label>
+                          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                            {selfiePreview ? (
+                              <div className="space-y-4">
+                                <img src={selfiePreview || "/placeholder.svg"} alt="Selfie preview" className="max-w-full h-48 object-contain mx-auto rounded-lg" />
+                                <div className="text-center">
+                                  <Button variant="outline" onClick={() => { setSelfieFile(null); setSelfiePreview(""); }} disabled={submitting}>Remove</Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center space-y-4">
+                                <Camera className="h-12 w-12 text-muted-foreground mx-auto" />
+                                <div>
+                                  <p className="text-sm font-medium">Upload a selfie holding your student ID</p>
+                                  <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
+                                </div>
+                                <input type="file" accept="image/*" onChange={handleSelfieUpload} className="hidden" id="selfie-upload" disabled={submitting} />
+                                <label htmlFor="selfie-upload">
+                                  <Button variant="outline" className="cursor-pointer" disabled={submitting}>
+                                    <Upload className="h-4 w-4 mr-2" />Choose File
+                                  </Button>
+                                </label>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Alert>
+                          <AlertDescription>
+                            <b>Government ID Verification</b><br />
+                            Please upload a clear photo of your government-issued ID (passport, national ID, or driver’s license). Make sure your name and photo are visible.<br />
+                            <span className="text-xs text-muted-foreground">For extra security, also upload a selfie holding your ID.</span>
+                          </AlertDescription>
+                        </Alert>
+                        {/* Government ID upload */}
+                        <div className="space-y-2">
+                          <Label>Government ID Photo</Label>
+                          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                            {studentIdPreview ? (
+                              <div className="space-y-4">
+                                <img src={studentIdPreview || "/placeholder.svg"} alt="ID preview" className="max-w-full h-48 object-contain mx-auto rounded-lg" />
+                                <div className="text-center">
+                                  <Button variant="outline" onClick={() => { setStudentIdFile(null); setStudentIdPreview(""); }} disabled={submitting}>Remove</Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center space-y-4">
+                                <Camera className="h-12 w-12 text-muted-foreground mx-auto" />
+                                <div>
+                                  <p className="text-sm font-medium">Upload your government-issued ID</p>
+                                  <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
+                                </div>
+                                <input type="file" accept="image/*" onChange={handleStudentIdUpload} className="hidden" id="gov-id-upload" disabled={submitting} />
+                                <label htmlFor="gov-id-upload">
+                                  <Button variant="outline" className="cursor-pointer" disabled={submitting}>
+                                    <Upload className="h-4 w-4 mr-2" />Choose File
+                                  </Button>
+                                </label>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {/* Selfie upload */}
+                        <div className="space-y-2">
+                          <Label>Selfie with ID</Label>
+                          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                            {selfiePreview ? (
+                              <div className="space-y-4">
+                                <img src={selfiePreview || "/placeholder.svg"} alt="Selfie preview" className="max-w-full h-48 object-contain mx-auto rounded-lg" />
+                                <div className="text-center">
+                                  <Button variant="outline" onClick={() => { setSelfieFile(null); setSelfiePreview(""); }} disabled={submitting}>Remove</Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center space-y-4">
+                                <Camera className="h-12 w-12 text-muted-foreground mx-auto" />
+                                <div>
+                                  <p className="text-sm font-medium">Upload a selfie holding your ID</p>
+                                  <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
+                                </div>
+                                <input type="file" accept="image/*" onChange={handleSelfieUpload} className="hidden" id="selfie-upload" disabled={submitting} />
+                                <label htmlFor="selfie-upload">
+                                  <Button variant="outline" className="cursor-pointer" disabled={submitting}>
+                                    <Upload className="h-4 w-4 mr-2" />Choose File
+                                  </Button>
+                                </label>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
                     )}
+                  </div>
+                )}
+
+                {/* Previous Requests */}
+                {verificationRequests.filter((r) => r.verification_type === "student_id").length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Previous Requests</h4>
+                    {verificationRequests
+                      .filter((r) => r.verification_type === "student_id")
+                      .map((request) => (
+                        <Card key={request.id} className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium">
+                                Submitted {new Date(request.submitted_at).toLocaleDateString()}
+                              </p>
+                              {request.reviewer_notes && (
+                                <p className="text-xs text-muted-foreground mt-1">{request.reviewer_notes}</p>
+                              )}
+                            </div>
+                            <Badge
+                              variant={
+                                request.status === "approved"
+                                  ? "default"
+                                  : request.status === "rejected"
+                                    ? "destructive"
+                                    : "secondary"
+                              }
+                            >
+                              {request.status}
+                            </Badge>
+                          </div>
+                        </Card>
+                      ))}
                   </div>
                 )}
               </CardContent>

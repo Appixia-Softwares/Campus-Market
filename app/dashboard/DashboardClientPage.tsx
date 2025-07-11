@@ -104,8 +104,8 @@ export default function DashboardClientPage() {
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Enforce email verification: redirect if not verified
-  if (user && !user.email_verified) {
+  // Enforce email and phone verification: redirect if not verified
+  if (user && (!user.email_verified || !user.phone_verified)) {
     if (typeof window !== 'undefined') {
       window.location.href = '/verification';
     }
