@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ShoppingBag, Eye, Heart, MessageSquare, Download, TrendingUp } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, query, where, orderBy, getDocs, doc, getDoc } from "firebase/firestore"
 import { useToast } from "@/components/ui/use-toast"
 
 interface AnalyticsData {
@@ -67,31 +68,28 @@ export default function AnalyticsPage() {
       const startDate = new Date()
       startDate.setDate(startDate.getDate() - Number.parseInt(dateRange))
 
-      // Fetch user's products with stats
-      const { data: products, error: productsError } = await supabase
-        .from("products")
-        .select(`
-          id,
-          title,
-          price,
-          views,
-          likes,
-          status,
-          created_at,
-          product_categories (name)
-        `)
-        .eq("seller_id", user.id)
-        .order("created_at", { ascending: false })
-
-      if (productsError) throw productsError
+      // Fetch user's products with stats from Firebase
+      const productsQuery = query(
+        collection(db, "products"),
+        where("seller_id", "==", user.id),
+        orderBy("created_at", "desc")
+      )
+      const productsSnapshot = await getDocs(productsQuery)
+      const products = productsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
 
       // Fetch messages count for user's products
-      const { data: conversations, error: conversationsError } = await supabase
-        .from("conversations")
-        .select("id, product_id")
-        .in("product_id", products?.map((p) => p.id) || [])
-
-      if (conversationsError) throw conversationsError
+      const conversationsQuery = query(
+        collection(db, "conversations"),
+        where("product_id", "in", products?.map((p) => p.id) || [])
+      )
+      const conversationsSnapshot = await getDocs(conversationsQuery)
+      const conversations = conversationsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
 
       // Calculate overview stats
       const totalViews = products?.reduce((sum, p) => sum + (p.views || 0), 0) || 0
@@ -118,7 +116,7 @@ export default function AnalyticsPage() {
       // Calculate category stats
       const categoryMap = new Map()
       products?.forEach((product) => {
-        const category = product.product_categories?.name || "Other"
+        const category = product.category || "Other"
         categoryMap.set(category, (categoryMap.get(category) || 0) + 1)
       })
 
@@ -137,7 +135,7 @@ export default function AnalyticsPage() {
         // Filter products created in this month
         const monthProducts =
           products?.filter((p) => {
-            const productDate = new Date(p.created_at)
+            const productDate = new Date(p.created_at?.toDate?.() || p.created_at)
             return productDate.getMonth() === date.getMonth() && productDate.getFullYear() === date.getFullYear()
           }) || []
 
@@ -199,11 +197,6 @@ export default function AnalyticsPage() {
     a.download = `analytics-${new Date().toISOString().split("T")[0]}.csv`
     a.click()
     URL.revokeObjectURL(url)
-
-    toast({
-      title: "Export successful",
-      description: "Analytics data has been exported to CSV",
-    })
   }
 
   if (loading) {
@@ -211,23 +204,21 @@ export default function AnalyticsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-96 mt-2" />
           </div>
-          <div className="flex gap-2">
-            <Skeleton className="h-9 w-32" />
-            <Skeleton className="h-9 w-24" />
-          </div>
+          <Skeleton className="h-10 w-32" />
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <Card key={i}>
-              <CardHeader className="pb-2">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-8 w-16 mb-1" />
-                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-3 w-32 mt-2" />
               </CardContent>
             </Card>
           ))}
@@ -238,14 +229,12 @@ export default function AnalyticsPage() {
 
   if (!analyticsData) {
     return (
-      <div className="space-y-6">
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium mb-2">No analytics data available</h3>
-          <p className="text-muted-foreground mb-6">Start selling products to see your analytics</p>
-          <Button asChild>
-            <a href="/marketplace/sell">Create Your First Listing</a>
-          </Button>
+      <div className="text-center py-12">
+        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+          <TrendingUp className="h-6 w-6 text-muted-foreground" />
         </div>
+        <h3 className="text-lg font-medium mb-2">No analytics data available</h3>
+        <p className="text-muted-foreground">Start selling to see your analytics here</p>
       </div>
     )
   }
@@ -254,25 +243,13 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+          <h1 className="text-3xl font-bold">Analytics</h1>
           <p className="text-muted-foreground">Track your marketplace performance</p>
         </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className="px-3 py-2 border rounded-md text-sm"
-          >
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-            <option value="365">Last year</option>
-          </select>
-          <Button variant="outline" size="sm" onClick={exportData}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
+        <Button onClick={exportData} variant="outline">
+          <Download className="h-4 w-4 mr-2" />
+          Export Data
+        </Button>
       </div>
 
       {/* Overview Cards */}
@@ -284,7 +261,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analyticsData.overview.totalViews.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Across {analyticsData.overview.totalListings} listings</p>
+            <p className="text-xs text-muted-foreground">All time views</p>
           </CardContent>
         </Card>
 
@@ -294,38 +271,32 @@ export default function AnalyticsPage() {
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analyticsData.overview.totalLikes}</div>
-            <p className="text-xs text-muted-foreground">
-              {analyticsData.overview.totalViews > 0
-                ? `${((analyticsData.overview.totalLikes / analyticsData.overview.totalViews) * 100).toFixed(1)}% like rate`
-                : "No views yet"}
-            </p>
+            <div className="text-2xl font-bold">{analyticsData.overview.totalLikes.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">All time likes</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Messages</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analyticsData.overview.totalMessages}</div>
-            <p className="text-xs text-muted-foreground">
-              {analyticsData.overview.totalViews > 0
-                ? `${((analyticsData.overview.totalMessages / analyticsData.overview.totalViews) * 100).toFixed(1)}% conversion`
-                : "No conversations yet"}
-            </p>
+            <div className="text-2xl font-bold">{analyticsData.overview.totalMessages.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">All time messages</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Listings</CardTitle>
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analyticsData.overview.activeListings}</div>
-            <p className="text-xs text-muted-foreground">{analyticsData.overview.soldListings} sold</p>
+            <div className="text-2xl font-bold">{analyticsData.overview.totalListings}</div>
+            <p className="text-xs text-muted-foreground">
+              {analyticsData.overview.activeListings} active • {analyticsData.overview.soldListings} sold
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -335,37 +306,32 @@ export default function AnalyticsPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="listings">Top Listings</TabsTrigger>
           <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Performance Over Time</CardTitle>
-                <CardDescription>Your marketplace activity by month</CardDescription>
+                <CardTitle>Top Performing Listings</CardTitle>
+                <CardDescription>Your best performing items by engagement</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {analyticsData.monthlyStats.map((data, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{data.month}</span>
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          {data.views}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart className="h-3 w-3" />
-                          {data.likes}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3" />
-                          {data.messages}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <ShoppingBag className="h-3 w-3" />
-                          {data.listings}
-                        </span>
+                  {analyticsData.topListings.map((listing, index) => (
+                    <div key={listing.id} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{listing.title}</p>
+                          <p className="text-sm text-muted-foreground">${listing.price}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{listing.views} views</p>
+                        <p className="text-xs text-muted-foreground">{listing.likes} likes</p>
                       </div>
                     </div>
                   ))}
@@ -375,22 +341,18 @@ export default function AnalyticsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Category Distribution</CardTitle>
-                <CardDescription>Your listings by category</CardDescription>
+                <CardTitle>Monthly Performance</CardTitle>
+                <CardDescription>Your activity over the last 6 months</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {analyticsData.categoryStats.map((category, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{category.category}</span>
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 h-2 bg-muted rounded-full">
-                          <div
-                            className="h-2 bg-primary rounded-full"
-                            style={{ width: `${category.percentage}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm text-muted-foreground w-12 text-right">{category.count}</span>
+                  {analyticsData.monthlyStats.map((stat) => (
+                    <div key={stat.month} className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{stat.month}</span>
+                      <div className="flex items-center space-x-4 text-sm">
+                        <span>{stat.listings} listings</span>
+                        <span>{stat.views} views</span>
+                        <span>{stat.likes} likes</span>
                       </div>
                     </div>
                   ))}
@@ -403,53 +365,36 @@ export default function AnalyticsPage() {
         <TabsContent value="listings" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Top Performing Listings</CardTitle>
-              <CardDescription>Your most popular listings</CardDescription>
+              <CardTitle>Detailed Listing Performance</CardTitle>
+              <CardDescription>Detailed breakdown of your listings</CardDescription>
             </CardHeader>
             <CardContent>
-              {analyticsData.topListings.length === 0 ? (
-                <div className="text-center py-8">
-                  <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No listings yet</h3>
-                  <p className="text-muted-foreground mb-4">Create your first listing to see analytics</p>
-                  <Button asChild>
-                    <a href="/marketplace/sell">Create Listing</a>
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {analyticsData.topListings.map((listing, index) => (
-                    <div key={listing.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline">#{index + 1}</Badge>
-                        <div>
-                          <p className="font-medium">{listing.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            ${listing.price.toFixed(2)} • {listing.status}
-                          </p>
-                        </div>
+              <div className="space-y-4">
+                {analyticsData.topListings.map((listing) => (
+                  <div key={listing.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium">{listing.title}</h4>
+                      <Badge variant={listing.status === "active" ? "default" : "secondary"}>
+                        {listing.status}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Views</p>
+                        <p className="font-medium">{listing.views}</p>
                       </div>
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          {listing.views}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart className="h-3 w-3" />
-                          {listing.likes}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3" />
-                          {listing.messages}
-                        </span>
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={`/marketplace/products/${listing.id}`}>View</a>
-                        </Button>
+                      <div>
+                        <p className="text-muted-foreground">Likes</p>
+                        <p className="font-medium">{listing.likes}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Messages</p>
+                        <p className="font-medium">{listing.messages}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -457,56 +402,61 @@ export default function AnalyticsPage() {
         <TabsContent value="trends" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Performance Insights</CardTitle>
-              <CardDescription>Key metrics and recommendations</CardDescription>
+              <CardTitle>Monthly Trends</CardTitle>
+              <CardDescription>Your performance trends over time</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-medium mb-2">Engagement Metrics</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 border rounded-lg">
-                      <p className="text-sm font-medium">Average Views per Listing</p>
-                      <p className="text-2xl font-bold">
-                        {analyticsData.overview.totalListings > 0
-                          ? Math.round(analyticsData.overview.totalViews / analyticsData.overview.totalListings)
-                          : 0}
-                      </p>
+              <div className="space-y-4">
+                {analyticsData.monthlyStats.map((stat) => (
+                  <div key={stat.month} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium">{stat.month}</h4>
                     </div>
-                    <div className="p-3 border rounded-lg">
-                      <p className="text-sm font-medium">Like Rate</p>
-                      <p className="text-2xl font-bold">
-                        {analyticsData.overview.totalViews > 0
-                          ? `${((analyticsData.overview.totalLikes / analyticsData.overview.totalViews) * 100).toFixed(1)}%`
-                          : "0%"}
-                      </p>
+                    <div className="grid grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Listings</p>
+                        <p className="font-medium">{stat.listings}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Views</p>
+                        <p className="font-medium">{stat.views}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Likes</p>
+                        <p className="font-medium">{stat.likes}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Messages</p>
+                        <p className="font-medium">{stat.messages}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                <div>
-                  <h4 className="font-medium mb-2">Recommendations</h4>
-                  <div className="space-y-2 text-sm">
-                    {analyticsData.overview.totalViews === 0 && (
-                      <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded">
-                        <TrendingUp className="h-4 w-4 text-blue-600" />
-                        <span>Add high-quality photos to increase views</span>
-                      </div>
-                    )}
-                    {analyticsData.overview.totalLikes / Math.max(analyticsData.overview.totalViews, 1) < 0.05 && (
-                      <div className="flex items-center gap-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 rounded">
-                        <Heart className="h-4 w-4 text-yellow-600" />
-                        <span>Improve your descriptions to increase engagement</span>
-                      </div>
-                    )}
-                    {analyticsData.overview.activeListings === 0 && (
-                      <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950/20 rounded">
-                        <ShoppingBag className="h-4 w-4 text-green-600" />
-                        <span>Create more listings to reach more buyers</span>
-                      </div>
-                    )}
+        <TabsContent value="categories" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Category Performance</CardTitle>
+              <CardDescription>How your listings perform by category</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {analyticsData.categoryStats.map((stat) => (
+                  <div key={stat.category} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-3 h-3 rounded-full bg-primary" />
+                      <span className="font-medium">{stat.category}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">{stat.count} listings</p>
+                      <p className="text-sm text-muted-foreground">{stat.percentage}%</p>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
