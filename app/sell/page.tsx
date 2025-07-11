@@ -23,6 +23,7 @@ import { Loader2, CheckCircle2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -40,6 +41,7 @@ export default function SellPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [createdProductId, setCreatedProductId] = useState<string | null>(null)
+  const [open, setOpen] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -116,167 +118,153 @@ export default function SellPage() {
   }
 
   return (
-    <div className="container max-w-2xl py-8">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Sell an Item</h1>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) router.back(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Sell an Item</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6">
           <p className="text-muted-foreground">
             Create a new listing for your item
           </p>
-        </div>
-
-        {success && createdProductId && (
-          <Alert className="bg-green-50 border-green-200">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">Success!</AlertTitle>
-            <AlertDescription className="text-green-700">
-              Your listing has been created successfully. Redirecting to your listing...
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter item title" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    A clear, descriptive title for your item
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe your item in detail"
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Include details about condition, features, and any flaws
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
+          {success && createdProductId && (
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-800">Success!</AlertTitle>
+              <AlertDescription className="text-green-700">
+                Your listing has been created successfully. Redirecting to your listing...
+              </AlertDescription>
+            </Alert>
+          )}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
-                name="price"
+                name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price</FormLabel>
+                    <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="0.00"
-                        step="0.01"
-                        min="0"
+                      <Input placeholder="Enter item title" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      A clear, descriptive title for your item
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe your item in detail"
+                        className="min-h-[100px]"
                         {...field}
                       />
                     </FormControl>
+                    <FormDescription>
+                      Include details about condition, features, and any flaws
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Electronics, Books" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="condition"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Condition</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. New, Like New, Used" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Harare, Campus" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
-                name="category"
+                name="images"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>Images</FormLabel>
                     <FormControl>
-                      <Input placeholder="Select category" {...field} />
+                      <ImageUpload
+                        value={field.value || []}
+                        onChange={field.onChange}
+                        onRemove={(url) => field.onChange((field.value || []).filter((img: string) => img !== url))}
+                        maxFiles={5}
+                      />
                     </FormControl>
+                    <FormDescription>
+                      Upload up to 5 images
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="condition"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Condition</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Item condition" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Item location" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="images"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Images</FormLabel>
-                  <FormControl>
-                    <ImageUpload
-                      value={field.value ?? []}
-                      onChange={field.onChange}
-                      onRemove={(url: string) => {
-                        field.onChange((field.value ?? []).filter((value: string) => value !== url))
-                      }}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Upload up to 5 images of your item
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Listing...
-                </>
-              ) : (
-                "Create Listing"
-              )}
-            </Button>
-          </form>
-        </Form>
-      </div>
-    </div>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Create Listing
+              </Button>
+            </form>
+          </Form>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
