@@ -14,6 +14,8 @@ import {
   Heart,
   BarChart3,
   Shield,
+  Info,
+  ArrowRight,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -290,27 +292,50 @@ export default function DashboardSidebar({ collapsed, onToggle, isMobile }: Dash
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>What do you want to sell?</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Plus className="h-5 w-5 text-primary" />
+                      What do you want to sell?
+                    </DialogTitle>
+                    <p className="text-muted-foreground text-sm mt-1 flex items-center gap-1">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      Choose a category to get started. You can list products or accommodation for students.
+                    </p>
                   </DialogHeader>
                   {!showAccommodationForm ? (
-                    <div className="flex flex-col gap-4 mt-2">
-                      <Button
-                        variant="default"
-                        className="w-full"
-                        onClick={() => {
-                          setSellDialogOpen(false);
-                          router.push("/marketplace/sell");
-                        }}
-                      >
-                        Product
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => setShowAccommodationForm(true)}
-                      >
-                        Accommodation
-                      </Button>
+                    <div className="mt-6">
+                      <div className="grid grid-cols-1 gap-4">
+                        {/* Product Option Row */}
+                        <button
+                          className="group w-full rounded-lg border border-primary/30 bg-background hover:bg-primary/5 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
+                          onClick={() => {
+                            setSellDialogOpen(false);
+                            router.push("/marketplace/sell");
+                          }}
+                        >
+                          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mr-4">
+                            <ShoppingBag className="h-7 w-7 text-primary" />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <div className="font-semibold text-base">Product</div>
+                            <div className="text-xs text-muted-foreground">Sell books, electronics, clothing, and more</div>
+                          </div>
+                          <ArrowRight className="h-5 w-5 ml-4 text-muted-foreground group-hover:text-primary" />
+                        </button>
+                        {/* Accommodation Option Row */}
+                        <button
+                          className="group w-full rounded-lg border border-accent bg-background hover:bg-accent/10 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
+                          onClick={() => setShowAccommodationForm(true)}
+                        >
+                          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mr-4">
+                            <Building className="h-7 w-7 text-accent" />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <div className="font-semibold text-base">Accommodation</div>
+                            <div className="text-xs text-muted-foreground">List a room, flat, or student housing</div>
+                          </div>
+                          <ArrowRight className="h-5 w-5 ml-4 text-muted-foreground group-hover:text-accent" />
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <AccommodationFormDialogContent onSuccess={() => { setSellDialogOpen(false); setShowAccommodationForm(false); }} />
