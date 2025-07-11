@@ -148,73 +148,7 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                     </CardContent>
                   </Card>
                 </div>
-                <div className="flex flex-col gap-6 mt-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Landlord Information</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-3 mb-4">
-                        <img
-                          src={property.landlord.image || "/placeholder.svg"}
-                          alt={property.landlord.name}
-                          className="rounded-full h-12 w-12"
-                        />
-                        <div>
-                          <div className="font-medium flex items-center">
-                            {property.landlord.name}
-                            {property.landlord.verified && <CheckCircle className="h-4 w-4 ml-1 text-primary" />}
-                          </div>
-                          <div className="text-sm text-muted-foreground">Landlord</div>
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Responds {property.landlord.responseTime}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{property.landlord.responseRate}% response rate</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Member since 2022</span>
-                        </div>
-                      </div>
-                      <div className="mt-4 pt-4 border-t">
-                        <Button variant="outline" className="w-full">
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Message Landlord
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center">
-                        <Info className="h-5 w-5 mr-2" />
-                        Safety Tips
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2 text-sm">
-                        <li className="flex items-start gap-2">
-                          <div className="h-5 w-5 flex items-center justify-center rounded-full bg-primary/10 text-primary mt-0.5">1</div>
-                          <span>Always verify the landlord's identity before making payments</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <div className="h-5 w-5 flex items-center justify-center rounded-full bg-primary/10 text-primary mt-0.5">2</div>
-                          <span>Use our secure payment system to protect your money</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <div className="h-5 w-5 flex items-center justify-center rounded-full bg-primary/10 text-primary mt-0.5">3</div>
-                          <span>Report suspicious listings or behavior to our support team</span>
-                        </li>
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
+                {/* The landlord and safety tips cards have been moved, so remove them here */}
               </div>
               <div className="md:col-span-2 order-2 md:order-none">
                 <PropertyGallery images={property.images} />
@@ -267,6 +201,75 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                           </div>
                         </CardContent>
                       </Card>
+
+                      {/* Landlord and Safety Tips cards moved here */}
+                      <div className="flex flex-col gap-6 mt-6">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Landlord Information</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex items-center gap-3 mb-4">
+                              <img
+                                src={property.landlord.image || "/placeholder.svg"}
+                                alt={property.landlord.name}
+                                className="rounded-full h-12 w-12"
+                              />
+                              <div>
+                                <div className="font-medium flex items-center">
+                                  {property.landlord.name}
+                                  {property.landlord.verified && <CheckCircle className="h-4 w-4 ml-1 text-primary" />}
+                                </div>
+                                <div className="text-sm text-muted-foreground">Landlord</div>
+                              </div>
+                            </div>
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm">Responds {property.landlord.responseTime}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm">{property.landlord.responseRate}% response rate</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm">Member since 2022</span>
+                              </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t">
+                              <Button variant="outline" className="w-full">
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                Message Landlord
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center">
+                              <Info className="h-5 w-5 mr-2" />
+                              Safety Tips
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <ul className="space-y-2 text-sm">
+                              <li className="flex items-start gap-2">
+                                <div className="h-5 w-5 flex items-center justify-center rounded-full bg-primary/10 text-primary mt-0.5">1</div>
+                                <span>Always verify the landlord's identity before making payments</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <div className="h-5 w-5 flex items-center justify-center rounded-full bg-primary/10 text-primary mt-0.5">2</div>
+                                <span>Use our secure payment system to protect your money</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <div className="h-5 w-5 flex items-center justify-center rounded-full bg-primary/10 text-primary mt-0.5">3</div>
+                                <span>Report suspicious listings or behavior to our support team</span>
+                              </li>
+                            </ul>
+                          </CardContent>
+                        </Card>
+                      </div>
                     </TabsContent>
 
                     <TabsContent value="amenities" className="mt-4">
