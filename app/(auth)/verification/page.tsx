@@ -28,6 +28,7 @@ import {
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/components/ui/use-toast"
 import { uploadFileToStorage, auth } from '@/lib/firebase'
+import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { sendEmailVerification } from 'firebase/auth';
 
 interface VerificationRequest {
@@ -67,8 +68,7 @@ export default function VerificationPage() {
 
   useEffect(() => {
     if (user) {
-      fetchVerificationRequests()
-      setEmailVerified(!!user.emailVerified)
+      setEmailVerified(!!user.email_verified)
     }
   }, [user])
 
@@ -82,25 +82,7 @@ export default function VerificationPage() {
     return () => clearInterval(interval)
   }, [phoneCountdown])
 
-  const fetchVerificationRequests = async () => {
-    if (!user) return
-
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from("verification_requests")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("submitted_at", { ascending: false })
-
-      if (error) throw error
-      setVerificationRequests(data || [])
-    } catch (error) {
-      console.error("Error fetching verification requests:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Remove fetchVerificationRequests and all supabase logic
 
   // No longer needed: checkEmailVerification
 
@@ -153,8 +135,17 @@ export default function VerificationPage() {
       const fileName = `student-id-${user.id}-${Date.now()}.${fileExt}`
       const publicUrl = await uploadFileToStorage(fileName, studentIdFile)
       setUploading(false)
-      // Submit verification request (implement Firestore logic as needed)
-      // await createVerificationRequest({ user_id: user.id, documents: [publicUrl], ... })
+      // Create verification request in Firestore
+      const db = getFirestore();
+      await addDoc(collection(db, 'verification_requests'), {
+        user_id: user.id,
+        verification_type: 'student_id',
+        status: 'pending',
+        documents: [publicUrl],
+        notes: additionalNotes,
+        student_id_number: studentIdNumber,
+        submitted_at: serverTimestamp(),
+      });
       toast({
         title: "Verification submitted",
         description: "Your student ID verification has been submitted for review",
@@ -179,7 +170,7 @@ export default function VerificationPage() {
 
   // Mocked phone verification logic (structure for Firebase integration)
   const sendPhoneVerification = async () => {
-    if (!user || !profile?.phone) {
+    if (!user || !user?.phone) {
       toast({
         title: "No phone number",
         description: "Please add a phone number to your profile first",
@@ -193,7 +184,7 @@ export default function VerificationPage() {
       setPhoneCountdown(60)
       toast({
         title: "Verification code sent",
-        description: `A verification code has been sent to ${profile.phone}`,
+        description: `A verification code has been sent to ${user.phone}`,
       })
     } catch (error) {
       toast({
@@ -259,9 +250,9 @@ export default function VerificationPage() {
     let completed = 0
     const total = 3
 
-    if (user?.emailVerified) completed++
-    if (profile?.phone_verified) completed++
-    if (profile?.verified) completed++
+    if (user?.email_verified) completed++
+    if (user?.phone_verified) completed++
+    if (user?.verified) completed++
 
     return (completed / total) * 100
   }
@@ -334,17 +325,17 @@ export default function VerificationPage() {
             <TabsTrigger value="student-id" className="flex items-center gap-2">
               <GraduationCap className="h-4 w-4" />
               Student ID
-              {profile?.verified && <CheckCircle className="h-4 w-4 text-green-500" />}
+              {user?.verified && <CheckCircle className="h-4 w-4 text-green-500" />}
             </TabsTrigger>
             <TabsTrigger value="phone" className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
               Phone
-              {profile?.phone_verified && <CheckCircle className="h-4 w-4 text-green-500" />}
+              {user?.phone_verified && <CheckCircle className="h-4 w-4 text-green-500" />}
             </TabsTrigger>
             <TabsTrigger value="email" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Email
-              {user?.emailVerified && <CheckCircle className="h-4 w-4 text-green-500" />}
+              {user?.email_verified && <CheckCircle className="h-4 w-4 text-green-500" />}
             </TabsTrigger>
           </TabsList>
 
@@ -372,7 +363,7 @@ export default function VerificationPage() {
                 <CardDescription>Upload a clear photo of your student ID to verify your student status</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {profile?.verified ? (
+                {user?.verified ? (
                   <Alert>
                     <CheckCircle className="h-4 w-4" />
                     <AlertDescription>
@@ -515,7 +506,7 @@ export default function VerificationPage() {
                 <CardTitle className="flex items-center gap-2">
                   <Phone className="h-5 w-5" />
                   Phone Verification
-                  {profile?.phone_verified && (
+                  {user?.phone_verified && (
                     <Badge variant="outline" className="ml-auto">
                       <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
                       Verified
@@ -525,16 +516,16 @@ export default function VerificationPage() {
                 <CardDescription>Verify your phone number to enable SMS notifications and build trust</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {profile?.phone_verified ? (
+                {user?.phone_verified ? (
                   <Alert>
                     <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>Your phone number {profile.phone} has been verified!</AlertDescription>
+                    <AlertDescription>Your phone number {user.phone} has been verified!</AlertDescription>
                   </Alert>
-                ) : profile?.phone ? (
+                ) : user?.phone ? (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
-                        <p className="font-medium">{profile.phone}</p>
+                        <p className="font-medium">{user.phone}</p>
                         <p className="text-sm text-muted-foreground">Your registered phone number</p>
                       </div>
                       {!phoneVerificationSent ? (
@@ -572,9 +563,6 @@ export default function VerificationPage() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
                       Please add a phone number to your profile first.
-                      <Button variant="link" className="p-0 h-auto ml-1" asChild>
-                        <a href="/profile">Go to Profile</a>
-                      </Button>
                     </AlertDescription>
                   </Alert>
                 )}
@@ -589,7 +577,7 @@ export default function VerificationPage() {
                 <CardTitle className="flex items-center gap-2">
                   <Mail className="h-5 w-5" />
                   Email Verification
-                  {user?.emailVerified && (
+                  {user?.email_verified && (
                     <Badge variant="outline" className="ml-auto">
                       <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
                       Verified
@@ -601,7 +589,7 @@ export default function VerificationPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {user?.emailVerified ? (
+                {user?.email_verified ? (
                   <Alert>
                     <CheckCircle className="h-4 w-4" />
                     <AlertDescription>Your email address {user.email} has been verified!</AlertDescription>
