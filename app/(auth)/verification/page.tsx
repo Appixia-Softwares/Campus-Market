@@ -29,7 +29,7 @@ import {
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/components/ui/use-toast"
 import { uploadFileToStorage, auth } from '@/lib/firebase'
-import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { sendEmailVerification } from 'firebase/auth';
 
 interface VerificationRequest {
@@ -91,6 +91,28 @@ export default function VerificationPage() {
     }
     return () => clearInterval(interval)
   }, [phoneCountdown])
+
+  // Auto-refresh email verification status every 5 seconds if not verified
+  useEffect(() => {
+    if (!user || user.email_verified) return;
+    let interval: NodeJS.Timeout;
+    const autoCheck = async () => {
+      if (auth.currentUser) {
+        await auth.currentUser.reload();
+        const isVerified = auth.currentUser.emailVerified;
+        setEmailVerified(isVerified);
+        if (isVerified) {
+          // Update Firestore user document
+          const db = getFirestore();
+          const userRef = doc(db, "users", auth.currentUser.uid);
+          await updateDoc(userRef, { email_verified: true });
+          clearInterval(interval);
+        }
+      }
+    };
+    interval = setInterval(autoCheck, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Remove fetchVerificationRequests and all supabase logic
 
@@ -280,13 +302,20 @@ export default function VerificationPage() {
     setCheckingEmailStatus(true);
     try {
       await auth.currentUser.reload();
-      setEmailVerified(auth.currentUser.emailVerified);
+      const isVerified = auth.currentUser.emailVerified;
+      setEmailVerified(isVerified);
+      if (isVerified) {
+        // Update Firestore user document
+        const db = getFirestore();
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userRef, { email_verified: true });
+      }
       toast({
-        title: auth.currentUser.emailVerified ? "Email verified!" : "Not verified yet",
-        description: auth.currentUser.emailVerified
+        title: isVerified ? "Email verified!" : "Not verified yet",
+        description: isVerified
           ? "Your email address has been verified."
           : "Please check your inbox and click the verification link.",
-        variant: auth.currentUser.emailVerified ? "default" : "destructive",
+        variant: isVerified ? "default" : "destructive",
       });
     } catch (error) {
       toast({
