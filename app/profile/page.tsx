@@ -23,6 +23,7 @@ import { collection, doc, getDocs, updateDoc, query, where } from 'firebase/fire
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import ProfileForm from "@/components/profile-form";
 import { ProfileFormValues } from "@/types";
+import ZIM_UNIVERSITIES from "@/utils/schools_data";
 
 interface ProfileStats {
   totalListings: number
@@ -229,7 +230,14 @@ export default function ProfilePage() {
                   </Badge>
                 )}
               </CardTitle>
-              <CardDescription>{user?.university_id ? "University not specified" : "University not specified"}</CardDescription>
+              {/* University display in profile overview */}
+              <CardDescription>
+                {(() => {
+                  if (!user?.university_id || user.university_id === 'none') return 'No University Selected';
+                  const uni = ZIM_UNIVERSITIES.find(u => u.id === user.university_id);
+                  return uni ? uni.name + (uni.location ? ` (${uni.location})` : '') : 'No University Selected';
+                })()}
+              </CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -313,7 +321,7 @@ export default function ProfilePage() {
                         placeholder="+263 77 123 4567"
                       />
                     </div>
-                    {/* <div className="space-y-2">
+                    <div className="space-y-2">
                       <Label htmlFor="location">Location</Label>
                       <Input
                         id="location"
@@ -321,30 +329,21 @@ export default function ProfilePage() {
                         disabled className="bg-muted"
                         placeholder="Harare, Zimbabwe"
                       />
-                    </div> */} // TODO: Add location to backend if needed
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="university">University</Label>
-                    <Select
-                      value={user?.university_id || "none"}
-                      onValueChange={(value) => {}} // No change in user data, just for display
-                      disabled
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your university" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {/* universities.map((uni) => ( // Removed as per edit hint */}
-                          <SelectItem key="no-university" value="none">
-                            No University Selected
-                          </SelectItem>
-                        {/* ))} */}
-                      </SelectContent>
-                    </Select>
+                    <div className="bg-muted rounded px-3 py-2 min-h-[40px] flex items-center">
+                      {(() => {
+                        if (!user?.university_id || user.university_id === 'none') return 'No University Selected';
+                        const uni = ZIM_UNIVERSITIES.find(u => u.id === user.university_id);
+                        return uni ? uni.name + (uni.location ? ` (${uni.location})` : '') : 'No University Selected';
+                      })()}
+                    </div>
                   </div>
 
-                  {/* <div className="space-y-2">
+                  <div className="space-y-2">
                     <Label htmlFor="bio">Bio</Label>
                     <Textarea
                       id="bio"
@@ -353,7 +352,7 @@ export default function ProfilePage() {
                       rows={3}
                       placeholder="Tell others about yourself..."
                     />
-                  </div> */} // TODO: Add bio to backend if needed
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -365,7 +364,59 @@ export default function ProfilePage() {
                   <CardDescription>Choose what notifications you want to receive</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Notification preferences are not in the backend user type. Add if needed. */}
+                  {/* Notification preferences toggles */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Email Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                    </div>
+                    <Switch
+                      checked={user?.email_notifications ?? false}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        await updateDoc(doc(db, 'users', user.id), { email_notifications: checked });
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Push Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Receive push notifications</p>
+                    </div>
+                    <Switch
+                      checked={user?.push_notifications ?? false}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        await updateDoc(doc(db, 'users', user.id), { push_notifications: checked });
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Message Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Get notified of new messages</p>
+                    </div>
+                    <Switch
+                      checked={user?.message_notifications ?? false}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        await updateDoc(doc(db, 'users', user.id), { message_notifications: checked });
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Marketing Emails</Label>
+                      <p className="text-sm text-muted-foreground">Receive promotional content</p>
+                    </div>
+                    <Switch
+                      checked={user?.marketing_emails ?? false}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        await updateDoc(doc(db, 'users', user.id), { marketing_emails: checked });
+                      }}
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -375,7 +426,46 @@ export default function ProfilePage() {
                   <CardDescription>Control who can see your information</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Privacy settings are not in the backend user type. Add if needed. */}
+                  {/* Privacy settings toggles */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Profile Visibility</Label>
+                      <p className="text-sm text-muted-foreground">Make your profile visible to other users</p>
+                    </div>
+                    <Switch
+                      checked={user?.profile_visible ?? true}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        await updateDoc(doc(db, 'users', user.id), { profile_visible: checked });
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Show Online Status</Label>
+                      <p className="text-sm text-muted-foreground">Let others see when you're online</p>
+                    </div>
+                    <Switch
+                      checked={user?.show_online_status ?? true}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        await updateDoc(doc(db, 'users', user.id), { show_online_status: checked });
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Show Contact Info</Label>
+                      <p className="text-sm text-muted-foreground">Display your contact information</p>
+                    </div>
+                    <Switch
+                      checked={user?.show_contact_info ?? false}
+                      onCheckedChange={async (checked) => {
+                        if (!user) return;
+                        await updateDoc(doc(db, 'users', user.id), { show_contact_info: checked });
+                      }}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
