@@ -12,12 +12,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { signUp, getUniversities, signIn } from "@/lib/api/auth"
+import { signUp } from '@/lib/auth-service';
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import ZIM_UNIVERSITIES from "@/utils/schools_data"
+import { Textarea } from "@/components/ui/textarea"
+import { useRef } from "react"
+import confetti from "canvas-confetti"
+import { toast as sonnerToast } from "sonner"
 
 interface University {
   id: string
@@ -61,6 +63,12 @@ interface SignUpError {
   hint?: string
 }
 
+// Add user type options
+const USER_TYPES = [
+  { id: 'student', label: 'Student' },
+  { id: 'non_student', label: 'Non-Student' },
+];
+
 interface SignUpFormData {
   fullName: string;
   email: string;
@@ -71,7 +79,12 @@ interface SignUpFormData {
   phone: string;
   yearOfStudy: string;
   course: string;
+  userType: 'student' | 'non_student';
+  occupation?: string;
+  organization?: string;
+  reason?: string;
 }
+
 
 export default function SignupPage() {
   const router = useRouter()
@@ -89,46 +102,88 @@ export default function SignupPage() {
     phone: "",
     yearOfStudy: "",
     course: "",
+    userType: 'student',
+    occupation: "",
+    organization: "",
+    reason: "",
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [agreeToTerms, setAgreeToTerms] = useState(false)
+  const [phoneError, setPhoneError] = useState("");
 
   useEffect(() => {
     async function loadUniversities() {
-      console.log("Debug - Starting to load universities")
       setIsLoadingUniversities(true)
       try {
-        const { data, error } = await getUniversities()
-        console.log("Debug - Universities response:", { data, error })
-
-        if (error) {
-          console.error("Debug - Error loading universities:", error)
-          return
-        }
-
-        if (data) {
-          console.log("Debug - Setting universities:", data.length)
-          setUniversities(data)
-        } else {
-          console.log("Debug - No universities data received")
-        }
+        // Group and sort universities by type and name
+        const grouped: { [type: string]: University[] } = {};
+        ZIM_UNIVERSITIES.forEach(u => {
+          if (!grouped[u.type || 'other']) grouped[u.type || 'other'] = [];
+          grouped[u.type || 'other'].push(u);
+        });
+        Object.keys(grouped).forEach(type => {
+          grouped[type].sort((a, b) => a.name.localeCompare(b.name));
+        });
+        // Flatten to a list with type markers
+        const sortedWithHeadings: (University & { _heading?: boolean })[] = [];
+        const typeLabels: { [type: string]: string } = {
+          university: 'Universities',
+          polytechnic: 'Polytechnics',
+          teachers_college: 'Teacher Training Colleges',
+          adult_education: 'Adult Education & Training',
+          vocational: 'Vocational Training Centers',
+          industrial_training: 'Industrial Training Centers',
+          agricultural: 'Agricultural Training Centers',
+          health_training: 'Health Training Institutions',
+          business_training: 'Business & Management Training',
+          religious: 'Religious Training Institutions',
+          adult_literacy: 'Adult Literacy Centers',
+          other: 'Other',
+        };
+        Object.keys(typeLabels).forEach(type => {
+          if (grouped[type] && grouped[type].length > 0) {
+            sortedWithHeadings.push({ id: type, name: typeLabels[type], location: '', _heading: true });
+            sortedWithHeadings.push(...grouped[type]);
+          }
+        });
+        setUniversities(sortedWithHeadings as University[]);
       } catch (err) {
         console.error("Debug - Unexpected error loading universities:", err)
       } finally {
         setIsLoadingUniversities(false)
       }
     }
-
     loadUniversities()
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
+    // Real-time phone validation
+    if (name === "phone") {
+      // Only allow digits, max 9
+      const digits = value.replace(/\D/g, "").slice(0, 9);
+      setFormData((prev) => ({ ...prev, phone: digits }));
+      // Live error
+      if (!digits) {
+        setPhoneError("Phone number is required");
+      } else if (digits.length !== 9) {
+        setPhoneError("Phone number must be exactly 9 digits");
+      } else {
+        setPhoneError("");
+      }
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
+
+  // Add this handler for textarea fields
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const nextStep = () => {
     if (currentStep < STEPS.length) {
@@ -159,45 +214,76 @@ export default function SignupPage() {
       return
     }
 
-    if (!formData.university) {
-      setError("Please select your university")
+    // Validate required fields based on user type
+    if (formData.userType === 'student') {
+      if (!formData.university) {
+        setError("Please select your university")
+        setIsLoading(false)
+        return
+      }
+      if (!formData.studentId) {
+        setError("Please enter your student ID")
+        setIsLoading(false)
+        return
+      }
+    }
+    // Phone validation (required, numeric, exactly 9 digits)
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (!phoneDigits) {
+      setError("Phone number is required")
       setIsLoading(false)
       return
     }
+    if (phoneDigits.length !== 9) {
+      setError("Phone number must be exactly 9 digits (e.g., 771234567)")
+      setIsLoading(false)
+      return
+    }
+    // ... rest of validation for non-students
+    if (formData.userType !== 'student') {
+      if (!formData.occupation || !formData.organization || !formData.reason) {
+        setError("Please fill in all required fields for non-students")
+        setIsLoading(false)
+        return
+      }
+    }
 
     try {
-      const auth = getAuth()
-      // Create user with email and password
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password)
-      const user = userCredential.user
-
-      // Optionally update display name
-      await updateProfile(user, { displayName: formData.fullName })
-
-      // Save additional user info in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
+      // Ensure phone is always saved with +263 country code
+      const cleanPhone = formData.phone.replace(/\s/g, "").replace(/^\+263|^263|^0/, "");
+      const phoneWithCode = cleanPhone ? `+263${cleanPhone}` : undefined;
+      await signUp(formData.email, formData.password, {
         full_name: formData.fullName,
-        email: formData.email,
         university_id: formData.university,
         student_id: formData.studentId,
-        phone: formData.phone ? `+263${formData.phone.replace(/\s/g, "")}` : undefined,
-        whatsapp_number: formData.phone ? `+263${formData.phone.replace(/\s/g, "")}` : undefined,
+        phone: phoneWithCode,
+        whatsapp_number: phoneWithCode,
         course: formData.course,
         year_of_study: formData.yearOfStudy,
-        status: 'active',
-        role: 'student',
-        verified: false,
-        phone_verified: false,
-        email_verified: false,
-        created_at: new Date().toISOString(),
+        role: formData.userType,
+        occupation: formData.occupation,
+        organization: formData.organization,
+        reason: formData.reason,
       })
-
+      // Celebration animation
+      confetti({
+        particleCount: 120,
+        spread: 90,
+        origin: { y: 0.7 },
+      });
+      // Sonner feedback
+      sonnerToast.success("Account created! 🎉", {
+        description: "Please check your email to confirm your account.",
+        duration: 4000,
+      });
       toast({
         title: "Account created!",
         description: "Please check your email to confirm your account.",
         variant: "default",
-      })
-      router.push("/login?message=Please check your email to confirm your account")
+      });
+      setTimeout(() => {
+        router.push("/login?message=Please check your email to confirm your account")
+      }, 1200);
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.")
     } finally {
@@ -210,6 +296,24 @@ export default function SignupPage() {
       case 1:
         return (
           <div className="space-y-4">
+            {/* User Type Selector */}
+            <div className="space-y-2">
+              <Label>User Type</Label>
+              <div className="flex gap-4">
+                {USER_TYPES.map((type) => (
+                  <Button
+                    key={type.id}
+                    type="button"
+                    variant={formData.userType === type.id ? "default" : "outline"}
+                    className={`px-6 py-2 rounded-full font-semibold transition-colors duration-150 ${formData.userType === type.id ? 'bg-green-600 text-white' : 'bg-white text-green-700 border-green-600 hover:bg-green-50'}`}
+                    onClick={() => setFormData((prev) => ({ ...prev, userType: type.id as 'student' | 'non_student' }))}
+                  >
+                    {type.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            {/* Student/Non-Student Fields */}
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <div className="relative">
@@ -226,7 +330,6 @@ export default function SignupPage() {
                 />
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -244,82 +347,131 @@ export default function SignupPage() {
                 />
               </div>
             </div>
+            {/* Advanced fields for non-students */}
+            {formData.userType === 'non_student' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="occupation">Occupation</Label>
+                  <Input
+                    id="occupation"
+                    name="occupation"
+                    placeholder="e.g., Lecturer, Entrepreneur"
+                    value={formData.occupation}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="organization">Organization</Label>
+                  <Input
+                    id="organization"
+                    name="organization"
+                    placeholder="e.g., University of Zimbabwe, Company Name"
+                    value={formData.organization}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reason">Reason for Joining</Label>
+                  <Textarea
+                    id="reason"
+                    name="reason"
+                    placeholder="Tell us why you want to join Campus Market..."
+                    value={formData.reason}
+                    onChange={handleTextareaChange}
+                    disabled={isLoading}
+                    rows={3}
+                  />
+                </div>
+              </>
+            )}
           </div>
         )
       case 2:
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="university">University</Label>
-              <Select
-                value={formData.university}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, university: value }))}
-                disabled={isLoading || isLoadingUniversities}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={isLoadingUniversities ? "Loading universities..." : "Select your university"}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {universities.map((university) => (
-                    <SelectItem key={university.id} value={university.id}>
-                      <div className="flex flex-col">
-                        <span>{university.name}</span>
-                        <span className="text-xs text-muted-foreground">{university.location}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        // Only show student fields if userType is 'student'
+        if (formData.userType === 'student') {
+          return (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="university">University</Label>
+                <Select
+                  value={formData.university}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, university: value }))}
+                  disabled={isLoading || isLoadingUniversities}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={isLoadingUniversities ? "Loading universities..." : "Select your university"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {universities.map((university) =>
+                      (university as any)._heading ? (
+                        <SelectItem key={university.id} value={university.id} disabled className="font-bold opacity-70 bg-muted">
+                          {(university as any).name}
+                        </SelectItem>
+                      ) : (
+                        <SelectItem key={university.id} value={university.id}>
+                          <div className="flex flex-col">
+                            <span>{university.name}</span>
+                            <span className="text-xs text-muted-foreground">{university.location}</span>
+                          </div>
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="studentId">Student ID</Label>
+                <Input
+                  id="studentId"
+                  name="studentId"
+                  placeholder="e.g., H230001A"
+                  value={formData.studentId}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="course">Course/Program</Label>
+                <Input
+                  id="course"
+                  name="course"
+                  placeholder="e.g., Computer Science"
+                  value={formData.course}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="yearOfStudy">Year of Study</Label>
+                <Select
+                  value={formData.yearOfStudy}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, yearOfStudy: value }))}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1st Year</SelectItem>
+                    <SelectItem value="2">2nd Year</SelectItem>
+                    <SelectItem value="3">3rd Year</SelectItem>
+                    <SelectItem value="4">4th Year</SelectItem>
+                    <SelectItem value="5">5th Year</SelectItem>
+                    <SelectItem value="postgrad">Postgraduate</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="studentId">Student ID</Label>
-              <Input
-                id="studentId"
-                name="studentId"
-                placeholder="e.g., H230001A"
-                value={formData.studentId}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="course">Course/Program</Label>
-              <Input
-                id="course"
-                name="course"
-                placeholder="e.g., Computer Science"
-                value={formData.course}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="yearOfStudy">Year of Study</Label>
-              <Select
-                value={formData.yearOfStudy}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, yearOfStudy: value }))}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1st Year</SelectItem>
-                  <SelectItem value="2">2nd Year</SelectItem>
-                  <SelectItem value="3">3rd Year</SelectItem>
-                  <SelectItem value="4">4th Year</SelectItem>
-                  <SelectItem value="5">5th Year</SelectItem>
-                  <SelectItem value="postgrad">Postgraduate</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )
+          )
+        } else {
+          // For non-students, skip this step
+          nextStep();
+          return null;
+        }
       case 3:
         return (
           <div className="space-y-4">
@@ -339,8 +491,12 @@ export default function SignupPage() {
                   onChange={handleChange}
                   disabled={isLoading}
                   className="flex-1"
+                  maxLength={9}
                 />
               </div>
+              {phoneError && (
+                <p className="text-xs text-red-600 mt-1">{phoneError}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -435,13 +591,15 @@ export default function SignupPage() {
     }
   }
 
+  const isPhoneValid = !phoneError && formData.phone.length === 9;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4">
         <div className="container flex items-center">
           <Link href="/" className="flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-green-600 dark:text-green-400" />
-            <span className="text-xl font-bold">Campus Marketplace</span>
+            <span className="text-xl font-bold">Campus Market</span>
           </Link>
         </div>
       </header>
@@ -477,7 +635,7 @@ export default function SignupPage() {
                     </Button>
                   )}
                   {currentStep < STEPS.length ? (
-                    <Button type="button" onClick={nextStep} disabled={isLoading} className="ml-auto flex items-center">
+                    <Button type="button" onClick={nextStep} disabled={isLoading || (currentStep === 3 && !isPhoneValid)} className="ml-auto flex items-center">
                       Next
                       <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -485,7 +643,7 @@ export default function SignupPage() {
                     <Button
                       type="submit"
                       className="ml-auto bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600"
-                      disabled={isLoading}
+                      disabled={isLoading || !isPhoneValid}
                     >
                       {isLoading ? (
                         <>
@@ -501,14 +659,6 @@ export default function SignupPage() {
               </form>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <div className="relative flex items-center w-full">
-                <div className="flex-grow border-t border-muted"></div>
-                <span className="mx-4 text-muted-foreground text-sm">or</span>
-                <div className="flex-grow border-t border-muted"></div>
-              </div>
-              <Button variant="outline" className="w-full" disabled={isLoading}>
-                Sign up with Google
-              </Button>
               <div className="text-center text-sm">
                 Already have an account?{" "}
                 <Link

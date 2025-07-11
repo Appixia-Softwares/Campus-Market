@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { supabase } from "@/lib/supabase"
+import { confirmPasswordReset } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function ResetPasswordPage() {
   const [formData, setFormData] = useState({
@@ -26,12 +27,10 @@ export default function ResetPasswordPage() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Check if we have the required tokens
-    const accessToken = searchParams.get("access_token")
-    const refreshToken = searchParams.get("refresh_token")
-
-    if (!accessToken || !refreshToken) {
-      setError("Invalid reset link. Please request a new password reset.")
+    // Check if we have the required oobCode from Firebase
+    const oobCode = searchParams.get("oobCode");
+    if (!oobCode) {
+      setError("Invalid or expired reset link. Please request a new password reset.");
     }
   }, [searchParams])
 
@@ -62,17 +61,17 @@ export default function ResetPasswordPage() {
     setError("")
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: formData.password,
-      })
-
-      if (error) {
-        setError(error.message)
-      } else {
-        setSuccess(true)
+      // Use Firebase Auth confirmPasswordReset with oobCode from URL
+      const oobCode = searchParams.get("oobCode");
+      if (!oobCode) {
+        setError("Invalid or expired reset link. Please request a new password reset.");
+        setIsLoading(false);
+        return;
       }
-    } catch (error) {
-      setError("An unexpected error occurred. Please try again.")
+      await confirmPasswordReset(auth, oobCode, formData.password);
+      setSuccess(true);
+    } catch (error: any) {
+      setError(error.message || "An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false)
     }
