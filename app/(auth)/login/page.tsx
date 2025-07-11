@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { signIn } from "@/lib/api/auth"
+import { signIn } from "@/lib/auth-service";
 import { useAuth } from "@/lib/auth-context"
 
 export default function LoginPage() {
@@ -74,18 +74,14 @@ export default function LoginPage() {
     setSuccessMessage("")
 
     try {
-      const { data, error } = await signIn(formData.email, formData.password)
-
-      if (error) {
-        setError(error.message)
-      } else {
-        // Refresh user data and redirect
-        await refreshUser()
-        const redirectTo = searchParams.get("redirectTo") || "/dashboard"
-        router.push(redirectTo)
-      }
-    } catch (error) {
-      setError("An unexpected error occurred. Please try again.")
+      // Use modular Firebase Auth signIn helper
+      await signIn(formData.email, formData.password);
+      // Refresh user data and redirect
+      await refreshUser();
+      const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+      router.push(redirectTo);
+    } catch (error: any) {
+      setError(error.message || "An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false)
     }
