@@ -35,6 +35,9 @@ import { db } from "@/lib/firebase"
 import { doc, getDoc } from "firebase/firestore"
 import { useEffect, useState } from "react"
 import { User as UserType } from "@/lib/auth-service"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 interface DashboardSidebarProps {
   collapsed: boolean
@@ -69,6 +72,9 @@ export default function DashboardSidebar({ collapsed, onToggle, isMobile }: Dash
   const { user, signOut } = useAuth()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const actuallyCollapsed = isMobile ? false : collapsed
+  const router = useRouter();
+  const [sellDialogOpen, setSellDialogOpen] = useState(false);
+  const [showAccommodationForm, setShowAccommodationForm] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -268,12 +274,47 @@ export default function DashboardSidebar({ collapsed, onToggle, isMobile }: Dash
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/marketplace/sell" || pathname.startsWith("/marketplace/sell")} tooltip="Sell Product">
-                <Link href="/marketplace/sell" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
-                  <Plus className="h-4 w-4" />
-                  {!actuallyCollapsed && <span>Sell Product</span>}
-                </Link>
-              </SidebarMenuButton>
+              <Dialog open={sellDialogOpen} onOpenChange={(open) => { setSellDialogOpen(open); if (!open) setShowAccommodationForm(false); }}>
+                <DialogTrigger asChild>
+                  <SidebarMenuButton
+                    isActive={pathname === "/marketplace/sell" || pathname.startsWith("/marketplace/sell")}
+                    tooltip="Sell Product"
+                    onClick={() => setSellDialogOpen(true)}
+                  >
+                    <div className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                      <Plus className="h-4 w-4" />
+                      {!actuallyCollapsed && <span>Sell Product</span>}
+                    </div>
+                  </SidebarMenuButton>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>What do you want to sell?</DialogTitle>
+                  </DialogHeader>
+                  <div className="flex flex-col gap-4 mt-2">
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={() => {
+                        setSellDialogOpen(false);
+                        router.push("/marketplace/sell");
+                      }}
+                    >
+                      Product
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setSellDialogOpen(false);
+                        router.push("/accommodation/sell-accommodation");
+                      }}
+                    >
+                      Accommodation
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === "/marketplace/my-listings"} tooltip="My Listings">

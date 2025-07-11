@@ -21,14 +21,7 @@ export const env = {
 
 // Validate required environment variables
 export function validateEnv() {
-  const required = ["SUPABASE_URL", "SUPABASE_ANON_KEY"] as const
-
-  for (const key of required) {
-    if (!env[key]) {
-      throw new Error(`Missing required environment variable: ${key}`)
-    }
-  }
-
+  // Firebase configuration is handled in lib/firebase.ts
   console.log("✅ Environment variables validated")
   console.log("🔧 App configuration:", {
     name: env.APP_NAME,
@@ -41,9 +34,6 @@ export function validateEnv() {
 if (typeof window === "undefined") {
   // Only validate on server side to avoid client-side errors
   try {
-    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
-      throw new Error("Missing required Supabase environment variables")
-    }
     validateEnv()
   } catch (error) {
     console.error("❌ Environment validation failed:", error)

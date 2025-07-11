@@ -403,11 +403,11 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <Building className="h-5 w-5 text-primary" />
-              <span className="font-semibold">Agripa</span>
+              
+              
             </div>
             <div className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Agripa. All rights reserved.
+              © {new Date().getFullYear()}  All rights reserved.
             </div>
           </div>
         </div>
