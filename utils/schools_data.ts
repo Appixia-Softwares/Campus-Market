@@ -38,7 +38,6 @@ interface University {
     // Teacher Training Colleges
     { id: 'belvedere', name: 'Belvedere Technical Teachers College', location: 'Harare', type: 'teachers_college' },
     { id: 'danhiko', name: 'Danhiko Technical Teachers College', location: 'Mutare', type: 'teachers_college' },
-    { id: 'chinhoyi_ttc', name: 'Chinhoyi Technical Teachers College', location: 'Chinhoyi', type: 'teachers_college' },
     { id: 'joshua_mqabuko', name: 'Joshua Mqabuko Nkomo Polytechnic', location: 'Bulawayo', type: 'teachers_college' },
     { id: 'mkoba', name: 'Mkoba Teachers College', location: 'Gweru', type: 'teachers_college' },
     { id: 'morgenster', name: 'Morgenster Teachers College', location: 'Masvingo', type: 'teachers_college' },

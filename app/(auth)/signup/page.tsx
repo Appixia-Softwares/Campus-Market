@@ -114,8 +114,38 @@ export default function SignupPage() {
     async function loadUniversities() {
       setIsLoadingUniversities(true)
       try {
-        // Set static Zimbabwean universities and adult schools
-        setUniversities(ZIM_UNIVERSITIES)
+        // Group and sort universities by type and name
+        const grouped: { [type: string]: University[] } = {};
+        ZIM_UNIVERSITIES.forEach(u => {
+          if (!grouped[u.type || 'other']) grouped[u.type || 'other'] = [];
+          grouped[u.type || 'other'].push(u);
+        });
+        Object.keys(grouped).forEach(type => {
+          grouped[type].sort((a, b) => a.name.localeCompare(b.name));
+        });
+        // Flatten to a list with type markers
+        const sortedWithHeadings: (University & { _heading?: boolean })[] = [];
+        const typeLabels: { [type: string]: string } = {
+          university: 'Universities',
+          polytechnic: 'Polytechnics',
+          teachers_college: 'Teacher Training Colleges',
+          adult_education: 'Adult Education & Training',
+          vocational: 'Vocational Training Centers',
+          industrial_training: 'Industrial Training Centers',
+          agricultural: 'Agricultural Training Centers',
+          health_training: 'Health Training Institutions',
+          business_training: 'Business & Management Training',
+          religious: 'Religious Training Institutions',
+          adult_literacy: 'Adult Literacy Centers',
+          other: 'Other',
+        };
+        Object.keys(typeLabels).forEach(type => {
+          if (grouped[type] && grouped[type].length > 0) {
+            sortedWithHeadings.push({ id: type, name: typeLabels[type], location: '', _heading: true });
+            sortedWithHeadings.push(...grouped[type]);
+          }
+        });
+        setUniversities(sortedWithHeadings as University[]);
       } catch (err) {
         console.error("Debug - Unexpected error loading universities:", err)
       } finally {
@@ -177,7 +207,21 @@ export default function SignupPage() {
         setIsLoading(false)
         return
       }
-    } else {
+    }
+    // Phone validation (required, numeric, exactly 9 digits)
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (!phoneDigits) {
+      setError("Phone number is required")
+      setIsLoading(false)
+      return
+    }
+    if (phoneDigits.length !== 9) {
+      setError("Phone number must be exactly 9 digits (e.g., 771234567)")
+      setIsLoading(false)
+      return
+    }
+    // ... rest of validation for non-students
+    if (formData.userType !== 'student') {
       if (!formData.occupation || !formData.organization || !formData.reason) {
         setError("Please fill in all required fields for non-students")
         setIsLoading(false)
@@ -187,12 +231,15 @@ export default function SignupPage() {
 
     try {
       // Use modular signUp helper from auth-service
+      // Ensure phone is always saved with +263 country code
+      const cleanPhone = formData.phone.replace(/\s/g, "").replace(/^\+263|^263|^0/, "");
+      const phoneWithCode = cleanPhone ? `+263${cleanPhone}` : undefined;
       await signUp(formData.email, formData.password, {
         full_name: formData.fullName,
         university_id: formData.university,
         student_id: formData.studentId,
-        phone: formData.phone ? `+263${formData.phone.replace(/\s/g, "")}` : undefined,
-        whatsapp_number: formData.phone ? `+263${formData.phone.replace(/\s/g, "")}` : undefined,
+        phone: phoneWithCode,
+        whatsapp_number: phoneWithCode,
         course: formData.course,
         year_of_study: formData.yearOfStudy,
         role: formData.userType,
@@ -223,17 +270,15 @@ export default function SignupPage() {
               <Label>User Type</Label>
               <div className="flex gap-4">
                 {USER_TYPES.map((type) => (
-                  <label key={type.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="userType"
-                      value={type.id}
-                      checked={formData.userType === type.id}
-                      onChange={() => setFormData((prev) => ({ ...prev, userType: type.id as 'student' | 'non_student' }))}
-                      className="accent-green-600"
-                    />
-                    <span>{type.label}</span>
-                  </label>
+                  <Button
+                    key={type.id}
+                    type="button"
+                    variant={formData.userType === type.id ? "default" : "outline"}
+                    className={`px-6 py-2 rounded-full font-semibold transition-colors duration-150 ${formData.userType === type.id ? 'bg-green-600 text-white' : 'bg-white text-green-700 border-green-600 hover:bg-green-50'}`}
+                    onClick={() => setFormData((prev) => ({ ...prev, userType: type.id as 'student' | 'non_student' }))}
+                  >
+                    {type.label}
+                  </Button>
                 ))}
               </div>
             </div>
@@ -330,14 +375,20 @@ export default function SignupPage() {
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {universities.map((university) => (
-                      <SelectItem key={university.id} value={university.id}>
-                        <div className="flex flex-col">
-                          <span>{university.name}</span>
-                          <span className="text-xs text-muted-foreground">{university.location}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {universities.map((university) =>
+                      (university as any)._heading ? (
+                        <SelectItem key={university.id} value={university.id} disabled className="font-bold opacity-70 bg-muted">
+                          {(university as any).name}
+                        </SelectItem>
+                      ) : (
+                        <SelectItem key={university.id} value={university.id}>
+                          <div className="flex flex-col">
+                            <span>{university.name}</span>
+                            <span className="text-xs text-muted-foreground">{university.location}</span>
+                          </div>
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
               </div>
