@@ -12,12 +12,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { signUp, getUniversities, signIn } from "@/lib/api/auth"
+import { signUp } from '@/lib/auth-service';
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import ZIM_UNIVERSITIES from "@/utils/schools_data"
 
 interface University {
   id: string
@@ -73,6 +71,8 @@ interface SignUpFormData {
   course: string;
 }
 
+
+
 export default function SignupPage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -98,30 +98,16 @@ export default function SignupPage() {
 
   useEffect(() => {
     async function loadUniversities() {
-      console.log("Debug - Starting to load universities")
       setIsLoadingUniversities(true)
       try {
-        const { data, error } = await getUniversities()
-        console.log("Debug - Universities response:", { data, error })
-
-        if (error) {
-          console.error("Debug - Error loading universities:", error)
-          return
-        }
-
-        if (data) {
-          console.log("Debug - Setting universities:", data.length)
-          setUniversities(data)
-        } else {
-          console.log("Debug - No universities data received")
-        }
+        // Set static Zimbabwean universities and adult schools
+        setUniversities(ZIM_UNIVERSITIES)
       } catch (err) {
         console.error("Debug - Unexpected error loading universities:", err)
       } finally {
         setIsLoadingUniversities(false)
       }
     }
-
     loadUniversities()
   }, [])
 
@@ -166,30 +152,15 @@ export default function SignupPage() {
     }
 
     try {
-      const auth = getAuth()
-      // Create user with email and password
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password)
-      const user = userCredential.user
-
-      // Optionally update display name
-      await updateProfile(user, { displayName: formData.fullName })
-
-      // Save additional user info in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
+      // Use modular signUp helper from auth-service
+      const { user } = await signUp(formData.email, formData.password, {
         full_name: formData.fullName,
-        email: formData.email,
         university_id: formData.university,
         student_id: formData.studentId,
         phone: formData.phone ? `+263${formData.phone.replace(/\s/g, "")}` : undefined,
         whatsapp_number: formData.phone ? `+263${formData.phone.replace(/\s/g, "")}` : undefined,
         course: formData.course,
         year_of_study: formData.yearOfStudy,
-        status: 'active',
-        role: 'student',
-        verified: false,
-        phone_verified: false,
-        email_verified: false,
-        created_at: new Date().toISOString(),
       })
 
       toast({
@@ -441,7 +412,7 @@ export default function SignupPage() {
         <div className="container flex items-center">
           <Link href="/" className="flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-green-600 dark:text-green-400" />
-            <span className="text-xl font-bold">Campus Marketplace</span>
+            <span className="text-xl font-bold">Campus Market</span>
           </Link>
         </div>
       </header>
@@ -501,14 +472,6 @@ export default function SignupPage() {
               </form>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <div className="relative flex items-center w-full">
-                <div className="flex-grow border-t border-muted"></div>
-                <span className="mx-4 text-muted-foreground text-sm">or</span>
-                <div className="flex-grow border-t border-muted"></div>
-              </div>
-              <Button variant="outline" className="w-full" disabled={isLoading}>
-                Sign up with Google
-              </Button>
               <div className="text-center text-sm">
                 Already have an account?{" "}
                 <Link

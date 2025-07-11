@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { supabase } from "@/lib/supabase"
+import { sendPasswordResetEmail } from '@/lib/auth-service';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -37,17 +37,11 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
-
-      if (error) {
-        setError(error.message)
-      } else {
-        setSuccess(true)
-      }
-    } catch (error) {
-      setError("An unexpected error occurred. Please try again.")
+      // Use modular Firebase helper for password reset
+      await sendPasswordResetEmail(email);
+      setSuccess(true);
+    } catch (error: any) {
+      setError(error.message || "An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false)
     }

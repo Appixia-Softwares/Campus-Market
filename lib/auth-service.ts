@@ -6,6 +6,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged as firebaseOnAuthStateChanged,
   User as FirebaseUser,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail, // Add this import
 } from 'firebase/auth';
 
 export interface User {
@@ -135,4 +136,19 @@ export const onAuthStateChanged = (callback: (user: User | null) => void) => {
     }
   });
   return { unsubscribe };
+};
+
+// Send password reset email
+/**
+ * Sends a password reset email to the given address using Firebase Auth.
+ * @param email The user's email address
+ */
+export const sendPasswordResetEmail = async (email: string) => {
+  try {
+    await firebaseSendPasswordResetEmail(auth, email);
+    return true;
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
 }; 
