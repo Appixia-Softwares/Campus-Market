@@ -11,6 +11,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, Upload } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
+import { useState, useMemo } from "react"
+import { Progress } from "@/components/ui/progress"
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -171,38 +174,6 @@ export function ProfileForm() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="text-lg font-medium mb-4">Verification Documents</h3>
-          <p className="text-muted-foreground mb-4">
-            Upload documents to verify your identity and property ownership. This helps build trust with potential
-            tenants.
-          </p>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="border rounded-md p-4">
-              <h4 className="font-medium mb-2">ID Verification</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Upload a government-issued ID (passport, driver's license, etc.)
-              </p>
-              <Button variant="outline" className="w-full">
-                <Upload className="mr-2 h-4 w-4" />
-                Upload ID
-              </Button>
-            </div>
-            <div className="border rounded-md p-4">
-              <h4 className="font-medium mb-2">Property Ownership</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Upload proof of property ownership or management rights
-              </p>
-              <Button variant="outline" className="w-full">
-                <Upload className="mr-2 h-4 w-4" />
-                Upload Document
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
