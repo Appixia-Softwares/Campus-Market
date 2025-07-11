@@ -21,7 +21,10 @@ export interface User {
   course?: string;
   year_of_study?: string;
   status?: 'active' | 'inactive' | 'suspended';
-  role?: 'student' | 'admin' | 'moderator';
+  role?: 'student' | 'non_student' | 'admin' | 'moderator';
+  occupation?: string;
+  organization?: string;
+  reason?: string;
   verified?: boolean;
   phone_verified?: boolean;
   email_verified?: boolean;
