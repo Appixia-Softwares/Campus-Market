@@ -70,6 +70,7 @@ export default function VerificationPage() {
     if (user) {
       setEmailVerified(!!user.email_verified)
     }
+    setLoading(false);
   }, [user])
 
   useEffect(() => {
@@ -273,19 +274,7 @@ export default function VerificationPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="container max-w-4xl mx-auto p-6">
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="h-8 bg-muted rounded w-64 mx-auto mb-2"></div>
-            <div className="h-4 bg-muted rounded w-96 mx-auto"></div>
-          </div>
-          <div className="h-64 bg-muted rounded"></div>
-        </div>
-      </div>
-    )
-  }
+  // Loading state is now handled above; always render main UI
 
   return (
     <div className="container max-w-4xl mx-auto p-6">

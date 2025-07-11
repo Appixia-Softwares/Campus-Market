@@ -37,8 +37,12 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
-      const redirectTo = searchParams.get("redirectTo") || "/dashboard"
-      router.push(redirectTo)
+      if (!user.email_verified) {
+        router.push("/verification");
+      } else {
+        const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+        router.push(redirectTo);
+      }
     }
   }, [user, router, searchParams])
 

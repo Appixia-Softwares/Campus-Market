@@ -104,6 +104,14 @@ export default function DashboardClientPage() {
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Enforce email verification: redirect if not verified
+  if (user && !user.email_verified) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/verification';
+    }
+    return null;
+  }
+
   const quickActions: QuickAction[] = [
     {
       title: "Sell Product",

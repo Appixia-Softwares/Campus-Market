@@ -17,6 +17,9 @@ import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
 import { Textarea } from "@/components/ui/textarea"
+import { useRef } from "react"
+import confetti from "canvas-confetti"
+import { toast as sonnerToast } from "sonner"
 
 interface University {
   id: string
@@ -246,7 +249,6 @@ export default function SignupPage() {
     }
 
     try {
-      // Use modular signUp helper from auth-service
       // Ensure phone is always saved with +263 country code
       const cleanPhone = formData.phone.replace(/\s/g, "").replace(/^\+263|^263|^0/, "");
       const phoneWithCode = cleanPhone ? `+263${cleanPhone}` : undefined;
@@ -263,12 +265,25 @@ export default function SignupPage() {
         organization: formData.organization,
         reason: formData.reason,
       })
+      // Celebration animation
+      confetti({
+        particleCount: 120,
+        spread: 90,
+        origin: { y: 0.7 },
+      });
+      // Sonner feedback
+      sonnerToast.success("Account created! 🎉", {
+        description: "Please check your email to confirm your account.",
+        duration: 4000,
+      });
       toast({
         title: "Account created!",
         description: "Please check your email to confirm your account.",
         variant: "default",
-      })
-      router.push("/login?message=Please check your email to confirm your account")
+      });
+      setTimeout(() => {
+        router.push("/login?message=Please check your email to confirm your account")
+      }, 1200);
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.")
     } finally {
