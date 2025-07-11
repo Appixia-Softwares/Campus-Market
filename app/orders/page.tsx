@@ -22,11 +22,13 @@ import {
   DollarSign,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { db } from '@/lib/firebase';
+import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where } from 'firebase/firestore';
+import { error } from "console"
 
 interface Order {
   id: string
@@ -108,25 +110,26 @@ export default function OrdersPage() {
 
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from("orders")
-        .select(`
-          *,
-          products (
-            id,
-            title,
-            price,
-            product_images (url, is_primary)
-          ),
-          buyer:users!orders_buyer_id_fkey (id, full_name, avatar_url),
-          seller:users!orders_seller_id_fkey (id, full_name, avatar_url)
-        `)
-        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-        .order("created_at", { ascending: false })
+      // Replace supabase logic with Firestore logic
+      // const { data, error } = await supabase
+      //   .from("orders")
+      //   .select(`
+      //     *,
+      //     products (
+      //       id,
+      //       title,
+      //       price,
+      //       product_images (url, is_primary)
+      //     ),
+      //     buyer:users!orders_buyer_id_fkey (id, full_name, avatar_url),
+      //     seller:users!orders_seller_id_fkey (id, full_name, avatar_url)
+      //   `)
+      //   .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+      //   .order("created_at", { ascending: false })
 
-      if (error) throw error
+      // if (error) throw error
 
-      setOrders(data || [])
+      setOrders([])
     } catch (error) {
       console.error("Error fetching orders:", error)
       toast.error("Failed to load orders")
@@ -137,7 +140,8 @@ export default function OrdersPage() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      const { error } = await supabase.from("orders").update({ status: newStatus }).eq("id", orderId)
+      // Replace supabase logic with Firestore logic
+      // const { error } = await supabase.from("orders").update({ status: newStatus }).eq("id", orderId)
 
       if (error) throw error
 

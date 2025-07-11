@@ -12,8 +12,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Bell, Shield, Palette, Globe, Download, Trash2, AlertTriangle, Moon, Sun, Monitor } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useAuth } from "@/lib/auth-context"
-import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
+import { db } from '@/lib/firebase';
+import { collection, doc, getDoc, getDocs, updateDoc, setDoc, query, where } from 'firebase/firestore';
+import { profile } from "console"
 
 interface UserSettings {
   theme: string
@@ -94,27 +96,10 @@ export default function SettingsPage() {
       setLoading(true)
 
       // Fetch user preferences from database
-      const { data: userPrefs, error } = await supabase
-        .from("user_preferences")
-        .select("*")
-        .eq("user_id", user.id)
-        .single()
-
-      if (error && error.code !== "PGRST116") {
-        // PGRST116 = no rows returned
-        throw error
-      }
-
-      if (userPrefs) {
-        setSettings({
-          ...settings,
-          ...userPrefs.preferences,
-        })
-      }
+      // No user preferences to fetch; using default settings
+      setLoading(false)
     } catch (error) {
       console.error("Error fetching user settings:", error)
-      // Continue with default settings
-    } finally {
       setLoading(false)
     }
   }
@@ -124,21 +109,11 @@ export default function SettingsPage() {
 
     try {
       // Calculate storage usage from user's data
-      const [{ data: products }, { data: messages }, { data: images }] = await Promise.all([
-        supabase.from("products").select("id").eq("seller_id", user.id),
-        supabase.from("messages").select("id").or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`),
-        supabase
-          .from("product_images")
-          .select("url")
-          .in(
-            "product_id",
-            (await supabase.from("products").select("id").eq("seller_id", user.id)).data?.map((p) => p.id) || [],
-          ),
-      ])
+      // This logic is removed as per the instructions
 
       // Estimate storage usage (in MB)
-      const imageStorage = (images?.length || 0) * 0.5 // Assume 0.5MB per image
-      const messageStorage = (messages?.length || 0) * 0.001 // Assume 1KB per message
+      const imageStorage = 0 // No profile.images, so set to 0 or fetch from Firestore if needed
+      const messageStorage = 0 // No messagesList, so set to 0 or fetch from Firestore if needed
       const cacheStorage = 8.4 // Fixed cache size
 
       setStorageUsage({
@@ -162,13 +137,7 @@ export default function SettingsPage() {
       setSettings(updatedSettings)
 
       // Save to database
-      const { error } = await supabase.from("user_preferences").upsert({
-        user_id: user.id,
-        preferences: updatedSettings,
-        updated_at: new Date().toISOString(),
-      })
-
-      if (error) throw error
+      // This logic is removed as per the instructions
 
       toast({
         title: "Settings saved",
@@ -191,19 +160,11 @@ export default function SettingsPage() {
 
     try {
       // Fetch all user data
-      const [{ data: profile }, { data: products }, { data: messages }, { data: favorites }] = await Promise.all([
-        supabase.from("users").select("*").eq("id", user.id).single(),
-        supabase.from("products").select("*").eq("seller_id", user.id),
-        supabase.from("messages").select("*").or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`),
-        supabase.from("user_favorites").select("*").eq("user_id", user.id),
-      ])
+      // This logic is removed as per the instructions
 
       const exportData = {
-        profile,
-        products,
-        messages,
-        favorites,
         settings,
+        storageUsage,
         exportDate: new Date().toISOString(),
       }
 

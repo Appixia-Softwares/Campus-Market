@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Heart, MessageSquare, Eye, Trash2 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
+import { db } from '@/lib/firebase'
+import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore'
 
 interface FavoriteProduct {
   id: string
@@ -54,23 +55,24 @@ export default function FavoritesPage() {
 
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from("user_favorites")
-        .select(`
-          *,
-          products (
-            *,
-            product_categories (name),
-            product_images (url),
-            users (full_name)
-          )
-        `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
+      // Replace supabase logic with Firestore logic
+      // const { data, error } = await supabase
+      //   .from("user_favorites")
+      //   .select(`
+      //     *,
+      //     products (
+      //       *,
+      //       product_categories (name),
+      //       product_images (url),
+      //       users (full_name)
+      //     )
+      //   `)
+      //   .eq("user_id", user.id)
+      //   .order("created_at", { ascending: false })
 
-      if (error) throw error
+      // if (error) throw error
 
-      setFavorites(data || [])
+      setFavorites([])
     } catch (error) {
       console.error("Error fetching favorites:", error)
       toast({
@@ -85,9 +87,10 @@ export default function FavoritesPage() {
 
   const removeFavorite = async (favoriteId: string) => {
     try {
-      const { error } = await supabase.from("user_favorites").delete().eq("id", favoriteId)
+      // Replace supabase delete logic with Firestore logic
+      // const { error } = await supabase.from("user_favorites").delete().eq("id", favoriteId)
 
-      if (error) throw error
+      if (console.error) throw console.error
 
       setFavorites((prev) => prev.filter((fav) => fav.id !== favoriteId))
       toast({

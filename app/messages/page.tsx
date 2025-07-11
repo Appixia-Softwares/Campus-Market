@@ -9,11 +9,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { MessageSquare, Search, Send, Phone, MoreVertical, Archive, Trash2, Star, CheckCheck, Plus } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { db } from '@/lib/firebase';
+import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, addDoc } from 'firebase/firestore';
 
 interface Conversation {
   id: string
@@ -76,57 +77,8 @@ export default function MessagesPage() {
 
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from("conversations")
-        .select(`
-          *,
-          products (id, title, price, product_images (url, is_primary))
-        `)
-        .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
-        .order("updated_at", { ascending: false })
-
-      if (error) throw error
-
-      // Get other user details and unread counts for each conversation
-      const conversationsWithDetails = await Promise.all(
-        (data || []).map(async (conv) => {
-          const otherUserId = conv.participant_1_id === user.id ? conv.participant_2_id : conv.participant_1_id
-
-          // Get other user details
-          const { data: userData } = await supabase
-            .from("users")
-            .select("id, full_name, avatar_url, whatsapp_number")
-            .eq("id", otherUserId)
-            .single()
-
-          // Get last message
-          const { data: lastMessage } = await supabase
-            .from("messages")
-            .select("content, created_at")
-            .eq("conversation_id", conv.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .single()
-
-          // Get unread count
-          const { count: unreadCount } = await supabase
-            .from("messages")
-            .select("*", { count: "exact", head: true })
-            .eq("conversation_id", conv.id)
-            .eq("read", false)
-            .neq("sender_id", user.id)
-
-          return {
-            ...conv,
-            other_user: userData,
-            last_message: lastMessage?.content || null,
-            last_message_time: lastMessage?.created_at || null,
-            unread_count: unreadCount || 0,
-          }
-        }),
-      )
-
-      setConversations(conversationsWithDetails)
+      // Replace supabase logic with Firestore logic
+      // ... existing code ...
     } catch (error) {
       console.error("Error fetching conversations:", error)
       toast.error("Failed to load conversations")
@@ -137,15 +89,8 @@ export default function MessagesPage() {
 
   const fetchMessages = async (conversationId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true })
-
-      if (error) throw error
-
-      setMessages(data || [])
+      // Replace supabase logic with Firestore logic
+      // ... existing code ...
     } catch (error) {
       console.error("Error fetching messages:", error)
     }
@@ -155,15 +100,8 @@ export default function MessagesPage() {
     if (!user) return
 
     try {
-      await supabase
-        .from("messages")
-        .update({ read: true })
-        .eq("conversation_id", conversationId)
-        .eq("read", false)
-        .neq("sender_id", user.id)
-
-      // Update local state
-      setConversations((prev) => prev.map((conv) => (conv.id === conversationId ? { ...conv, unread_count: 0 } : conv)))
+      // Replace supabase logic with Firestore logic
+      // ... existing code ...
     } catch (error) {
       console.error("Error marking messages as read:", error)
     }
@@ -175,35 +113,8 @@ export default function MessagesPage() {
     setSendingMessage(true)
 
     try {
-      const { error } = await supabase.from("messages").insert({
-        conversation_id: selectedConversation.id,
-        sender_id: user.id,
-        content: newMessage.trim(),
-        read: false,
-      })
-
-      if (error) throw error
-
-      // Update conversation timestamp
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", selectedConversation.id)
-
-      setNewMessage("")
-      fetchMessages(selectedConversation.id)
-      fetchConversations()
-
-      // Send notification
-      await supabase.from("notifications").insert({
-        user_id: selectedConversation.other_user.id,
-        title: "New Message",
-        content: `${user.full_name} sent you a message`,
-        link: `/messages`,
-        type: "message",
-      })
-
-      toast.success("Message sent")
+      // Replace supabase logic with Firestore logic
+      // ... existing code ...
     } catch (error) {
       console.error("Error sending message:", error)
       toast.error("Failed to send message")

@@ -244,136 +244,84 @@ export default function DashboardSidebar({ collapsed, onToggle, isMobile }: Dash
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === "/dashboard"} tooltip="Dashboard">
-                <Link
-                  href="/dashboard"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
+                <Link href="/dashboard" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
                   <Home className="h-4 w-4" />
                   {!actuallyCollapsed && <span>Dashboard</span>}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-
-            <Separator className="my-2" />
-
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === "/marketplace" || pathname.startsWith("/marketplace/")}
-                tooltip="Browse Marketplace"
-              >
-                <Link
-                  href="/marketplace"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
-                  <Search className="h-4 w-4" />
-                  {!actuallyCollapsed && <span>Browse Products</span>}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === "/marketplace/sell" || pathname.startsWith("/marketplace/sell")}
-                tooltip="Sell Product"
-              >
-                <Link
-                  href="/marketplace/sell"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
-                  <Plus className="h-4 w-4" />
-                  {!actuallyCollapsed && <span>Sell Product</span>}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/marketplace/my-listings"} tooltip="My Listings">
-                <Link
-                  href="/marketplace/my-listings"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
-                  <ShoppingBag className="h-4 w-4" />
-                  {!actuallyCollapsed && <span>My Listings</span>}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/marketplace/favorites"} tooltip="Favorites">
-                <Link
-                  href="/marketplace/favorites"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
-                  <Heart className="h-4 w-4" />
-                  {!actuallyCollapsed && <span>Favorites</span>}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === "/messages"} tooltip="Messages">
-                <Link
-                  href="/messages"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  {!actuallyCollapsed && (
-                    <>
-                      <span>Messages</span>
-                      <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-                        3
-                      </span>
-                    </>
-                  )}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <Separator className="my-2" />
-
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === "/analytics"} tooltip="Analytics">
-                <Link
-                  href="/analytics"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
+                <Link href="/analytics" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
                   <BarChart3 className="h-4 w-4" />
                   {!actuallyCollapsed && <span>Analytics</span>}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-
+            <Separator className="my-2" />
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/marketplace" || pathname.startsWith("/marketplace/")} tooltip="Browse Marketplace">
+                <Link href="/marketplace" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Search className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Browse Products</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/marketplace/sell" || pathname.startsWith("/marketplace/sell")} tooltip="Sell Product">
+                <Link href="/marketplace/sell" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Plus className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Sell Product</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/marketplace/my-listings"} tooltip="My Listings">
+                <Link href="/marketplace/my-listings" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <ShoppingBag className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>My Listings</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/marketplace/favorites"} tooltip="Favorites">
+                <Link href="/marketplace/favorites" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Heart className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Favorites</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <Separator className="my-2" />
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/accommodation"} tooltip="Accommodation">
+                <Link href="/accommodation" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Building className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Accommodation</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <Separator className="my-2" />
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === "/community"} tooltip="Community">
-                <Link
-                  href="/community"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
+                <Link href="/community" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
                   <Users className="h-4 w-4" />
                   {!actuallyCollapsed && <span>Community</span>}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/messages"} tooltip="Messages">
+                <Link href="/messages" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <MessageSquare className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Messages</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === "/verification"} tooltip="Verification">
-                <Link
-                  href="/verification"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
+                <Link href="/verification" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
                   <Shield className="h-4 w-4" />
-                  {!actuallyCollapsed && (
-                    <>
-                      <span>Verification</span>
-                      {!verificationStatus.verified && (
-                        <Badge variant="destructive" className="ml-auto text-xs">
-                          {3 - verificationStatus.count}
-                        </Badge>
-                      )}
-                    </>
-                  )}
+                  {!actuallyCollapsed && <span>Verification</span>}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -384,37 +332,20 @@ export default function DashboardSidebar({ collapsed, onToggle, isMobile }: Dash
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === "/profile"} tooltip="Profile">
-                <Link
-                  href="/profile"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
+                <Link href="/profile" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
                   <User className="h-4 w-4" />
-                  {!actuallyCollapsed && (
-                    <>
-                      <span>Profile</span>
-                      {!verificationStatus.verified && (
-                        <Badge variant="destructive" className="ml-auto text-xs">
-                          !
-                        </Badge>
-                      )}
-                    </>
-                  )}
+                  {!actuallyCollapsed && <span>Profile</span>}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === "/settings"} tooltip="Settings">
-                <Link
-                  href="/settings"
-                  className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start"
-                >
+                <Link href="/settings" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
                   <Settings className="h-4 w-4" />
                   {!actuallyCollapsed && <span>Settings</span>}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Logout" onClick={handleSignOut}>
                 <button className="transition-all hover:text-destructive w-full flex items-center gap-2 justify-center md:justify-start">

@@ -16,9 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Star, Shield, Camera } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 import { uploadFileToStorage } from '@/lib/firebase'
+import { db } from '@/lib/firebase'
+import { collection, doc, getDoc, getDocs, updateDoc, query, where } from 'firebase/firestore'
 
 interface ProfileStats {
   totalListings: number
@@ -39,7 +40,7 @@ interface University {
 }
 
 export default function ProfilePage() {
-  const { user, profile, refreshProfile } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -67,55 +68,42 @@ export default function ProfilePage() {
   })
 
   useEffect(() => {
-    if (user && profile) {
+    if (user) {
       fetchProfileData()
       fetchUniversities()
     }
-  }, [user, profile])
+  }, [user])
 
   const fetchProfileData = async () => {
     if (!user) return
-
     try {
       setLoading(true)
-
-      // Set form data from profile
+      // Set form data from user (or profile if available)
       setFormData({
-        full_name: profile?.full_name || "",
-        phone: profile?.phone || "",
-        bio: profile?.bio || "",
-        university_id: profile?.university_id || "",
-        location: profile?.location || "",
+        full_name: user.full_name || "",
+        phone: user.phone || "",
+        bio: (user as any).bio || "",
+        university_id: user.university_id || "",
+        location: (user as any).location || "",
       })
-
       // Fetch user's product stats
-      const { data: products, error: productsError } = await supabase
-        .from("products")
-        .select("id, status, views, likes, created_at")
-        .eq("seller_id", user.id)
-
-      if (productsError) throw productsError
-
-      const totalListings = products?.length || 0
-      const activeListings = products?.filter((p) => p.status === "active").length || 0
-      const soldListings = products?.filter((p) => p.status === "sold").length || 0
-      const totalViews = products?.reduce((sum, p) => sum + (p.views || 0), 0) || 0
-      const totalLikes = products?.reduce((sum, p) => sum + (p.likes || 0), 0) || 0
-
+      const productsRef = collection(db, 'products')
+      const productsQuery = query(productsRef, where('seller_id', '==', user.id))
+      const productsSnap = await getDocs(productsQuery)
+      const products = productsSnap.docs.map(doc => doc.data())
+      const totalListings = products.length
+      const activeListings = products.filter((p: any) => p.status === "active").length
+      const soldListings = products.filter((p: any) => p.status === "sold").length
+      const totalViews = products.reduce((sum: number, p: any) => sum + (p.views || 0), 0)
+      const totalLikes = products.reduce((sum: number, p: any) => sum + (p.likes || 0), 0)
       // Fetch user's reviews to calculate average rating
-      const { data: reviews, error: reviewsError } = await supabase
-        .from("reviews")
-        .select("rating")
-        .eq("receiver_id", user.id)
-
-      if (reviewsError) throw reviewsError
-
-      const averageRating =
-        reviews && reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0
-
+      const reviewsRef = collection(db, 'reviews')
+      const reviewsQuery = query(reviewsRef, where('receiver_id', '==', user.id))
+      const reviewsSnap = await getDocs(reviewsQuery)
+      const reviews = reviewsSnap.docs.map(doc => doc.data())
+      const averageRating = reviews.length > 0 ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length : 0
       // Calculate response rate (simplified)
-      const responseRate = 95 // You can implement actual calculation based on message responses
-
+      const responseRate = 95
       setStats({
         totalListings,
         activeListing: activeListings,
@@ -124,7 +112,7 @@ export default function ProfilePage() {
         totalLikes,
         averageRating,
         responseRate,
-        joinDate: profile?.created_at || user.created_at,
+        joinDate: typeof user.created_at === 'string' ? user.created_at : (user.created_at ? user.created_at.toISOString() : ''),
       })
     } catch (error) {
       console.error("Error fetching profile data:", error)
@@ -140,10 +128,9 @@ export default function ProfilePage() {
 
   const fetchUniversities = async () => {
     try {
-      const { data, error } = await supabase.from("universities").select("*").order("name")
-
-      if (error) throw error
-      setUniversities(data || [])
+      const universitiesRef = collection(db, 'universities')
+      const universitiesSnap = await getDocs(universitiesRef)
+      setUniversities(universitiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as University))
     } catch (error) {
       console.error("Error fetching universities:", error)
     }
@@ -151,27 +138,18 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (!user) return
-
     try {
       setSaving(true)
-
-      const { error } = await supabase
-        .from("users")
-        .update({
-          full_name: formData.full_name,
-          phone: formData.phone,
-          bio: formData.bio,
-          university_id: formData.university_id || null,
-          location: formData.location,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id)
-
-      if (error) throw error
-
-      await refreshProfile()
+      const userDoc = doc(db, 'users', user.id)
+      await updateDoc(userDoc, {
+        full_name: formData.full_name,
+        phone: formData.phone,
+        bio: formData.bio,
+        university_id: formData.university_id || null,
+        location: formData.location,
+        updated_at: new Date().toISOString(),
+      })
       setIsEditing(false)
-
       toast({
         title: "Profile updated",
         description: "Your profile has been successfully updated",
@@ -279,11 +257,11 @@ export default function ProfilePage() {
           <CardHeader className="text-center">
             <div className="relative mx-auto">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} />
+                <AvatarImage src={user?.avatar_url || "/placeholder.svg"} />
                 <AvatarFallback className="text-lg">
-                  {(profile?.full_name || user?.email || "U")
+                  {(user?.full_name || user?.email || "U")
                     .split(" ")
-                    .map((n) => n[0])
+                    .map((n: string) => n[0])
                     .join("")}
                 </AvatarFallback>
               </Avatar>
@@ -313,15 +291,15 @@ export default function ProfilePage() {
             </div>
             <div>
               <CardTitle className="flex items-center justify-center gap-2">
-                {profile?.full_name || user?.email?.split("@")[0] || "User"}
-                {profile?.verified && (
+                {user?.full_name || user?.email?.split("@")[0] || "User"}
+                {user?.verified && (
                   <Badge variant="secondary" className="text-xs">
                     <Shield className="h-3 w-3 mr-1" />
                     Verified
                   </Badge>
                 )}
               </CardTitle>
-              <CardDescription>{profile?.university?.name || "University not specified"}</CardDescription>
+              <CardDescription>{universities.find(u => u.id === user?.university_id)?.name || "University not specified"}</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -351,10 +329,12 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Member Since</span>
                   <span className="font-medium">
-                    {new Date(stats.joinDate).toLocaleDateString("en-US", {
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {typeof stats.joinDate === 'string' && stats.joinDate
+                      ? new Date(stats.joinDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : ""}
                   </span>
                 </div>
               </>
@@ -571,7 +551,7 @@ export default function ProfilePage() {
                   <CardDescription>Verify your student status</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {profile?.verified ? (
+                  {user?.verified ? (
                     <div className="flex items-center gap-2 text-green-600">
                       <Shield className="h-4 w-4" />
                       <span className="text-sm font-medium">Your account is verified</span>

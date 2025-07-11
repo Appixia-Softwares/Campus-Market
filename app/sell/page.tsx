@@ -17,13 +17,22 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 import { ImageUpload } from "@/components/image-upload"
 import { Loader2, CheckCircle2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 
-// ... existing form schema ...
+const formSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required'),
+  price: z.string().min(1, 'Price is required'),
+  category: z.string().min(1, 'Category is required'),
+  condition: z.string().min(1, 'Condition is required'),
+  location: z.string().min(1, 'Location is required'),
+  images: z.array(z.string()).optional(),
+});
 
 export default function SellPage() {
   const router = useRouter()
@@ -51,82 +60,49 @@ export default function SellPage() {
     setCreatedProductId(null)
 
     try {
-      // Get the current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      
-      if (userError || !user) {
-        toast({
-          title: "Authentication Error",
-          description: "Please sign in to create a listing",
-          variant: "destructive",
-        })
-        return
-      }
-
       // Create the product
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .insert({
-          title: values.title,
-          description: values.description,
-          price: parseFloat(values.price),
-          category: values.category,
-          condition: values.condition,
-          location: values.location,
-          seller_id: user.id,
-          status: 'active',
-          created_at: new Date().toISOString(),
-        })
-        .select()
-        .single()
-
-      if (productError) {
-        console.error('Error creating listing:', productError)
-        toast({
-          title: "Error",
-          description: "Failed to create listing. Please try again.",
-          variant: "destructive",
-        })
-        return
-      }
-
-      // If we have images, create records in the product_images table
-      if (values.images.length > 0) {
-        const imageRecords = values.images.map((url, index) => ({
-          product_id: product.id,
-          url,
-          alt_text: `Product image ${index + 1}`,
-          is_primary: index === 0,
-          sort_order: index,
-        }))
-
-        const { error: imageError } = await supabase
-          .from('product_images')
-          .insert(imageRecords)
-
-        if (imageError) {
-          console.error('Error saving images:', imageError)
-          // Continue anyway since the product was created
-        }
-      }
-
-      setSuccess(true)
-      setCreatedProductId(product.id)
-      
-      toast({
-        title: "Success!",
-        description: "Your listing has been created successfully.",
-        variant: "default",
+      const product = await addDoc(collection(db, 'products'), {
+        title: values.title,
+        description: values.description,
+        price: parseFloat(values.price),
+        category: values.category,
+        condition: values.condition,
+        location: values.location,
+        status: 'active',
+        created_at: new Date().toISOString(),
       })
 
-      // Reset form
-      form.reset()
+      if (product) {
+        // If we have images, create records in the product_images table
+        if ((values.images ?? []).length > 0) {
+          const imageRecords = (values.images ?? []).map((url: string, index: number) => ({
+            product_id: product.id,
+            url,
+            alt_text: `Product image ${index + 1}`,
+            is_primary: index === 0,
+            sort_order: index,
+          }))
 
-      // Redirect after a short delay
-      setTimeout(() => {
-        router.push(`/products/${product.id}`)
-      }, 2000)
+          await addDoc(collection(db, 'product_images'), imageRecords)
+        }
 
+        setSuccess(true)
+        setCreatedProductId(product.id)
+        
+        toast({
+          title: "Success!",
+          description: "Your listing has been created successfully.",
+          variant: "default",
+        })
+
+        // Reset form
+        form.reset()
+
+        // Redirect after a short delay
+        setTimeout(() => {
+          router.push(`/products/${product.id}`)
+        }, 2000)
+      }
     } catch (error) {
       console.error('Error creating listing:', error)
       toast({
@@ -273,10 +249,10 @@ export default function SellPage() {
                   <FormLabel>Images</FormLabel>
                   <FormControl>
                     <ImageUpload
-                      value={field.value}
+                      value={field.value ?? []}
                       onChange={field.onChange}
-                      onRemove={(url) => {
-                        field.onChange(field.value.filter((value) => value !== url))
+                      onRemove={(url: string) => {
+                        field.onChange((field.value ?? []).filter((value: string) => value !== url))
                       }}
                     />
                   </FormControl>
