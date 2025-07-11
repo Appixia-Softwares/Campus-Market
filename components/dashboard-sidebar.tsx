@@ -38,6 +38,7 @@ import { User as UserType } from "@/lib/auth-service"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
+import AccommodationFormDialogContent from "./AccommodationFormDialogContent"
 
 interface DashboardSidebarProps {
   collapsed: boolean
@@ -291,28 +292,29 @@ export default function DashboardSidebar({ collapsed, onToggle, isMobile }: Dash
                   <DialogHeader>
                     <DialogTitle>What do you want to sell?</DialogTitle>
                   </DialogHeader>
-                  <div className="flex flex-col gap-4 mt-2">
-                    <Button
-                      variant="default"
-                      className="w-full"
-                      onClick={() => {
-                        setSellDialogOpen(false);
-                        router.push("/marketplace/sell");
-                      }}
-                    >
-                      Product
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        setSellDialogOpen(false);
-                        router.push("/accommodation/sell-accommodation");
-                      }}
-                    >
-                      Accommodation
-                    </Button>
-                  </div>
+                  {!showAccommodationForm ? (
+                    <div className="flex flex-col gap-4 mt-2">
+                      <Button
+                        variant="default"
+                        className="w-full"
+                        onClick={() => {
+                          setSellDialogOpen(false);
+                          router.push("/marketplace/sell");
+                        }}
+                      >
+                        Product
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setShowAccommodationForm(true)}
+                      >
+                        Accommodation
+                      </Button>
+                    </div>
+                  ) : (
+                    <AccommodationFormDialogContent onSuccess={() => { setSellDialogOpen(false); setShowAccommodationForm(false); }} />
+                  )}
                 </DialogContent>
               </Dialog>
             </SidebarMenuItem>
