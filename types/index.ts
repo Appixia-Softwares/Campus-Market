@@ -153,3 +153,22 @@ export type ActivityFeedItem = {
   listing?: Listing
   accommodation?: Accommodation
 }
+
+// --- ProfileFormValues: Used for the profile form, matches the Zod schema in components/profile-form.tsx ---
+export type ProfileFormValues = {
+  fullName: string;
+  email: string;
+  phone: string;
+  profilePhoto: string;
+  bio: string;
+  location: string;
+  contactMethod: string;
+  userType: "student" | "non_student";
+  university_id: string;
+  studentId: string;
+  course: string;
+  yearOfStudy: string;
+  occupation: string;
+  organization: string;
+  reason: string;
+};
