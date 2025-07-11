@@ -109,6 +109,7 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [agreeToTerms, setAgreeToTerms] = useState(false)
+  const [phoneError, setPhoneError] = useState("");
 
   useEffect(() => {
     async function loadUniversities() {
@@ -157,6 +158,21 @@ export default function SignupPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
+    // Real-time phone validation
+    if (name === "phone") {
+      // Only allow digits, max 9
+      const digits = value.replace(/\D/g, "").slice(0, 9);
+      setFormData((prev) => ({ ...prev, phone: digits }));
+      // Live error
+      if (!digits) {
+        setPhoneError("Phone number is required");
+      } else if (digits.length !== 9) {
+        setPhoneError("Phone number must be exactly 9 digits");
+      } else {
+        setPhoneError("");
+      }
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
@@ -460,8 +476,12 @@ export default function SignupPage() {
                   onChange={handleChange}
                   disabled={isLoading}
                   className="flex-1"
+                  maxLength={9}
                 />
               </div>
+              {phoneError && (
+                <p className="text-xs text-red-600 mt-1">{phoneError}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -556,6 +576,8 @@ export default function SignupPage() {
     }
   }
 
+  const isPhoneValid = !phoneError && formData.phone.length === 9;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4">
@@ -598,7 +620,7 @@ export default function SignupPage() {
                     </Button>
                   )}
                   {currentStep < STEPS.length ? (
-                    <Button type="button" onClick={nextStep} disabled={isLoading} className="ml-auto flex items-center">
+                    <Button type="button" onClick={nextStep} disabled={isLoading || (currentStep === 3 && !isPhoneValid)} className="ml-auto flex items-center">
                       Next
                       <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -606,7 +628,7 @@ export default function SignupPage() {
                     <Button
                       type="submit"
                       className="ml-auto bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600"
-                      disabled={isLoading}
+                      disabled={isLoading || !isPhoneValid}
                     >
                       {isLoading ? (
                         <>
