@@ -25,6 +25,19 @@ export interface User {
   occupation?: string;
   organization?: string;
   reason?: string;
+  // --- Added fields for profile enhancement ---
+  bio?: string;
+  location?: string;
+  // Notification preferences
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+  message_notifications?: boolean;
+  marketing_emails?: boolean;
+  // Privacy settings
+  profile_visible?: boolean;
+  show_online_status?: boolean;
+  show_contact_info?: boolean;
+  // --- End added fields ---
   verified?: boolean;
   phone_verified?: boolean;
   email_verified?: boolean;
