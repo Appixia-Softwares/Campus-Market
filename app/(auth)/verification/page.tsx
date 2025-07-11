@@ -31,6 +31,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { uploadFileToStorage, auth } from '@/lib/firebase'
 import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { sendEmailVerification } from 'firebase/auth';
+import { useRouter } from "next/navigation"
 
 interface VerificationRequest {
   id: string
@@ -47,6 +48,7 @@ interface VerificationRequest {
 export default function VerificationPage() {
   const { user } = useAuth()
   const { toast } = useToast()
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -71,11 +73,10 @@ export default function VerificationPage() {
   const [selfiePreview, setSelfiePreview] = useState<string>("");
 
   useEffect(() => {
-    if (user) {
-      setEmailVerified(!!user.email_verified)
+    if (user && user.email_verified) {
+      router.replace("/dashboard")
     }
-    setLoading(false);
-  }, [user])
+  }, [user, router])
 
   // Auto-refresh email verification status every 5 seconds if not verified
   useEffect(() => {
