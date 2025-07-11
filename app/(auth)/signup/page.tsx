@@ -17,7 +17,6 @@ import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
 import { Textarea } from "@/components/ui/textarea"
-import { useRef } from "react"
 import confetti from "canvas-confetti"
 import { toast as sonnerToast } from "sonner"
 

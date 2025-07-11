@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +15,9 @@ import { useToast } from "@/components/ui/use-toast"
 import { formatDistanceToNow } from "date-fns"
 import { collection, query, where, orderBy, getDocs, limit, getDoc, doc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { ProfileCompletionBanner } from "@/components/profile-completion-banner"
+import ProfileForm from "@/components/profile-form"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 
 interface DashboardStats {
   totalListings: number
@@ -103,8 +106,25 @@ export default function DashboardClientPage() {
   const [recentListings, setRecentListings] = useState<RecentListing[]>([])
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([])
   const [loading, setLoading] = useState(true)
+  const [showProfileModal, setShowProfileModal] = useState(false)
 
-  // Enforce email verification: redirect if not verified
+  // Profile completion logic
+  const requiredFields = useMemo(() => {
+    const base = ["full_name", "email"];
+    if (user?.role === "student") {
+      return [...base, "university_id", "student_id", "course", "year_of_study"];
+    } else {
+      return [...base, "occupation", "organization", "reason"];
+    }
+  }, [user]);
+  const profileProgress = useMemo(() => {
+    if (!user) return 0;
+    const filled = requiredFields.filter((field) => user[field]);
+    return Math.round((filled.length / requiredFields.length) * 100);
+  }, [user, requiredFields]);
+  const isProfileComplete = profileProgress === 100;
+
+  // Enforce only email verification: redirect if not verified
   if (user && !user.email_verified) {
     if (typeof window !== 'undefined') {
       window.location.href = '/verification';
@@ -315,6 +335,17 @@ export default function DashboardClientPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      {!isProfileComplete && (
+        <ProfileCompletionBanner
+          progress={profileProgress}
+          onEditProfile={() => setShowProfileModal(true)}
+        />
+      )}
+      <Dialog open={showProfileModal} onOpenChange={setShowProfileModal}>
+        <DialogContent className="max-w-2xl p-0">
+          <ProfileForm onSubmit={() => setShowProfileModal(false)} />
+        </DialogContent>
+      </Dialog>
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">
           Welcome back, {user?.email?.split("@")[0]}!

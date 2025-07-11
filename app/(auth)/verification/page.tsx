@@ -24,12 +24,14 @@ import {
   Mail,
   AlertTriangle,
   Info,
+  Loader2,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/components/ui/use-toast"
 import { uploadFileToStorage, auth } from '@/lib/firebase'
-import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { sendEmailVerification } from 'firebase/auth';
+import { useRouter } from "next/navigation"
 
 interface VerificationRequest {
   id: string
@@ -46,6 +48,7 @@ interface VerificationRequest {
 export default function VerificationPage() {
   const { user } = useAuth()
   const { toast } = useToast()
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -57,31 +60,45 @@ export default function VerificationPage() {
   const [studentIdNumber, setStudentIdNumber] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
 
-  // Phone Verification
-  const [phoneCode, setPhoneCode] = useState("")
-  const [phoneVerificationSent, setPhoneVerificationSent] = useState(false)
-  const [phoneCountdown, setPhoneCountdown] = useState(0)
-
   // Email Verification
   const [emailVerificationSent, setEmailVerificationSent] = useState(false)
   const [emailVerified, setEmailVerified] = useState(false)
+  const [checkingEmailStatus, setCheckingEmailStatus] = useState(false);
+
+  // Add a state for payment status for ID verification
+  const [idPaymentComplete, setIdPaymentComplete] = useState(false);
+
+  // Add state for selfie file and preview
+  const [selfieFile, setSelfieFile] = useState<File | null>(null);
+  const [selfiePreview, setSelfiePreview] = useState<string>("");
 
   useEffect(() => {
-    if (user) {
-      setEmailVerified(!!user.email_verified)
+    if (user && user.email_verified) {
+      router.replace("/dashboard")
     }
-    setLoading(false);
-  }, [user])
+  }, [user, router])
 
+  // Auto-refresh email verification status every 5 seconds if not verified
   useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (phoneCountdown > 0) {
-      interval = setInterval(() => {
-        setPhoneCountdown((prev) => prev - 1)
-      }, 1000)
-    }
-    return () => clearInterval(interval)
-  }, [phoneCountdown])
+    if (!user || user.email_verified) return;
+    let interval: NodeJS.Timeout;
+    const autoCheck = async () => {
+      if (auth.currentUser) {
+        await auth.currentUser.reload();
+        const isVerified = auth.currentUser.emailVerified;
+        setEmailVerified(isVerified);
+        if (isVerified) {
+          // Update Firestore user document
+          const db = getFirestore();
+          const userRef = doc(db, "users", auth.currentUser.uid);
+          await updateDoc(userRef, { email_verified: true });
+          clearInterval(interval);
+        }
+      }
+    };
+    interval = setInterval(autoCheck, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Remove fetchVerificationRequests and all supabase logic
 
@@ -118,6 +135,24 @@ export default function VerificationPage() {
     }
     reader.readAsDataURL(file)
   }
+
+  // Handler for selfie upload
+  const handleSelfieUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file type", description: "Please upload an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Image must be less than 10MB", variant: "destructive" });
+      return;
+    }
+    setSelfieFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setSelfiePreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const submitStudentIdVerification = async () => {
     if (!user || !studentIdFile || !studentIdNumber.trim()) {
@@ -169,65 +204,6 @@ export default function VerificationPage() {
     }
   }
 
-  // Mocked phone verification logic (structure for Firebase integration)
-  const sendPhoneVerification = async () => {
-    if (!user || !user?.phone) {
-      toast({
-        title: "No phone number",
-        description: "Please add a phone number to your profile first",
-        variant: "destructive",
-      })
-      return
-    }
-    try {
-      // TODO: Integrate with Firebase Phone Auth for real SMS verification
-      setPhoneVerificationSent(true)
-      setPhoneCountdown(60)
-      toast({
-        title: "Verification code sent",
-        description: `A verification code has been sent to ${user.phone}`,
-      })
-    } catch (error) {
-      toast({
-        title: "Failed to send code",
-        description: "Please try again later",
-        variant: "destructive",
-      })
-    }
-  }
-
-  // Mocked phone code verification (structure for Firebase integration)
-  const verifyPhoneCode = async () => {
-    if (!phoneCode.trim()) {
-      toast({
-        title: "Enter verification code",
-        description: "Please enter the 6-digit code sent to your phone",
-        variant: "destructive",
-      })
-      return
-    }
-    try {
-      // TODO: Integrate with Firebase Phone Auth for real code verification
-      if (phoneCode.length === 6) {
-        // Simulate success
-        toast({
-          title: "Phone verified",
-          description: "Your phone number has been successfully verified",
-        })
-        setPhoneCode("")
-        setPhoneVerificationSent(false)
-      } else {
-        throw new Error("Invalid verification code")
-      }
-    } catch (error) {
-      toast({
-        title: "Verification failed",
-        description: "Invalid verification code. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
   // Send email verification using Firebase Auth
   const resendEmailVerification = async () => {
     if (!user) return;
@@ -247,12 +223,43 @@ export default function VerificationPage() {
     }
   }
 
+  // Add a handler to check verification status
+  const checkEmailVerificationStatus = async () => {
+    if (!auth.currentUser) return;
+    setCheckingEmailStatus(true);
+    try {
+      await auth.currentUser.reload();
+      const isVerified = auth.currentUser.emailVerified;
+      setEmailVerified(isVerified);
+      if (isVerified) {
+        // Update Firestore user document
+        const db = getFirestore();
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userRef, { email_verified: true });
+      }
+      toast({
+        title: isVerified ? "Email verified!" : "Not verified yet",
+        description: isVerified
+          ? "Your email address has been verified."
+          : "Please check your inbox and click the verification link.",
+        variant: isVerified ? "default" : "destructive",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to check verification status.",
+        variant: "destructive",
+      });
+    } finally {
+      setCheckingEmailStatus(false);
+    }
+  };
+
   const getVerificationProgress = () => {
     let completed = 0
-    const total = 3
+    const total = 2
 
     if (user?.email_verified) completed++
-    if (user?.phone_verified) completed++
     if (user?.verified) completed++
 
     return (completed / total) * 100
@@ -300,7 +307,6 @@ export default function VerificationPage() {
                 <Progress value={getVerificationProgress()} className="h-2" />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Email</span>
-                  <span>Phone</span>
                   <span>Student ID</span>
                 </div>
               </div>
@@ -309,18 +315,8 @@ export default function VerificationPage() {
         </div>
 
         {/* Verification Tabs */}
-        <Tabs defaultValue="student-id" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="student-id" className="flex items-center gap-2">
-              <GraduationCap className="h-4 w-4" />
-              Student ID
-              {user?.verified && <CheckCircle className="h-4 w-4 text-green-500" />}
-            </TabsTrigger>
-            <TabsTrigger value="phone" className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              Phone
-              {user?.phone_verified && <CheckCircle className="h-4 w-4 text-green-500" />}
-            </TabsTrigger>
+        <Tabs defaultValue="email" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="email" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Email
@@ -328,238 +324,7 @@ export default function VerificationPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Student ID Verification */}
-          <TabsContent value="student-id">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5" />
-                  Student ID Verification
-                  {(() => {
-                    const status = getVerificationStatus("student_id")
-                    if (status) {
-                      const Icon = status.icon
-                      return (
-                        <Badge variant="outline" className="ml-auto">
-                          <Icon className={`h-3 w-3 mr-1 ${status.color}`} />
-                          {status.text}
-                        </Badge>
-                      )
-                    }
-                    return null
-                  })()}
-                </CardTitle>
-                <CardDescription>Upload a clear photo of your student ID to verify your student status</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {user?.verified ? (
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Your student ID has been verified! You now have a verified badge on your profile.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Student ID Number</Label>
-                        <Input
-                          placeholder="e.g., H230001A"
-                          value={studentIdNumber}
-                          onChange={(e) => setStudentIdNumber(e.target.value)}
-                          disabled={submitting}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Upload Student ID Photo</Label>
-                        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
-                          {studentIdPreview ? (
-                            <div className="space-y-4">
-                              <img
-                                src={studentIdPreview || "/placeholder.svg"}
-                                alt="Student ID preview"
-                                className="max-w-full h-48 object-contain mx-auto rounded-lg"
-                              />
-                              <div className="text-center">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => {
-                                    setStudentIdFile(null)
-                                    setStudentIdPreview("")
-                                  }}
-                                  disabled={submitting}
-                                >
-                                  Remove
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-center space-y-4">
-                              <Camera className="h-12 w-12 text-muted-foreground mx-auto" />
-                              <div>
-                                <p className="text-sm font-medium">Upload your student ID</p>
-                                <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
-                              </div>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleStudentIdUpload}
-                                className="hidden"
-                                id="student-id-upload"
-                                disabled={submitting}
-                              />
-                              <label htmlFor="student-id-upload">
-                                <Button variant="outline" className="cursor-pointer" disabled={submitting}>
-                                  <Upload className="h-4 w-4 mr-2" />
-                                  Choose File
-                                </Button>
-                              </label>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Additional Notes (Optional)</Label>
-                        <Textarea
-                          placeholder="Any additional information that might help with verification..."
-                          value={additionalNotes}
-                          onChange={(e) => setAdditionalNotes(e.target.value)}
-                          disabled={submitting}
-                          rows={3}
-                        />
-                      </div>
-
-                      <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertDescription>
-                          Make sure your student ID is clearly visible and readable. Cover any sensitive information
-                          except your name, photo, and student number.
-                        </AlertDescription>
-                      </Alert>
-
-                      <Button
-                        onClick={submitStudentIdVerification}
-                        disabled={!studentIdFile || !studentIdNumber.trim() || submitting}
-                        className="w-full"
-                      >
-                        {uploading ? "Uploading..." : submitting ? "Submitting..." : "Submit for Verification"}
-                      </Button>
-                    </div>
-                  </>
-                )}
-
-                {/* Previous Requests */}
-                {verificationRequests.filter((r) => r.verification_type === "student_id").length > 0 && (
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Previous Requests</h4>
-                    {verificationRequests
-                      .filter((r) => r.verification_type === "student_id")
-                      .map((request) => (
-                        <Card key={request.id} className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium">
-                                Submitted {new Date(request.submitted_at).toLocaleDateString()}
-                              </p>
-                              {request.reviewer_notes && (
-                                <p className="text-xs text-muted-foreground mt-1">{request.reviewer_notes}</p>
-                              )}
-                            </div>
-                            <Badge
-                              variant={
-                                request.status === "approved"
-                                  ? "default"
-                                  : request.status === "rejected"
-                                    ? "destructive"
-                                    : "secondary"
-                              }
-                            >
-                              {request.status}
-                            </Badge>
-                          </div>
-                        </Card>
-                      ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Phone Verification */}
-          <TabsContent value="phone">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Phone className="h-5 w-5" />
-                  Phone Verification
-                  {user?.phone_verified && (
-                    <Badge variant="outline" className="ml-auto">
-                      <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
-                      Verified
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription>Verify your phone number to enable SMS notifications and build trust</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {user?.phone_verified ? (
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>Your phone number {user.phone} has been verified!</AlertDescription>
-                  </Alert>
-                ) : user?.phone ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{user.phone}</p>
-                        <p className="text-sm text-muted-foreground">Your registered phone number</p>
-                      </div>
-                      {!phoneVerificationSent ? (
-                        <Button onClick={sendPhoneVerification}>Send Code</Button>
-                      ) : (
-                        <Badge variant="outline">Code Sent</Badge>
-                      )}
-                    </div>
-
-                    {phoneVerificationSent && (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>Verification Code</Label>
-                          <Input
-                            placeholder="Enter 6-digit code"
-                            value={phoneCode}
-                            onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                            maxLength={6}
-                          />
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Button onClick={verifyPhoneCode} disabled={phoneCode.length !== 6}>
-                            Verify Code
-                          </Button>
-                          <Button variant="outline" onClick={sendPhoneVerification} disabled={phoneCountdown > 0}>
-                            {phoneCountdown > 0 ? `Resend in ${phoneCountdown}s` : "Resend Code"}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      Please add a phone number to your profile first.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Email Verification */}
+          {/* Email Verification (Mandatory) */}
           <TabsContent value="email">
             <Card>
               <CardHeader>
@@ -578,6 +343,13 @@ export default function VerificationPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {!user?.email_verified && (
+                  <Alert variant="destructive">
+                    <AlertDescription>
+                      <b>Email verification is required to access your dashboard.</b>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 {user?.email_verified ? (
                   <Alert>
                     <CheckCircle className="h-4 w-4" />
@@ -596,7 +368,14 @@ export default function VerificationPage() {
                         <Badge variant="outline">Email Sent</Badge>
                       )}
                     </div>
-
+                    <div className="flex gap-2">
+                      <Button onClick={checkEmailVerificationStatus} disabled={checkingEmailStatus} variant="outline">
+                        {checkingEmailStatus ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : null}
+                        Check Verification Status
+                      </Button>
+                    </div>
                     {emailVerificationSent && (
                       <Alert>
                         <Mail className="h-4 w-4" />
