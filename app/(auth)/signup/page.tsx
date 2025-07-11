@@ -16,6 +16,7 @@ import { signUp } from '@/lib/auth-service';
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
+import { Textarea } from "@/components/ui/textarea"
 
 interface University {
   id: string
@@ -59,6 +60,12 @@ interface SignUpError {
   hint?: string
 }
 
+// Add user type options
+const USER_TYPES = [
+  { id: 'student', label: 'Student' },
+  { id: 'non_student', label: 'Non-Student' },
+];
+
 interface SignUpFormData {
   fullName: string;
   email: string;
@@ -69,8 +76,11 @@ interface SignUpFormData {
   phone: string;
   yearOfStudy: string;
   course: string;
+  userType: 'student' | 'non_student';
+  occupation?: string;
+  organization?: string;
+  reason?: string;
 }
-
 
 
 export default function SignupPage() {
@@ -89,6 +99,10 @@ export default function SignupPage() {
     phone: "",
     yearOfStudy: "",
     course: "",
+    userType: 'student',
+    occupation: "",
+    organization: "",
+    reason: "",
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -115,6 +129,12 @@ export default function SignupPage() {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
+
+  // Add this handler for textarea fields
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const nextStep = () => {
     if (currentStep < STEPS.length) {
@@ -145,15 +165,29 @@ export default function SignupPage() {
       return
     }
 
-    if (!formData.university) {
-      setError("Please select your university")
-      setIsLoading(false)
-      return
+    // Validate required fields based on user type
+    if (formData.userType === 'student') {
+      if (!formData.university) {
+        setError("Please select your university")
+        setIsLoading(false)
+        return
+      }
+      if (!formData.studentId) {
+        setError("Please enter your student ID")
+        setIsLoading(false)
+        return
+      }
+    } else {
+      if (!formData.occupation || !formData.organization || !formData.reason) {
+        setError("Please fill in all required fields for non-students")
+        setIsLoading(false)
+        return
+      }
     }
 
     try {
       // Use modular signUp helper from auth-service
-      const { user } = await signUp(formData.email, formData.password, {
+      await signUp(formData.email, formData.password, {
         full_name: formData.fullName,
         university_id: formData.university,
         student_id: formData.studentId,
@@ -161,8 +195,11 @@ export default function SignupPage() {
         whatsapp_number: formData.phone ? `+263${formData.phone.replace(/\s/g, "")}` : undefined,
         course: formData.course,
         year_of_study: formData.yearOfStudy,
+        role: formData.userType,
+        occupation: formData.occupation,
+        organization: formData.organization,
+        reason: formData.reason,
       })
-
       toast({
         title: "Account created!",
         description: "Please check your email to confirm your account.",
@@ -181,6 +218,26 @@ export default function SignupPage() {
       case 1:
         return (
           <div className="space-y-4">
+            {/* User Type Selector */}
+            <div className="space-y-2">
+              <Label>User Type</Label>
+              <div className="flex gap-4">
+                {USER_TYPES.map((type) => (
+                  <label key={type.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="userType"
+                      value={type.id}
+                      checked={formData.userType === type.id}
+                      onChange={() => setFormData((prev) => ({ ...prev, userType: type.id as 'student' | 'non_student' }))}
+                      className="accent-green-600"
+                    />
+                    <span>{type.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            {/* Student/Non-Student Fields */}
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <div className="relative">
@@ -197,7 +254,6 @@ export default function SignupPage() {
                 />
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -215,82 +271,125 @@ export default function SignupPage() {
                 />
               </div>
             </div>
+            {/* Advanced fields for non-students */}
+            {formData.userType === 'non_student' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="occupation">Occupation</Label>
+                  <Input
+                    id="occupation"
+                    name="occupation"
+                    placeholder="e.g., Lecturer, Entrepreneur"
+                    value={formData.occupation}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="organization">Organization</Label>
+                  <Input
+                    id="organization"
+                    name="organization"
+                    placeholder="e.g., University of Zimbabwe, Company Name"
+                    value={formData.organization}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reason">Reason for Joining</Label>
+                  <Textarea
+                    id="reason"
+                    name="reason"
+                    placeholder="Tell us why you want to join Campus Market..."
+                    value={formData.reason}
+                    onChange={handleTextareaChange}
+                    disabled={isLoading}
+                    rows={3}
+                  />
+                </div>
+              </>
+            )}
           </div>
         )
       case 2:
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="university">University</Label>
-              <Select
-                value={formData.university}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, university: value }))}
-                disabled={isLoading || isLoadingUniversities}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={isLoadingUniversities ? "Loading universities..." : "Select your university"}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {universities.map((university) => (
-                    <SelectItem key={university.id} value={university.id}>
-                      <div className="flex flex-col">
-                        <span>{university.name}</span>
-                        <span className="text-xs text-muted-foreground">{university.location}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        // Only show student fields if userType is 'student'
+        if (formData.userType === 'student') {
+          return (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="university">University</Label>
+                <Select
+                  value={formData.university}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, university: value }))}
+                  disabled={isLoading || isLoadingUniversities}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={isLoadingUniversities ? "Loading universities..." : "Select your university"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {universities.map((university) => (
+                      <SelectItem key={university.id} value={university.id}>
+                        <div className="flex flex-col">
+                          <span>{university.name}</span>
+                          <span className="text-xs text-muted-foreground">{university.location}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="studentId">Student ID</Label>
+                <Input
+                  id="studentId"
+                  name="studentId"
+                  placeholder="e.g., H230001A"
+                  value={formData.studentId}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="course">Course/Program</Label>
+                <Input
+                  id="course"
+                  name="course"
+                  placeholder="e.g., Computer Science"
+                  value={formData.course}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="yearOfStudy">Year of Study</Label>
+                <Select
+                  value={formData.yearOfStudy}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, yearOfStudy: value }))}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1st Year</SelectItem>
+                    <SelectItem value="2">2nd Year</SelectItem>
+                    <SelectItem value="3">3rd Year</SelectItem>
+                    <SelectItem value="4">4th Year</SelectItem>
+                    <SelectItem value="5">5th Year</SelectItem>
+                    <SelectItem value="postgrad">Postgraduate</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="studentId">Student ID</Label>
-              <Input
-                id="studentId"
-                name="studentId"
-                placeholder="e.g., H230001A"
-                value={formData.studentId}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="course">Course/Program</Label>
-              <Input
-                id="course"
-                name="course"
-                placeholder="e.g., Computer Science"
-                value={formData.course}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="yearOfStudy">Year of Study</Label>
-              <Select
-                value={formData.yearOfStudy}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, yearOfStudy: value }))}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1st Year</SelectItem>
-                  <SelectItem value="2">2nd Year</SelectItem>
-                  <SelectItem value="3">3rd Year</SelectItem>
-                  <SelectItem value="4">4th Year</SelectItem>
-                  <SelectItem value="5">5th Year</SelectItem>
-                  <SelectItem value="postgrad">Postgraduate</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )
+          )
+        } else {
+          // For non-students, skip this step
+          nextStep();
+          return null;
+        }
       case 3:
         return (
           <div className="space-y-4">
