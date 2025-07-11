@@ -88,48 +88,48 @@ export default function ProfileForm({ onSubmit: onSubmitProp }: ProfileFormProps
 
   return (
     <Card className="max-w-2xl mx-auto">
-      <CardContent className="p-6">
+        <CardContent className="p-6">
         <div className="flex flex-col items-center mb-6">
-          <Avatar className="h-24 w-24">
+              <Avatar className="h-24 w-24">
             <AvatarImage src={form.watch("profilePhoto") || "/placeholder-user.jpg"} alt="Profile" />
             <AvatarFallback>{(form.watch("fullName") && typeof form.watch("fullName") === 'string') ? form.watch("fullName").charAt(0) : "U"}</AvatarFallback>
-          </Avatar>
-        </div>
+              </Avatar>
+              </div>
         <Progress value={progress} className="mb-6" />
-        <Form {...form}>
+              <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
                 name="fullName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
                       <Input {...field} readOnly />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
                     <FormLabel>Phone <span className="text-muted-foreground">(Format: +263771234567)</span></FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -211,28 +211,28 @@ export default function ProfileForm({ onSubmit: onSubmitProp }: ProfileFormProps
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Student ID <span className="text-destructive">*</span></FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
                   name="course"
-                  render={({ field }) => (
-                    <FormItem>
+                      render={({ field }) => (
+                        <FormItem>
                       <FormLabel>Course/Program <span className="text-destructive">*</span></FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
                   name="yearOfStudy"
                   render={({ field }) => (
                     <FormItem>
@@ -251,23 +251,23 @@ export default function ProfileForm({ onSubmit: onSubmitProp }: ProfileFormProps
                 <FormField
                   control={form.control}
                   name="occupation"
-                  render={({ field }) => (
+                      render={({ field }) => (
                     <FormItem>
                       <FormLabel>Occupation <span className="text-destructive">*</span></FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
                   name="organization"
-                  render={({ field }) => (
+                      render={({ field }) => (
                     <FormItem>
                       <FormLabel>Organization/Company <span className="text-destructive">*</span></FormLabel>
-                      <FormControl>
+                          <FormControl>
                         <Input {...field} />
                       </FormControl>
                       <FormMessage />
@@ -282,19 +282,19 @@ export default function ProfileForm({ onSubmit: onSubmitProp }: ProfileFormProps
                       <FormLabel>Reason for Joining <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
                         <Textarea {...field} placeholder="Tell us why you want to join..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
             )}
             <div className="flex justify-end pt-4">
-              <Button type="submit">Save Changes</Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+                    <Button type="submit">Save Changes</Button>
+                  </div>
+                </form>
+              </Form>
+        </CardContent>
+      </Card>
   );
 }
