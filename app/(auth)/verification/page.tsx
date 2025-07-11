@@ -27,7 +27,8 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/components/ui/use-toast"
-import { uploadFileToStorage } from '@/lib/firebase'
+import { uploadFileToStorage, auth } from '@/lib/firebase'
+import { sendEmailVerification } from 'firebase/auth';
 
 interface VerificationRequest {
   id: string
@@ -62,11 +63,12 @@ export default function VerificationPage() {
 
   // Email Verification
   const [emailVerificationSent, setEmailVerificationSent] = useState(false)
+  const [emailVerified, setEmailVerified] = useState(false)
 
   useEffect(() => {
     if (user) {
       fetchVerificationRequests()
-      checkEmailVerification()
+      setEmailVerified(!!user.emailVerified)
     }
   }, [user])
 
@@ -100,11 +102,7 @@ export default function VerificationPage() {
     }
   }
 
-  const checkEmailVerification = () => {
-    if (user?.email_confirmed_at) {
-      setEmailVerificationSent(true)
-    }
-  }
+  // No longer needed: checkEmailVerification
 
   const handleStudentIdUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -179,6 +177,7 @@ export default function VerificationPage() {
     }
   }
 
+  // Mocked phone verification logic (structure for Firebase integration)
   const sendPhoneVerification = async () => {
     if (!user || !profile?.phone) {
       toast({
@@ -188,19 +187,15 @@ export default function VerificationPage() {
       })
       return
     }
-
     try {
-      // In a real app, you'd integrate with SMS service like Twilio
-      // For now, we'll simulate the process
+      // TODO: Integrate with Firebase Phone Auth for real SMS verification
       setPhoneVerificationSent(true)
       setPhoneCountdown(60)
-
       toast({
         title: "Verification code sent",
         description: `A verification code has been sent to ${profile.phone}`,
       })
     } catch (error) {
-      console.error("Error sending phone verification:", error)
       toast({
         title: "Failed to send code",
         description: "Please try again later",
@@ -209,6 +204,7 @@ export default function VerificationPage() {
     }
   }
 
+  // Mocked phone code verification (structure for Firebase integration)
   const verifyPhoneCode = async () => {
     if (!phoneCode.trim()) {
       toast({
@@ -218,20 +214,14 @@ export default function VerificationPage() {
       })
       return
     }
-
     try {
-      // In a real app, you'd verify the code with your SMS service
-      // For demo purposes, accept any 6-digit code
+      // TODO: Integrate with Firebase Phone Auth for real code verification
       if (phoneCode.length === 6) {
-        await supabase.from("users").update({ phone_verified: true }).eq("id", user!.id)
-
-        await refreshProfile()
-
+        // Simulate success
         toast({
           title: "Phone verified",
           description: "Your phone number has been successfully verified",
         })
-
         setPhoneCode("")
         setPhoneVerificationSent(false)
       } else {
@@ -246,27 +236,22 @@ export default function VerificationPage() {
     }
   }
 
+  // Send email verification using Firebase Auth
   const resendEmailVerification = async () => {
+    if (!user) return;
     try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: user!.email!,
-      })
-
-      if (error) throw error
-
-      setEmailVerificationSent(true)
+      await sendEmailVerification(auth.currentUser!);
+      setEmailVerificationSent(true);
       toast({
         title: "Verification email sent",
         description: "Please check your email and click the verification link",
-      })
+      });
     } catch (error) {
-      console.error("Error resending email verification:", error)
       toast({
         title: "Failed to send email",
         description: "Please try again later",
         variant: "destructive",
-      })
+      });
     }
   }
 
@@ -274,7 +259,7 @@ export default function VerificationPage() {
     let completed = 0
     const total = 3
 
-    if (user?.email_confirmed_at) completed++
+    if (user?.emailVerified) completed++
     if (profile?.phone_verified) completed++
     if (profile?.verified) completed++
 
@@ -359,7 +344,7 @@ export default function VerificationPage() {
             <TabsTrigger value="email" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Email
-              {user?.email_confirmed_at && <CheckCircle className="h-4 w-4 text-green-500" />}
+              {user?.emailVerified && <CheckCircle className="h-4 w-4 text-green-500" />}
             </TabsTrigger>
           </TabsList>
 
@@ -604,7 +589,7 @@ export default function VerificationPage() {
                 <CardTitle className="flex items-center gap-2">
                   <Mail className="h-5 w-5" />
                   Email Verification
-                  {user?.email_confirmed_at && (
+                  {user?.emailVerified && (
                     <Badge variant="outline" className="ml-auto">
                       <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
                       Verified
@@ -616,7 +601,7 @@ export default function VerificationPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {user?.email_confirmed_at ? (
+                {user?.emailVerified ? (
                   <Alert>
                     <CheckCircle className="h-4 w-4" />
                     <AlertDescription>Your email address {user.email} has been verified!</AlertDescription>
