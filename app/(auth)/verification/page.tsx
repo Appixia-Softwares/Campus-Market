@@ -58,11 +58,6 @@ export default function VerificationPage() {
   const [studentIdNumber, setStudentIdNumber] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
 
-  // Phone Verification
-  const [phoneCode, setPhoneCode] = useState("")
-  const [phoneVerificationSent, setPhoneVerificationSent] = useState(false)
-  const [phoneCountdown, setPhoneCountdown] = useState(0)
-
   // Email Verification
   const [emailVerificationSent, setEmailVerificationSent] = useState(false)
   const [emailVerified, setEmailVerified] = useState(false)
@@ -81,16 +76,6 @@ export default function VerificationPage() {
     }
     setLoading(false);
   }, [user])
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (phoneCountdown > 0) {
-      interval = setInterval(() => {
-        setPhoneCountdown((prev) => prev - 1)
-      }, 1000)
-    }
-    return () => clearInterval(interval)
-  }, [phoneCountdown])
 
   // Auto-refresh email verification status every 5 seconds if not verified
   useEffect(() => {
@@ -218,65 +203,6 @@ export default function VerificationPage() {
     }
   }
 
-  // Mocked phone verification logic (structure for Firebase integration)
-  const sendPhoneVerification = async () => {
-    if (!user || !user?.phone) {
-      toast({
-        title: "No phone number",
-        description: "Please add a phone number to your profile first",
-        variant: "destructive",
-      })
-      return
-    }
-    try {
-      // TODO: Integrate with Firebase Phone Auth for real SMS verification
-      setPhoneVerificationSent(true)
-      setPhoneCountdown(60)
-      toast({
-        title: "Verification code sent",
-        description: `A verification code has been sent to ${user.phone}`,
-      })
-    } catch (error) {
-      toast({
-        title: "Failed to send code",
-        description: "Please try again later",
-        variant: "destructive",
-      })
-    }
-  }
-
-  // Mocked phone code verification (structure for Firebase integration)
-  const verifyPhoneCode = async () => {
-    if (!phoneCode.trim()) {
-      toast({
-        title: "Enter verification code",
-        description: "Please enter the 6-digit code sent to your phone",
-        variant: "destructive",
-      })
-      return
-    }
-    try {
-      // TODO: Integrate with Firebase Phone Auth for real code verification
-      if (phoneCode.length === 6) {
-        // Simulate success
-        toast({
-          title: "Phone verified",
-          description: "Your phone number has been successfully verified",
-        })
-        setPhoneCode("")
-        setPhoneVerificationSent(false)
-      } else {
-        throw new Error("Invalid verification code")
-      }
-    } catch (error) {
-      toast({
-        title: "Verification failed",
-        description: "Invalid verification code. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
   // Send email verification using Firebase Auth
   const resendEmailVerification = async () => {
     if (!user) return;
@@ -330,10 +256,9 @@ export default function VerificationPage() {
 
   const getVerificationProgress = () => {
     let completed = 0
-    const total = 3
+    const total = 2
 
     if (user?.email_verified) completed++
-    if (user?.phone_verified) completed++
     if (user?.verified) completed++
 
     return (completed / total) * 100
@@ -381,7 +306,6 @@ export default function VerificationPage() {
                 <Progress value={getVerificationProgress()} className="h-2" />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Email</span>
-                  <span>Phone</span>
                   <span>Student ID</span>
                 </div>
               </div>
@@ -391,16 +315,11 @@ export default function VerificationPage() {
 
         {/* Verification Tabs */}
         <Tabs defaultValue="email" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="email" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Email
               {user?.email_verified && <CheckCircle className="h-4 w-4 text-green-500" />}
-            </TabsTrigger>
-            <TabsTrigger value="phone" className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              Phone
-              {user?.phone_verified && <CheckCircle className="h-4 w-4 text-green-500" />}
             </TabsTrigger>
             <TabsTrigger value="id" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
@@ -417,10 +336,10 @@ export default function VerificationPage() {
                   <Mail className="h-5 w-5" />
                   Email Verification
                   {user?.email_verified && (
-                    <Badge variant="outline" className="ml-auto">
+                        <Badge variant="outline" className="ml-auto">
                       <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
                       Verified
-                    </Badge>
+                        </Badge>
                   )}
                 </CardTitle>
                 <CardDescription>
@@ -441,7 +360,7 @@ export default function VerificationPage() {
                     <AlertDescription>Your email address {user.email} has been verified!</AlertDescription>
                   </Alert>
                 ) : (
-                  <div className="space-y-4">
+                    <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <p className="font-medium">{user?.email}</p>
@@ -471,81 +390,6 @@ export default function VerificationPage() {
                       </Alert>
                     )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Phone Verification (Mandatory) */}
-          <TabsContent value="phone">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Phone className="h-5 w-5" />
-                  Phone Verification
-                  {user?.phone_verified && (
-                    <Badge variant="outline" className="ml-auto">
-                      <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
-                      Verified
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  Verify your phone number to enable SMS notifications and build trust
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {!user?.phone_verified && (
-                  <Alert variant="destructive">
-                    <AlertDescription>
-                      <b>Phone verification is required to access your dashboard.</b>
-                    </AlertDescription>
-                  </Alert>
-                )}
-                {user?.phone ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{user.phone}</p>
-                        <p className="text-sm text-muted-foreground">Your registered phone number</p>
-                      </div>
-                      {!phoneVerificationSent ? (
-                        <Button onClick={sendPhoneVerification}>Send Code</Button>
-                      ) : (
-                        <Badge variant="outline">Code Sent</Badge>
-                      )}
-                    </div>
-
-                    {phoneVerificationSent && (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>Verification Code</Label>
-                          <Input
-                            placeholder="Enter 6-digit code"
-                            value={phoneCode}
-                            onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                            maxLength={6}
-                          />
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Button onClick={verifyPhoneCode} disabled={phoneCode.length !== 6}>
-                            Verify Code
-                          </Button>
-                          <Button variant="outline" onClick={sendPhoneVerification} disabled={phoneCountdown > 0}>
-                            {phoneCountdown > 0 ? `Resend in ${phoneCountdown}s` : "Resend Code"}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      Please add a phone number to your profile first.
-                    </AlertDescription>
-                  </Alert>
                 )}
               </CardContent>
             </Card>
@@ -594,35 +438,35 @@ export default function VerificationPage() {
                           </AlertDescription>
                         </Alert>
                         {/* Student ID upload (reuse existing logic) */}
-                        <div className="space-y-2">
+                      <div className="space-y-2">
                           <Label>Student ID Photo</Label>
-                          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
-                            {studentIdPreview ? (
-                              <div className="space-y-4">
+                        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                          {studentIdPreview ? (
+                            <div className="space-y-4">
                                 <img src={studentIdPreview || "/placeholder.svg"} alt="Student ID preview" className="max-w-full h-48 object-contain mx-auto rounded-lg" />
-                                <div className="text-center">
+                              <div className="text-center">
                                   <Button variant="outline" onClick={() => { setStudentIdFile(null); setStudentIdPreview(""); }} disabled={submitting}>Remove</Button>
                                 </div>
+                            </div>
+                          ) : (
+                            <div className="text-center space-y-4">
+                              <Camera className="h-12 w-12 text-muted-foreground mx-auto" />
+                              <div>
+                                <p className="text-sm font-medium">Upload your student ID</p>
+                                <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
                               </div>
-                            ) : (
-                              <div className="text-center space-y-4">
-                                <Camera className="h-12 w-12 text-muted-foreground mx-auto" />
-                                <div>
-                                  <p className="text-sm font-medium">Upload your student ID</p>
-                                  <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
-                                </div>
                                 <input type="file" accept="image/*" onChange={handleStudentIdUpload} className="hidden" id="student-id-upload" disabled={submitting} />
-                                <label htmlFor="student-id-upload">
-                                  <Button variant="outline" className="cursor-pointer" disabled={submitting}>
+                              <label htmlFor="student-id-upload">
+                                <Button variant="outline" className="cursor-pointer" disabled={submitting}>
                                     <Upload className="h-4 w-4 mr-2" />Choose File
-                                  </Button>
-                                </label>
-                              </div>
-                            )}
-                          </div>
+                                </Button>
+                              </label>
+                            </div>
+                          )}
                         </div>
+                      </div>
                         {/* Selfie upload */}
-                        <div className="space-y-2">
+                      <div className="space-y-2">
                           <Label>Selfie with Student ID</Label>
                           <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
                             {selfiePreview ? (
@@ -648,17 +492,17 @@ export default function VerificationPage() {
                               </div>
                             )}
                           </div>
-                        </div>
+                      </div>
                       </>
                     ) : (
                       <>
-                        <Alert>
-                          <AlertDescription>
+                      <Alert>
+                        <AlertDescription>
                             <b>Government ID Verification</b><br />
                             Please upload a clear photo of your government-issued ID (passport, national ID, or driver’s license). Make sure your name and photo are visible.<br />
                             <span className="text-xs text-muted-foreground">For extra security, also upload a selfie holding your ID.</span>
-                          </AlertDescription>
-                        </Alert>
+                        </AlertDescription>
+                      </Alert>
                         {/* Government ID upload */}
                         <div className="space-y-2">
                           <Label>Government ID Photo</Label>
@@ -709,13 +553,13 @@ export default function VerificationPage() {
                                 <label htmlFor="selfie-upload">
                                   <Button variant="outline" className="cursor-pointer" disabled={submitting}>
                                     <Upload className="h-4 w-4 mr-2" />Choose File
-                                  </Button>
+                      </Button>
                                 </label>
                               </div>
                             )}
                           </div>
-                        </div>
-                      </>
+                    </div>
+                  </>
                     )}
                   </div>
                 )}
