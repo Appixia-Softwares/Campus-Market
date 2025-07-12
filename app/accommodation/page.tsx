@@ -2,10 +2,9 @@
 import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Filter, SlidersHorizontal, Search, X } from "lucide-react"
-import AccommodationFilters, { AccommodationFilterState } from "@/components/accommodation-filters"
+import { SlidersHorizontal, Search, X, CheckCircle, GraduationCap } from "lucide-react"
+import AccommodationFilters, { AccommodationFilterState, AccommodationFiltersTrigger } from "@/components/accommodation-filters"
 import AccommodationList, { AccommodationListing } from "@/components/accommodation-list"
 
 // Mock data for listings (move to a separate file if needed)
@@ -121,7 +120,6 @@ export default function AccommodationPage() {
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<'grid' | 'list'>('grid')
-  const [showFilters, setShowFilters] = useState(false)
 
   // Filtering logic
   const filteredListings = useMemo(() => {
@@ -161,7 +159,26 @@ export default function AccommodationPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 container py-8">
+      <main className="flex-1 container py-0">
+        {/* Hero/Header Section */}
+        <div className="relative bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-xl p-8 md:p-12 shadow-xl overflow-hidden mb-8 mt-8">
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-3 mb-2">
+              <span className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-full text-sm font-medium">
+                <CheckCircle className="h-4 w-4 text-green-900" /> Verified Listings
+              </span>
+              <span className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-full text-sm font-medium">
+                <GraduationCap className="h-4 w-4 text-green-900" /> For Students
+              </span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-black drop-shadow-lg mb-2">
+              Find Accommodation
+            </h1>
+            <div className="flex items-center text-black/80 mb-2">
+              Browse verified listings near your campus
+            </div>
+          </div>
+        </div>
         {/* Top search and filter bar */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex flex-col md:flex-row gap-2 md:items-center">
@@ -181,7 +198,6 @@ export default function AccommodationPage() {
               onReset={handleReset}
               mobileSheet={isMobile}
             />
-            <Button onClick={() => setShowFilters(true)} className="hidden" />
           </div>
           {/* Active filter badges */}
           {activeBadges.length > 0 && (
