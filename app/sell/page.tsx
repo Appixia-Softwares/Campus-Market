@@ -270,18 +270,19 @@ export default function SellPage() {
                     <input type="hidden" {...form.register("category")} value={selectedCategory} />
                   </div>
                   {/* Category-specific fields */}
-                  {CATEGORY_CONFIG[selectedCategory as CategoryKey] && CATEGORY_CONFIG[selectedCategory as CategoryKey].length > 0 && (
-                    <div className="grid grid-cols-2 gap-4">
-                      {CATEGORY_CONFIG[selectedCategory as CategoryKey].map((field: CategoryField) => (
-                        <FormFieldBlock
-                          key={field.name}
-                          name={field.name}
-                          label={field.label}
-                          placeholder={field.placeholder}
-                          type={field.type}
-                        />
-                      ))}
-            </div>
+                  {(CATEGORY_CONFIG as Record<CategoryKey, CategoryField[]>)[selectedCategory as CategoryKey] &&
+                    (CATEGORY_CONFIG as Record<CategoryKey, CategoryField[]>)[selectedCategory as CategoryKey].length > 0 && (
+                      <div className="grid grid-cols-2 gap-4">
+                        {(CATEGORY_CONFIG as Record<CategoryKey, CategoryField[]>)[selectedCategory as CategoryKey].map((field: CategoryField) => (
+                          <FormFieldBlock
+                            key={field.name}
+                            name={field.name}
+                            label={field.label}
+                            placeholder={field.placeholder}
+                            type={field.type}
+                          />
+                        ))}
+                      </div>
                   )}
             <div className="grid grid-cols-2 gap-4">
               <FormField

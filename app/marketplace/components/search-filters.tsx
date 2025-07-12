@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Search, Filter, X, MapPin, Truck, Star, Clock } from "lucide-react"
+import { Star, Sparkles, ThumbsUp, Wrench, Flame, MapPin, Calendar, DollarSign, Gem, Filter, X, Search, Truck } from "lucide-react";
+import { CATEGORY_META } from "@/lib/category-config";
+import ZIM_UNIVERSITIES from "@/utils/schools_data";
 import { motion, AnimatePresence } from "framer-motion"
 
 interface SearchFiltersProps {
@@ -37,20 +39,20 @@ export function SearchFilters({ onSearch, categories, universities }: SearchFilt
   const [activeFilters, setActiveFilters] = useState<string[]>([])
 
   const CONDITIONS = [
-    { value: "New", label: "New", description: "Brand new, never used", emoji: "✨" },
-    { value: "Like New", label: "Like New", description: "Barely used, excellent condition", emoji: "🌟" },
-    { value: "Good", label: "Good", description: "Used but in good condition", emoji: "👍" },
-    { value: "Fair", label: "Fair", description: "Shows wear but still functional", emoji: "👌" },
-    { value: "Poor", label: "Poor", description: "Heavy wear, may need repairs", emoji: "🔧" },
+    { value: "New", label: "New", description: "Brand new, never used", icon: <Sparkles className="h-4 w-4 text-primary" /> },
+    { value: "Like New", label: "Like New", description: "Barely used, excellent condition", icon: <Star className="h-4 w-4 text-yellow-500" /> },
+    { value: "Good", label: "Good", description: "Used but in good condition", icon: <ThumbsUp className="h-4 w-4 text-green-500" /> },
+    { value: "Fair", label: "Fair", description: "Shows wear but still functional", icon: <Wrench className="h-4 w-4 text-muted-foreground" /> },
+    { value: "Poor", label: "Poor", description: "Heavy wear, may need repairs", icon: <Wrench className="h-4 w-4 text-destructive" /> },
   ]
 
   const SORT_OPTIONS = [
-    { value: "newest", label: "Newest First", icon: "🆕" },
-    { value: "oldest", label: "Oldest First", icon: "📅" },
-    { value: "price_asc", label: "Price: Low to High", icon: "💰" },
-    { value: "price_desc", label: "Price: High to Low", icon: "💎" },
-    { value: "popular", label: "Most Popular", icon: "🔥" },
-    { value: "nearest", label: "Nearest First", icon: "📍" },
+    { value: "newest", label: "Newest First", icon: <Sparkles className="h-4 w-4" /> },
+    { value: "oldest", label: "Oldest First", icon: <Calendar className="h-4 w-4" /> },
+    { value: "price_asc", label: "Price: Low to High", icon: <DollarSign className="h-4 w-4" /> },
+    { value: "price_desc", label: "Price: High to Low", icon: <Gem className="h-4 w-4" /> },
+    { value: "popular", label: "Most Popular", icon: <Flame className="h-4 w-4" /> },
+    { value: "nearest", label: "Nearest First", icon: <MapPin className="h-4 w-4" /> },
   ]
 
   const handleSearch = () => {
@@ -254,12 +256,9 @@ export function SearchFilters({ onSearch, categories, universities }: SearchFilt
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Categories</SelectItem>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            <div className="flex items-center gap-2">
-                              <span>{category.icon}</span>
-                              {category.name}
-                            </div>
+                        {CATEGORY_META.map(cat => (
+                          <SelectItem key={cat.key} value={cat.key}>
+                            {cat.icon && <cat.icon className="h-4 w-4 mr-1 inline" />} {cat.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -276,18 +275,13 @@ export function SearchFilters({ onSearch, categories, universities }: SearchFilt
                       onValueChange={(value) => setFilters({ ...filters, university: value })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="All Institutions" />
+                        <SelectValue placeholder="All Universities" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Institutions</SelectItem>
-                        {universities.map((university) => (
-                          <SelectItem key={university.id} value={university.id}>
-                            <div className="flex flex-col items-start">
-                              <span className="font-medium">{university.name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {university.location} • {university.type}
-                              </span>
-                            </div>
+                        <SelectItem value="all">All Universities</SelectItem>
+                        {ZIM_UNIVERSITIES.map(u => (
+                          <SelectItem key={u.id} value={u.id}>
+                            <MapPin className="h-4 w-4 mr-1 inline" /> {u.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -311,7 +305,7 @@ export function SearchFilters({ onSearch, categories, universities }: SearchFilt
                         {CONDITIONS.map((condition) => (
                           <SelectItem key={condition.value} value={condition.value}>
                             <div className="flex items-center gap-2">
-                              <span>{condition.emoji}</span>
+                              <span>{condition.icon}</span>
                               <div>
                                 <div className="font-medium">{condition.label}</div>
                                 <div className="text-xs text-muted-foreground">{condition.description}</div>
@@ -325,7 +319,7 @@ export function SearchFilters({ onSearch, categories, universities }: SearchFilt
 
                   <div className="space-y-3">
                     <Label className="text-sm font-medium flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
+                      <Calendar className="h-4 w-4" />
                       Sort By
                     </Label>
                     <Select value={filters.sortBy} onValueChange={(value) => setFilters({ ...filters, sortBy: value })}>
