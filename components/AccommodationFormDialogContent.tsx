@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import { Home, MapPin, ImageIcon, X, User, Upload, Building, CheckCircle, AlertCircle } from "lucide-react"
+import { Home, MapPin, ImageIcon, X, User, Upload, Building, CheckCircle, AlertCircle, Check, Bed, Users, Wifi, ParkingCircle, Utensils, WashingMachine, Sparkles, ShieldCheck } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 const amenitiesList = [
@@ -247,9 +247,33 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     return validateCurrentTab(currentTab).isValid
   }
 
+  // Add a stepper at the top
+  const steps = [
+    { key: "basic", label: "Basic Info", icon: Home },
+    { key: "details", label: "Details", icon: Bed },
+    { key: "images", label: "Photos", icon: ImageIcon },
+    { key: "contact", label: "Contact", icon: User },
+  ]
+
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <form onSubmit={handleSubmit}>
+      {/* Modern stepper */}
+      <div className="flex items-center justify-between mb-8">
+        {steps.map((step, idx) => (
+          <React.Fragment key={step.key}>
+            <div className="flex flex-col items-center">
+              <div className={`rounded-full h-10 w-10 flex items-center justify-center border-2 ${currentTab === step.key ? 'border-green-600 bg-green-100 text-green-700' : 'border-gray-300 bg-white text-gray-400'} font-bold text-lg mb-1 transition-all`}>
+                <step.icon className="h-5 w-5" />
+              </div>
+              <span className={`text-xs font-medium ${currentTab === step.key ? 'text-green-700' : 'text-gray-400'}`}>{step.label}</span>
+            </div>
+            {idx < steps.length - 1 && (
+              <div className="flex-1 h-0.5 bg-gray-200 mx-2" />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+      <form onSubmit={handleSubmit} className="relative">
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger
@@ -287,7 +311,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
           {/* BASIC INFO TAB */}
           <TabsContent value="basic" className="mt-6">
             <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+              <CardHeader className="bg-background">
                 <CardTitle className="flex items-center text-green-800">
                   <Home className="h-5 w-5 mr-2" />
                   Basic Information
@@ -440,7 +464,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
           {/* PROPERTY DETAILS TAB */}
           <TabsContent value="details" className="mt-6">
             <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+              <CardHeader className="bg-background">
                 <CardTitle className="flex items-center text-green-800">
                   <Building className="h-5 w-5 mr-2" />
                   Property Details
@@ -506,20 +530,33 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-green-800">Amenities & Features</h3>
                   <p className="text-sm text-gray-600">Select all amenities that apply to your property</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {amenitiesList.map((amenity) => (
-                      <div key={amenity} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={amenity}
-                          checked={selectedAmenities.includes(amenity)}
-                          onCheckedChange={() => handleAmenityToggle(amenity)}
-                          className="border-green-300 data-[state=checked]:bg-green-600"
-                        />
-                        <Label htmlFor={amenity} className="text-sm cursor-pointer">
-                          {amenity}
-                        </Label>
-                      </div>
-                    ))}
+                  {/* Replace amenities checkboxes with Lucide icon badges in a grid */}
+                  <div className="space-y-2">
+                    <Label className="text-green-700 font-medium">Amenities</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      {amenitiesList.map((amenity) => {
+                        // Pick an icon for each amenity (fallback to Sparkles)
+                        let Icon = Sparkles
+                        if (amenity.toLowerCase().includes("wifi")) Icon = Wifi
+                        if (amenity.toLowerCase().includes("furnished")) Icon = Home
+                        if (amenity.toLowerCase().includes("laundry")) Icon = WashingMachine
+                        if (amenity.toLowerCase().includes("kitchen")) Icon = Utensils
+                        if (amenity.toLowerCase().includes("parking")) Icon = ParkingCircle
+                        if (amenity.toLowerCase().includes("security")) Icon = ShieldCheck
+                        return (
+                          <button
+                            type="button"
+                            key={amenity}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${selectedAmenities.includes(amenity) ? 'bg-green-100 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500'} hover:border-green-400 focus:outline-none`}
+                            onClick={() => handleAmenityToggle(amenity)}
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span className="text-xs font-medium">{amenity}</span>
+                            {selectedAmenities.includes(amenity) && <Check className="h-3 w-3 ml-1 text-green-600" />}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                   {selectedAmenities.length > 0 && (
                     <div className="mt-4 p-4 bg-green-50 rounded-lg">
@@ -543,57 +580,36 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
           {/* IMAGES TAB */}
           <TabsContent value="images" className="mt-6">
             <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+              <CardHeader className="bg-background">
                 <CardTitle className="flex items-center text-green-800">
                   <ImageIcon className="h-5 w-5 mr-2" />
-                  Property Photos
+                  Photos
                 </CardTitle>
-                <CardDescription>
-                  Add high-quality photos to showcase your property. The first image will be the main photo.
-                </CardDescription>
+                <CardDescription>Upload high-quality images of your property</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {images.map((img, idx) => (
-                    <div key={idx} className="relative group">
-                      <img
-                        src={img || "/placeholder.svg"}
-                        alt={`Property image ${idx + 1}`}
-                        className="w-full h-32 object-cover rounded-lg border border-green-200"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => removeImage(idx)}
-                        className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                      {idx === 0 && (
-                        <div className="absolute bottom-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
-                          Main Photo
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {images.length < 8 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleImageUpload}
-                      className="border-2 border-dashed border-green-300 w-full h-32 rounded-lg flex flex-col justify-center items-center text-green-600 hover:bg-green-50 hover:border-green-400 bg-transparent"
-                    >
-                      <Upload className="h-8 w-8 mb-2" />
-                      <span className="text-sm">Add Photo</span>
+                <div className="flex flex-col items-center">
+                  <div className="w-full max-w-md border-2 border-dashed border-green-400 rounded-lg p-6 flex flex-col items-center justify-center bg-green-50 mb-4">
+                    <ImageIcon className="h-10 w-10 text-green-400 mb-2" />
+                    <span className="text-green-700 font-medium mb-2">Drag & drop images here</span>
+                    <Button variant="outline" onClick={handleImageUpload} type="button">
+                      <Upload className="h-4 w-4 mr-2" /> Add Image
                     </Button>
-                  )}
-                </div>
-                <div className="text-sm text-gray-600 bg-green-50 p-4 rounded-lg">
-                  <p>• Upload at least 3 photos for better visibility</p>
-                  <p>• Recommended size: 1200x800 pixels</p>
-                  <p>• Supported formats: JPG, PNG, WebP</p>
-                  <p>• Current photos: {images.length}/8</p>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+                    {images.map((img, idx) => (
+                      <div key={idx} className="relative group">
+                        <img src={img} alt={`Property ${idx + 1}`} className="rounded-lg w-full h-32 object-cover border border-green-200" />
+                        <button
+                          type="button"
+                          className="absolute top-1 right-1 bg-white/80 rounded-full p-1 shadow hover:bg-red-100"
+                          onClick={() => removeImage(idx)}
+                        >
+                          <X className="h-4 w-4 text-red-500" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -602,7 +618,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
           {/* CONTACT INFO TAB */}
           <TabsContent value="contact" className="mt-6">
             <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+              <CardHeader className="bg-background">
                 <CardTitle className="flex items-center text-green-800">
                   <User className="h-5 w-5 mr-2" />
                   Contact Information
@@ -668,42 +684,18 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Navigation Buttons */}
-        <div className="mt-8 flex justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentTab === "basic"}
-            className="border-green-300 text-green-700 hover:bg-green-50 bg-transparent"
-          >
-            Previous
+        {/* Sticky footer for navigation buttons */}
+        <div className="sticky bottom-0 left-0 w-full bg-background border-t border-green-900/20 py-4 flex justify-between gap-4 z-10 px-6 mt-8">
+          <Button variant="outline" type="button" onClick={handlePrevious} disabled={currentTab === "basic" || isSubmitting}>
+            Back
           </Button>
-
-          {currentTab === "contact" ? (
-            <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700 text-white">
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  List Property
-                </>
-              )}
+          {currentTab !== "contact" ? (
+            <Button type="button" onClick={handleNext} disabled={!isCurrentTabValid() || isSubmitting}>
+              Next
             </Button>
           ) : (
-            <Button
-              type="button"
-              onClick={handleNext}
-              className={`text-white transition-all duration-200 ${
-                isCurrentTabValid() ? "bg-green-600 hover:bg-green-700" : "bg-gray-400 hover:bg-gray-500"
-              }`}
-            >
-              Next
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           )}
         </div>
