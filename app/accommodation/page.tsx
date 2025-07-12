@@ -1,111 +1,12 @@
 "use client"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { SlidersHorizontal, Search, X, CheckCircle, GraduationCap } from "lucide-react"
 import AccommodationFilters, { AccommodationFilterState, AccommodationFiltersTrigger } from "@/components/accommodation-filters"
-import AccommodationList, { AccommodationListing } from "@/components/accommodation-list"
-
-// Mock data for listings (move to a separate file if needed)
-const MOCK_LISTINGS: AccommodationListing[] = [
-  {
-    id: "1",
-    title: "Modern Studio Apartment",
-    location: "Main Campus",
-    address: "123 University Ave",
-    price: 250,
-    priceUnit: "month",
-    type: "studio",
-    beds: 1,
-    baths: 1,
-    amenities: ["Wifi", "Furnished", "Utilities Included"],
-    verified: true,
-    rating: 4.8,
-    reviewCount: 24,
-    image: "/placeholder.svg?height=200&width=300",
-  },
-  {
-    id: "2",
-    title: "Shared 2-Bedroom Apartment",
-    location: "North Campus",
-    address: "456 College St",
-    price: 180,
-    priceUnit: "month",
-    type: "shared",
-    beds: 2,
-    baths: 1,
-    amenities: ["Wifi", "Kitchen", "Laundry"],
-    verified: true,
-    rating: 4.5,
-    reviewCount: 18,
-    image: "/placeholder.svg?height=200&width=300",
-  },
-  {
-    id: "3",
-    title: "Private Room in Student House",
-    location: "City Center",
-    address: "789 Downtown Rd",
-    price: 200,
-    priceUnit: "month",
-    type: "single",
-    beds: 1,
-    baths: 1,
-    amenities: ["Wifi", "Shared Kitchen", "Study Area"],
-    verified: false,
-    rating: 4.2,
-    reviewCount: 12,
-    image: "/placeholder.svg?height=200&width=300",
-  },
-  {
-    id: "4",
-    title: "Luxury Student Apartment",
-    location: "South Campus",
-    address: "101 Campus Drive",
-    price: 320,
-    priceUnit: "month",
-    type: "apartment",
-    beds: 2,
-    baths: 2,
-    amenities: ["Wifi", "Gym", "Pool", "Study Rooms"],
-    verified: true,
-    rating: 4.9,
-    reviewCount: 36,
-    image: "/placeholder.svg?height=200&width=300",
-  },
-  {
-    id: "5",
-    title: "Cozy Single Room",
-    location: "Main Campus",
-    address: "222 College Blvd",
-    price: 150,
-    priceUnit: "month",
-    type: "single",
-    beds: 1,
-    baths: 1,
-    amenities: ["Wifi", "Desk", "Shared Kitchen"],
-    verified: true,
-    rating: 4.3,
-    reviewCount: 15,
-    image: "/placeholder.svg?height=200&width=300",
-  },
-  {
-    id: "6",
-    title: "Budget Friendly Shared Room",
-    location: "South Campus",
-    address: "333 Student Lane",
-    price: 120,
-    priceUnit: "month",
-    type: "shared",
-    beds: 2,
-    baths: 1,
-    amenities: ["Wifi", "Laundry", "Bike Storage"],
-    verified: false,
-    rating: 4.0,
-    reviewCount: 8,
-    image: "/placeholder.svg?height=200&width=300",
-  },
-]
+import AccommodationList from "@/components/accommodation-list"
+import { getAccommodations } from "@/services/accommodation"
 
 const DEFAULT_FILTERS: AccommodationFilterState = {
   price: [0, 500],
@@ -122,28 +23,43 @@ export default function AccommodationPage() {
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
+  const [accommodations, setAccommodations] = useState<any[]>([])
 
-  // Filtering logic
+  // Fetch accommodations from backend
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true)
+      try {
+        const data = await getAccommodations({
+          searchQuery: search,
+          // Add more filter mapping as needed
+        })
+        setAccommodations(data)
+      } catch (e) {
+        setAccommodations([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [filters, search])
+
+  // Filtering logic (client-side for now, can be moved to backend)
   const filteredListings = useMemo(() => {
-    return MOCK_LISTINGS.filter((listing) => {
-      // Search
-      if (search && !(
-        listing.title.toLowerCase().includes(search.toLowerCase()) ||
-        listing.address.toLowerCase().includes(search.toLowerCase())
-      )) return false
+    return accommodations.filter((listing) => {
       // Price
       if (listing.price < filters.price[0] || listing.price > filters.price[1]) return false
       // Type
       if (filters.types.length && !filters.types.includes(listing.type)) return false
       // Amenities (all selected must be present)
-      if (filters.amenities.length && !filters.amenities.every(a => listing.amenities.includes(a))) return false
+      if (filters.amenities && filters.amenities.length && !filters.amenities.every((a: string) => (listing.amenities || []).includes(a))) return false
       // Location
-      if (filters.locations.length && !filters.locations.includes(listing.location.replace(/ /g, '-').toLowerCase())) return false
+      if (filters.locations.length && !filters.locations.includes((listing.location || '').replace(/ /g, '-').toLowerCase())) return false
       // Verified
       if (filters.verifiedOnly && !listing.verified) return false
       return true
     })
-  }, [filters, search])
+  }, [accommodations, filters])
 
   // Responsive: use bottom sheet for filters on mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768

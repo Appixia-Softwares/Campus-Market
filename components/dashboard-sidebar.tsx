@@ -368,6 +368,12 @@ export default function DashboardSidebar({ collapsed, onToggle, isMobile }: Dash
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => setShowAccommodationForm(true)}>
+                <Home className="h-5 w-5" />
+                <span>Add Accommodation</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <Separator className="my-2" />
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === "/community"} tooltip="Community">
@@ -424,6 +430,14 @@ export default function DashboardSidebar({ collapsed, onToggle, isMobile }: Dash
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
+        <Dialog open={showAccommodationForm} onOpenChange={setShowAccommodationForm}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add Accommodation</DialogTitle>
+            </DialogHeader>
+            <AccommodationFormDialogContent onSuccess={() => setShowAccommodationForm(false)} />
+          </DialogContent>
+        </Dialog>
       </Sidebar>
     </SidebarProvider>
   )
