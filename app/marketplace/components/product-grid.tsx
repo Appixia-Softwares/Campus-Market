@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Heart, MapPin, Clock, Eye, Truck, Phone, MessageCircle, Share2, MoreVertical } from "lucide-react"
+import { Heart, MapPin, Clock, Eye, Truck, MessageCircle, Share2, MoreVertical } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
@@ -18,6 +18,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Timestamp } from "firebase/firestore"
 import { db } from '@/lib/firebase'
 import { doc, setDoc, getDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Laptop, Shirt, Home, Book, Dumbbell, Car, Baby, Apple, Watch, Camera, Gamepad2, PawPrint, Sparkles, Briefcase, Globe, Gift, Music, FlaskConical, Wrench, Gem, BedDouble, Bike, Tv, Phone, Wallet, ShoppingBag, Package, Cake } from "lucide-react";
+// Import local university data
+import ZIM_UNIVERSITIES from "@/utils/schools_data";
 
 interface ProductGridProps {
   products: any[]
@@ -36,6 +40,44 @@ const formatDate = (date: Timestamp | string | Date) => {
     return new Date(date)
   }
   return date
+}
+
+// 2. Create a mapping from category name to icon component
+const categoryIconMap: Record<string, React.ElementType> = {
+  Electronics: Laptop,
+  Fashion: Shirt,
+  "Home & Garden": Home,
+  "Books & Media": Book,
+  "Beauty & Personal Care": Sparkles,
+  "Sports & Outdoors": Dumbbell,
+  "Toys & Games": Gamepad2,
+  Groceries: Apple,
+  Automotive: Car,
+  "Health & Wellness": FlaskConical,
+  "Jewelry & Accessories": Gem,
+  "Office & School": Briefcase,
+  "Baby & Kids": Baby,
+  "Pet Supplies": PawPrint,
+  "Gifts & Occasions": Gift,
+  "Music & Instruments": Music,
+  Watches: Watch,
+  Cameras: Camera,
+  Gaming: Gamepad2,
+  "Health & Beauty": Sparkles,
+  "Travel & Luggage": Globe,
+  Furniture: BedDouble,
+  "Weddings & Events": Cake,
+  "TV & Audio": Tv,
+  "Phones & Tablets": Phone,
+  "Bikes & Scooters": Bike,
+  "Tools & DIY": Wrench,
+  "Bags & Wallets": Wallet,
+  Shoes: ShoppingBag,
+};
+
+// Helper to get university by id
+function getUniversityById(id: string) {
+  return ZIM_UNIVERSITIES.find(u => u.id === id);
 }
 
 export function ProductGrid({
@@ -213,9 +255,9 @@ export function ProductGrid({
           >
             <Link href={`/marketplace/products/${product.id}`} className="block h-full">
               <Card
-                className={`overflow-hidden h-full hover:shadow-lg transition-all duration-300 group ${
+                className={`overflow-hidden h-full group transition-all duration-300 ${
                   viewMode === "list" ? "flex" : ""
-                }`}
+                } group-hover:shadow-2xl group-hover:scale-[1.03] ${product.featured ? "border-2 border-yellow-400" : ""}`}
               >
                 <div
                   className={`relative overflow-hidden ${viewMode === "list" ? "w-48 flex-shrink-0" : "aspect-square"}`}
@@ -264,11 +306,29 @@ export function ProductGrid({
                   </div>
 
                   {/* University Badge */}
-                  {product.universities && (
-                    <div className="absolute bottom-2 left-2">
-                      <Badge variant="outline" className="bg-white/90 text-xs">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {product.universities.name}
+                  {(() => {
+                    // Prefer Firestore university, fallback to local
+                    let uni = product.universities && product.universities.name !== "Unknown University"
+                      ? product.universities
+                      : getUniversityById(product.university_id);
+                    return (
+                      <div className="absolute top-2 right-2 z-10">
+                        <Badge variant="secondary" className="bg-green-100 text-green-700 flex items-center gap-1 px-3 py-1 rounded-full shadow-md">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {uni ? uni.name : "Unknown University"}
+                        </Badge>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Category Badge */}
+                  {product.product_categories && (
+                    <div className="absolute bottom-2 left-2 z-10">
+                      <Badge variant="secondary" className="bg-primary/90 text-primary-foreground flex items-center gap-1 px-3 py-1 rounded-full shadow-md">
+                        {categoryIconMap[product.product_categories.name] && (
+                          React.createElement(categoryIconMap[product.product_categories.name], { className: "h-4 w-4 mr-1" })
+                        )}
+                        {product.product_categories.name}
                       </Badge>
                     </div>
                   )}
@@ -278,15 +338,13 @@ export function ProductGrid({
                   <CardContent className="p-4">
                     {/* Seller Info */}
                     <div className="flex items-center gap-2 mb-3">
-                      <Avatar className="h-6 w-6">
+                      <Avatar className="h-6 w-6 ring-2 ring-primary/20">
                         <AvatarImage src={product.users?.avatar_url || "/placeholder.svg"} />
-                        <AvatarFallback className="text-xs">{product.users?.full_name?.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary">{product.users?.full_name?.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <span className="text-sm text-muted-foreground">{product.users?.full_name}</span>
+                      <span className="text-sm text-primary font-medium">{product.users?.full_name}</span>
                       {product.users?.verified && (
-                        <Badge variant="outline" className="text-xs px-1">
-                          ✓
-                        </Badge>
+                        <Badge variant="outline" className="text-xs px-1 border-green-400 text-green-600 bg-green-50">✓</Badge>
                       )}
                     </div>
 
@@ -365,27 +423,37 @@ export function ProductGrid({
                   </CardContent>
 
                   <CardFooter className="p-4 pt-0 flex gap-2">
-                    {product.users?.whatsapp_number && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 text-green-600 border-green-200 hover:bg-green-50"
-                        onClick={(e) => contactWhatsApp(product, e)}
-                      >
-                        <Phone className="h-4 w-4 mr-1" />
-                        WhatsApp
-                      </Button>
-                    )}
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="flex-1"
-                      onClick={(e) => startConversation(product, e)}
-                      disabled={product.status === "sold" || product.seller_id === user?.id}
-                    >
-                      <MessageCircle className="h-4 w-4 mr-1" />
-                      {product.status === "sold" ? "Sold" : "Message"}
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-green-600 border-green-200 hover:bg-green-50"
+                            onClick={(e) => contactWhatsApp(product, e)}
+                          >
+                            <Phone className="h-4 w-4 mr-1" />
+                            WhatsApp
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Contact seller on WhatsApp</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => startConversation(product, e)}
+                            disabled={product.status === "sold" || product.seller_id === user?.id}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-1" />
+                            {product.status === "sold" ? "Sold" : "Message"}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Send a message to the seller</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </CardFooter>
                 </div>
               </Card>

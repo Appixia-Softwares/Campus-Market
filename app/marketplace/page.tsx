@@ -309,13 +309,7 @@ export default function MarketplacePage() {
           snapshot.docs.map(async (docSnapshot) => {
             try {
               const productData = docSnapshot.data()
-              console.log("Debug - Processing product:", {
-                id: docSnapshot.id,
-                title: productData.title,
-                status: productData.status
-              })
-              
-              // Get all images for the product
+              // Defensive: Only fetch related docs if the ID exists
               const imagesQuery = query(
                 collection(db, 'product_images'),
                 where('product_id', '==', docSnapshot.id)
@@ -327,49 +321,41 @@ export default function MarketplacePage() {
               }))
 
               // Get seller info
-              const sellerRef = doc(db, 'users', productData.seller_id)
-              const sellerDoc = await getDoc(sellerRef)
-              const sellerDocData = sellerDoc.data();
-              const sellerData = sellerDoc.exists() && sellerDocData ? {
+              const sellerRef = productData.seller_id ? doc(db, 'users', productData.seller_id) : null;
+              const sellerDoc = sellerRef ? await getDoc(sellerRef) : null;
+              const sellerDocData = sellerDoc && sellerDoc.exists() ? sellerDoc.data() : null;
+              const sellerData = sellerDocData ? {
                 id: sellerDoc.id,
-                ...(sellerDocData as {
-                  full_name: string
-                  email: string
-                  avatar_url: string | null
-                  verified: boolean
-                  whatsapp_number: string | null
-                  university_id: string
-                  student_id: string | null
-                  year_of_study: number | null
-                  course: string | null
-                })
-              } : null
+                ...sellerDocData
+              } : null;
 
               // Get category info
-              const categoryRef = doc(db, 'product_categories', productData.category_id)
-              const categoryDoc = await getDoc(categoryRef)
-              const categoryDocData = categoryDoc.data();
-              const categoryData = categoryDoc.exists() && categoryDocData ? {
+              const categoryRef = productData.category_id ? doc(db, 'product_categories', productData.category_id) : null;
+              const categoryDoc = categoryRef ? await getDoc(categoryRef) : null;
+              const categoryDocData = categoryDoc && categoryDoc.exists() ? categoryDoc.data() : null;
+              const categoryData = categoryDocData ? {
                 id: categoryDoc.id,
-                ...(categoryDocData as {
-                  name: string
-                  description: string | null
-                  icon: string
-                })
-              } : null
+                ...categoryDocData
+              } : {
+                id: "",
+                name: "Uncategorized",
+                description: "",
+                icon: ""
+              };
 
               // Get university info
-              const universityRef = doc(db, 'universities', productData.university_id)
-              const universityDoc = await getDoc(universityRef)
-              const universityDocData = universityDoc.data();
-              const universityData = universityDoc.exists() && universityDocData ? {
+              const universityRef = productData.university_id ? doc(db, 'universities', productData.university_id) : null;
+              const universityDoc = universityRef ? await getDoc(universityRef) : null;
+              const universityDocData = universityDoc && universityDoc.exists() ? universityDoc.data() : null;
+              const universityData = universityDocData ? {
                 id: universityDoc.id,
-                ...(universityDocData as {
-                  name: string
-                  location: string
-                  type: string
-                })
-              } : null
+                ...universityDocData
+              } : {
+                id: "",
+                name: "Unknown University",
+                location: "",
+                type: ""
+              };
 
               // Create the product object with all related data
               const product = {
@@ -380,15 +366,6 @@ export default function MarketplacePage() {
                 product_categories: categoryData,
                 universities: universityData
               } as Product
-
-              console.log("Debug - Processed product:", {
-                id: product.id,
-                title: product.title,
-                imagesCount: product.product_images?.length || 0,
-                hasSeller: !!product.users,
-                hasCategory: !!product.product_categories,
-                hasUniversity: !!product.universities
-              })
 
               return product
             } catch (productError) {

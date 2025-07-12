@@ -1011,7 +1011,7 @@ export default function SellPage() {
         
         if (allLocationsSnapshot.empty) {
           console.log("Debug - No locations found in collection")
-          toast({
+        toast({
             title: "No Locations Found",
             description: "The locations collection is empty",
           variant: "destructive",
@@ -1126,7 +1126,7 @@ export default function SellPage() {
                 user={user}
               />
             )}
-            {step === 2 && (
+              {step === 2 && (
               <ImagesStep
                 images={images}
                 setImages={setImages}
@@ -1134,14 +1134,14 @@ export default function SellPage() {
                 onBack={() => setStep(1)}
               />
             )}
-            {step === 3 && (
+              {step === 3 && (
               <PreviewStep
                 data={{ ...formData, images, category }}
                 onNext={() => setStep(4)}
                 onBack={() => setStep(2)}
               />
             )}
-            {step === 4 && (
+              {step === 4 && (
               <ReviewStep
                 data={{ ...formData, images, category }}
                 onSubmit={handleFinalSubmit}
@@ -1151,9 +1151,9 @@ export default function SellPage() {
                 submitSuccess={submitSuccess}
               />
             )}
-          </div>
-        </div>
-      </div>
+                  </div>
+                            </div>
+                          </div>
     </ProtectedRoute>
   )
 }
@@ -1184,9 +1184,9 @@ function CategoryStep({ categories, onSelect }: { categories: any[]; onSelect: (
                 </button>
               );
             })
-          )}
-        </div>
-      </div>
+                )}
+              </div>
+    </div>
     </div>
   );
 }
