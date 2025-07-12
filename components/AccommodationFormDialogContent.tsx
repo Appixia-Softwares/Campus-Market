@@ -697,7 +697,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                           </button>
                         )
                       })}
-                    </div>
+                      </div>
                   </div>
                   {selectedAmenities.length > 0 && (
                     <div className="mt-4 p-4 bg-green-50 rounded-lg">
@@ -747,18 +747,18 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                   {/* Image previews */}
                   {images.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-2">
-                      {images.map((img, idx) => (
-                        <div key={idx} className="relative group">
+                  {images.map((img, idx) => (
+                    <div key={idx} className="relative group">
                           <img src={img} alt={`Property ${idx + 1}`} className="rounded-lg w-full h-32 object-cover border border-green-200" />
                           <button
-                            type="button"
+                        type="button"
                             className="absolute top-1 right-1 bg-white/80 rounded-full p-1 shadow hover:bg-red-100"
-                            onClick={() => removeImage(idx)}
+                        onClick={() => removeImage(idx)}
                             aria-label="Remove image"
-                          >
+                      >
                             <X className="h-4 w-4 text-red-500" />
                           </button>
-                          {idx === 0 && (
+                      {idx === 0 && (
                             <span className="absolute bottom-1 left-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">Main</span>
                           )}
                         </div>
@@ -815,10 +815,10 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                           <img src={img} alt={`Preview ${idx + 1}`} className="rounded-lg w-full h-24 object-cover border border-green-200" />
                           {idx === 0 && (
                             <span className="absolute bottom-1 left-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">Main</span>
-                          )}
-                        </div>
+                    )}
+                  </div>
                       ))}
-                    </div>
+                </div>
                     <h3 className="font-semibold text-green-700 mt-4 mb-2">Seller Info</h3>
                     <p><strong>Name:</strong> {user?.full_name || user?.email}</p>
                     <p><strong>Email:</strong> {user?.email}</p>

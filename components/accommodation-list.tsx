@@ -93,74 +93,74 @@ export default function AccommodationList({ listings, isLoading }: Accommodation
       </div>
       {view === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {listings.map((listing) => (
-            <Card key={listing.id} className="overflow-hidden">
-              <div className="flex flex-col md:flex-row">
-                <div className="relative md:w-1/3">
-                  <img
-                    src={listing.image || "/placeholder.svg"}
-                    alt={listing.title}
-                    className="w-full h-48 md:h-full object-cover"
-                  />
-                  {listing.verified && (
-                    <Badge variant="secondary" className="absolute top-2 right-2 bg-primary text-primary-foreground">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Verified
-                    </Badge>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`absolute top-2 left-2 rounded-full bg-background/80 hover:bg-background ${
-                      favorites.includes(listing.id) ? "text-red-500" : "text-muted-foreground"
-                    }`}
-                    onClick={() => toggleFavorite(listing.id)}
-                  >
-                    <Heart className={`h-5 w-5 ${favorites.includes(listing.id) ? "fill-current" : ""}`} />
-                  </Button>
+      {listings.map((listing) => (
+        <Card key={listing.id} className="overflow-hidden">
+          <div className="flex flex-col md:flex-row">
+            <div className="relative md:w-1/3">
+              <img
+                src={listing.image || "/placeholder.svg"}
+                alt={listing.title}
+                className="w-full h-48 md:h-full object-cover"
+              />
+              {listing.verified && (
+                <Badge variant="secondary" className="absolute top-2 right-2 bg-primary text-primary-foreground">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Verified
+                </Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`absolute top-2 left-2 rounded-full bg-background/80 hover:bg-background ${
+                  favorites.includes(listing.id) ? "text-red-500" : "text-muted-foreground"
+                }`}
+                onClick={() => toggleFavorite(listing.id)}
+              >
+                <Heart className={`h-5 w-5 ${favorites.includes(listing.id) ? "fill-current" : ""}`} />
+              </Button>
+            </div>
+            <div className="p-4 md:w-2/3 flex flex-col">
+              <div className="mb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-lg">{listing.title}</h3>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      <span>{listing.address}</span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="ml-2">
+                    {listing.type}
+                  </Badge>
                 </div>
-                <div className="p-4 md:w-2/3 flex flex-col">
-                  <div className="mb-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold text-lg">{listing.title}</h3>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          <span>{listing.address}</span>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="ml-2">
-                        {listing.type}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 my-2">
-                    <div className="flex items-center">
-                      <Bed className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span className="text-sm">
-                        {listing.beds} {listing.beds > 1 ? "beds" : "bed"}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <Bath className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span className="text-sm">
-                        {listing.baths} {listing.baths > 1 ? "baths" : "bath"}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 mr-1 text-amber-500 fill-amber-500" />
-                      <span className="text-sm font-medium">{listing.rating}</span>
-                      <span className="text-xs text-muted-foreground ml-1">({listing.reviewCount})</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-1 my-2">
+              </div>
+              <div className="flex items-center gap-4 my-2">
+                <div className="flex items-center">
+                  <Bed className="h-4 w-4 mr-1 text-muted-foreground" />
+                  <span className="text-sm">
+                    {listing.beds} {listing.beds > 1 ? "beds" : "bed"}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <Bath className="h-4 w-4 mr-1 text-muted-foreground" />
+                  <span className="text-sm">
+                    {listing.baths} {listing.baths > 1 ? "baths" : "bath"}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 mr-1 text-amber-500 fill-amber-500" />
+                  <span className="text-sm font-medium">{listing.rating}</span>
+                  <span className="text-xs text-muted-foreground ml-1">({listing.reviewCount})</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1 my-2">
                     {listing.amenities.map((amenity, i) => {
                       const Icon = AMENITY_ICONS[amenity] || Home
                       return (
                         <Badge key={i} variant="secondary" className="text-xs flex items-center gap-1">
                           <Icon className="h-3 w-3 mr-1" />
-                          {amenity}
-                        </Badge>
+                    {amenity}
+                  </Badge>
                       )
                     })}
                   </div>
@@ -256,24 +256,24 @@ export default function AccommodationList({ listings, isLoading }: Accommodation
                       )
                     })}
                   </div>
-                  <div className="mt-auto pt-4 flex items-center justify-between">
-                    <div className="font-semibold text-lg">
-                      ${listing.price}
-                      <span className="text-xs text-muted-foreground">/{listing.priceUnit}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        Contact
-                      </Button>
-                      <Link href={`/accommodation/${listing.id}`}>
-                        <Button size="sm">View Details</Button>
-                      </Link>
-                    </div>
-                  </div>
+              <div className="mt-auto pt-4 flex items-center justify-between">
+                <div className="font-semibold text-lg">
+                  ${listing.price}
+                  <span className="text-xs text-muted-foreground">/{listing.priceUnit}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm">
+                    Contact
+                  </Button>
+                  <Link href={`/accommodation/${listing.id}`}>
+                    <Button size="sm">View Details</Button>
+                  </Link>
                 </div>
               </div>
-            </Card>
-          ))}
+            </div>
+          </div>
+        </Card>
+      ))}
         </div>
       )}
     </div>

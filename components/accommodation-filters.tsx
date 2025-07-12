@@ -124,8 +124,8 @@ export function AccommodationFilterForm({ value, onChange, onReset, showActions,
                   <Checkbox id={t.id} checked={value.types.includes(t.id)} onCheckedChange={() => toggleMulti("types", t.id)} />
                   <label htmlFor={t.id} className="text-sm font-medium flex items-center gap-1">
                     <t.icon className="h-4 w-4 mr-1" /> {t.label}
-                  </label>
-                </div>
+                </label>
+              </div>
               ))}
             </div>
           </AccordionContent>
@@ -139,8 +139,8 @@ export function AccommodationFilterForm({ value, onChange, onReset, showActions,
                   <Checkbox id={a.id} checked={value.amenities.includes(a.id)} onCheckedChange={() => toggleMulti("amenities", a.id)} />
                   <label htmlFor={a.id} className="text-sm font-medium flex items-center gap-1">
                     <a.icon className="h-4 w-4 mr-1" /> {a.label}
-                  </label>
-                </div>
+                </label>
+              </div>
               ))}
             </div>
           </AccordionContent>
@@ -154,8 +154,8 @@ export function AccommodationFilterForm({ value, onChange, onReset, showActions,
                   <Checkbox id={l.id} checked={value.locations.includes(l.id)} onCheckedChange={() => toggleMulti("locations", l.id)} />
                   <label htmlFor={l.id} className="text-sm font-medium flex items-center gap-1">
                     <l.icon className="h-4 w-4 mr-1" /> {l.label}
-                  </label>
-                </div>
+                </label>
+              </div>
               ))}
             </div>
           </AccordionContent>
@@ -255,8 +255,8 @@ export default function AccommodationFilters({ value, onChange, onReset, mobileS
                   <Checkbox id={t.id} checked={value.types.includes(t.id)} onCheckedChange={() => toggleMulti("types", t.id)} />
                   <label htmlFor={t.id} className="text-sm font-medium flex items-center gap-1">
                     <t.icon className="h-4 w-4 mr-1" /> {t.label}
-                  </label>
-                </div>
+                </label>
+              </div>
               ))}
             </div>
           </AccordionContent>
@@ -270,8 +270,8 @@ export default function AccommodationFilters({ value, onChange, onReset, mobileS
                   <Checkbox id={a.id} checked={value.amenities.includes(a.id)} onCheckedChange={() => toggleMulti("amenities", a.id)} />
                   <label htmlFor={a.id} className="text-sm font-medium flex items-center gap-1">
                     <a.icon className="h-4 w-4 mr-1" /> {a.label}
-                  </label>
-                </div>
+                </label>
+              </div>
               ))}
             </div>
           </AccordionContent>
@@ -285,8 +285,8 @@ export default function AccommodationFilters({ value, onChange, onReset, mobileS
                   <Checkbox id={l.id} checked={value.locations.includes(l.id)} onCheckedChange={() => toggleMulti("locations", l.id)} />
                   <label htmlFor={l.id} className="text-sm font-medium flex items-center gap-1">
                     <l.icon className="h-4 w-4 mr-1" /> {l.label}
-                  </label>
-                </div>
+                </label>
+              </div>
               ))}
             </div>
           </AccordionContent>
