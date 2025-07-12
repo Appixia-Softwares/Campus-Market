@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import { uploadFileToStorage } from "@/lib/firebase"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
+import confetti from "canvas-confetti"
 
 const amenitiesList = [
   "Wifi",
@@ -236,6 +237,11 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       toast({
         title: "Property Listed Successfully!",
         description: "Your accommodation has been added to our platform.",
+      })
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.7 },
       })
 
       // Reset form
@@ -782,11 +788,12 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h3 className="font-semibold text-green-700 mb-2">Property Info</h3>
+                    <p><strong>Type:</strong> {formData.propertyType === "other" ? formData.customPropertyType : propertyTypes.find(t => t.value === formData.propertyType)?.label}</p>
                     <p><strong>Title:</strong> {formData.title}</p>
-                    <p><strong>Type:</strong> {formData.propertyType}</p>
                     <p><strong>Description:</strong> {formData.description}</p>
                     <p><strong>Details:</strong> {formData.longDescription}</p>
                     <p><strong>Address:</strong> {formData.address}</p>
+                    <p><strong>University:</strong> {ZIM_UNIVERSITIES.find(u => u.id === formData.university)?.name || formData.university}</p>
                     <p><strong>Campus/Area:</strong> {formData.campusLocation}</p>
                     <p><strong>Price:</strong> ${formData.price}</p>
                     <p><strong>Beds:</strong> {formData.beds}</p>
@@ -804,7 +811,12 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                     <h3 className="font-semibold text-green-700 mb-2">Photos</h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {images.map((img, idx) => (
-                        <img key={idx} src={img} alt={`Preview ${idx + 1}`} className="rounded-lg w-full h-24 object-cover border border-green-200" />
+                        <div key={idx} className="relative">
+                          <img src={img} alt={`Preview ${idx + 1}`} className="rounded-lg w-full h-24 object-cover border border-green-200" />
+                          {idx === 0 && (
+                            <span className="absolute bottom-1 left-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">Main</span>
+                          )}
+                        </div>
                       ))}
                     </div>
                     <h3 className="font-semibold text-green-700 mt-4 mb-2">Seller Info</h3>
