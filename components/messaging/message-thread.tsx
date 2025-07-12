@@ -12,11 +12,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Send, ArrowLeft, ImageIcon, Paperclip, Smile } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context"
-import { useRealtime } from "@/lib/realtime-context"
-import { getMessages, sendMessage, markConversationAsRead } from "@/lib/api/messages"
+import { db } from '@/lib/firebase'
+import { collection, doc, getDoc, updateDoc, addDoc, onSnapshot, query, where, orderBy } from 'firebase/firestore'
 import { formatDistanceToNow } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
-import { useSupabaseClient } from "@supabase/auth-helpers-react"
 
 interface Message {
   id: string
@@ -37,70 +36,38 @@ export function MessageThread() {
   const router = useRouter()
   const { user } = useAuth()
   const { toast } = useToast()
-  const { subscribeToMessages } = useRealtime()
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [messageText, setMessageText] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const supabase = useSupabaseClient()
 
-  // Fetch messages
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (!id || !user) return
-
-      setLoading(true)
-      try {
-        const { data, error } = await getMessages(id)
-        if (error) throw error
-
-        setMessages(data as Message[])
-
-        // Mark messages as read
-        await markConversationAsRead(id, user.id)
-      } catch (error) {
-        console.error("Error fetching messages:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load messages. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchMessages()
-  }, [id, user, toast])
-
-  // Subscribe to new messages
+  // Fetch messages and subscribe to updates
   useEffect(() => {
     if (!id || !user) return
-
-    const unsubscribe = subscribeToMessages(id, async (payload) => {
-      const newMessage = payload.new as Message
-
-      // Fetch user details for the new message
-      const { data } = await supabase
-        .from("users")
-        .select("id, full_name, avatar_url")
-        .eq("id", newMessage.sender_id)
-        .single()
-
-      newMessage.users = data as any
-
-      setMessages((prev) => [...prev, newMessage])
-
-      // Mark as read if not from current user
-      if (newMessage.sender_id !== user.id) {
-        await markConversationAsRead(id, user.id)
-      }
+    setLoading(true)
+    // Listen for live updates
+    const q = query(collection(db, 'messages'), where('conversation_id', '==', id), orderBy('created_at', 'asc'))
+    const unsub = onSnapshot(q, async (snapshot) => {
+      const msgs = await Promise.all(snapshot.docs.map(async (docSnap) => {
+        const msg = docSnap.data() as Message
+        // Fetch user info for each message
+        const userDoc = await getDoc(doc(db, 'users', msg.sender_id))
+        msg.users = userDoc.exists() ? userDoc.data() as any : { full_name: 'Unknown', avatar_url: null }
+        return { ...msg, id: docSnap.id }
+      }))
+      setMessages(msgs)
+      setLoading(false)
+      // Mark as read if there are unread messages not from current user
+      msgs.forEach(async (msg) => {
+        if (!msg.read && msg.sender_id !== user.id) {
+          await updateDoc(doc(db, 'messages', msg.id), { read: true })
+        }
+      })
     })
-
-    return unsubscribe
-  }, [id, user, subscribeToMessages, supabase])
+    return () => unsub()
+  }, [id, user])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -110,18 +77,21 @@ export function MessageThread() {
   // Handle sending a message
   const handleSendMessage = async () => {
     if (!messageText.trim() || !user || !id) return
-
     setSending(true)
     try {
-      const { error } = await sendMessage({
+      await addDoc(collection(db, 'messages'), {
         conversation_id: id,
         sender_id: user.id,
         content: messageText.trim(),
         read: false,
+        created_at: new Date().toISOString(),
       })
-
-      if (error) throw error
-
+      // Update conversation last message
+      await updateDoc(doc(db, 'conversations', id), {
+        last_message: messageText.trim(),
+        last_message_time: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
       setMessageText("")
       textareaRef.current?.focus()
     } catch (error) {
