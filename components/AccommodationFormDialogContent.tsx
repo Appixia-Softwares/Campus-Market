@@ -14,6 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Home, MapPin, ImageIcon, X, User, Upload, Building, CheckCircle, AlertCircle, Check, Bed, Users, Wifi, ParkingCircle, Utensils, WashingMachine, Sparkles, ShieldCheck } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/lib/auth-context"
+import { uploadFileToStorage } from "@/lib/firebase"
 
 const amenitiesList = [
   "Wifi",
@@ -60,6 +62,9 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
   const [currentTab, setCurrentTab] = useState("basic")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
+  const { user } = useAuth()
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -84,13 +89,21 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     setSelectedAmenities((prev) => (prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity]))
   }
 
-  const handleImageUpload = () => {
-    const newImage = `/placeholder.svg?height=200&width=300&text=Image${images.length + 1}`
-    setImages((prev) => [...prev, newImage])
-    toast({
-      title: "Image Added",
-      description: "Photo has been added to your listing.",
-    })
+  const handleImageUpload = async (file: File) => {
+    setUploading(true)
+    setUploadProgress(0)
+    try {
+      const path = `accommodation-images/${user?.id}/${Date.now()}-${file.name}`
+      // Use uploadBytesResumable for progress (if available)
+      const url = await uploadFileToStorage(path, file)
+      setImages((prev) => [...prev, url])
+      toast({ title: "Image Uploaded", description: "Photo has been uploaded.", })
+    } catch (error) {
+      toast({ title: "Upload Failed", description: "Could not upload image.", variant: "destructive" })
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
   }
 
   const removeImage = (index: number) => {
@@ -121,17 +134,6 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       }
     }
 
-    if (tab === "contact") {
-      if (!formData.phone.trim()) missingFields.push("Phone Number")
-      if (!formData.email.trim()) missingFields.push("Email Address")
-
-      // Email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (formData.email && !emailRegex.test(formData.email)) {
-        missingFields.push("Valid Email Address")
-      }
-    }
-
     return {
       isValid: missingFields.length === 0,
       missingFields,
@@ -154,7 +156,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       return
     }
 
-    const tabs = ["basic", "details", "images", "contact"]
+    const tabs = ["basic", "details", "images", "preview"]
     const currentIndex = tabs.indexOf(currentTab)
     console.log("Current index:", currentIndex, "Next index:", currentIndex + 1)
 
@@ -170,7 +172,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
   }
 
   const handlePrevious = () => {
-    const tabs = ["basic", "details", "images", "contact"]
+    const tabs = ["basic", "details", "images", "preview"]
     const currentIndex = tabs.indexOf(currentTab)
     if (currentIndex > 0) {
       setCurrentTab(tabs[currentIndex - 1])
@@ -183,13 +185,11 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     // Validate all required tabs before submission
     const basicValidation = validateCurrentTab("basic")
     const detailsValidation = validateCurrentTab("details")
-    const contactValidation = validateCurrentTab("contact")
 
-    if (!basicValidation.isValid || !detailsValidation.isValid || !contactValidation.isValid) {
+    if (!basicValidation.isValid || !detailsValidation.isValid) {
       const allMissingFields = [
         ...basicValidation.missingFields,
         ...detailsValidation.missingFields,
-        ...contactValidation.missingFields,
       ]
 
       toast({
@@ -252,7 +252,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     { key: "basic", label: "Basic Info", icon: Home },
     { key: "details", label: "Details", icon: Bed },
     { key: "images", label: "Photos", icon: ImageIcon },
-    { key: "contact", label: "Contact", icon: User },
+    { key: "preview", label: "Preview", icon: CheckCircle },
   ]
 
   return (
@@ -297,14 +297,8 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
             <TabsTrigger value="images" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
               Photos
             </TabsTrigger>
-            <TabsTrigger
-              value="contact"
-              className="data-[state=active]:bg-green-600 data-[state=active]:text-white relative"
-            >
-              Contact Info
-              {!validateCurrentTab("contact").isValid && currentTab !== "contact" && (
-                <AlertCircle className="h-4 w-4 text-red-500 absolute -top-1 -right-1" />
-              )}
+            <TabsTrigger value="preview" className="data-[state=active]:bg-green-600 data-[state=active]:text-white relative">
+              Preview
             </TabsTrigger>
           </TabsList>
 
@@ -590,11 +584,12 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
               <CardContent className="space-y-6 p-6">
                 <div className="flex flex-col items-center">
                   <div className="w-full max-w-md border-2 border-dashed border-green-400 rounded-lg p-6 flex flex-col items-center justify-center bg-green-50 mb-4">
-                    <ImageIcon className="h-10 w-10 text-green-400 mb-2" />
-                    <span className="text-green-700 font-medium mb-2">Drag & drop images here</span>
-                    <Button variant="outline" onClick={handleImageUpload} type="button">
-                      <Upload className="h-4 w-4 mr-2" /> Add Image
-                    </Button>
+                    <input type="file" accept="image/*" multiple onChange={e => { if (e.target.files) Array.from(e.target.files).forEach(handleImageUpload) }} className="hidden" id="accom-image-upload" />
+                    <label htmlFor="accom-image-upload">
+                      <Button variant="outline" asChild disabled={uploading}>
+                        <span><Upload className="h-4 w-4 mr-2" /> {uploading ? `Uploading... (${uploadProgress}%)` : "Add Image"}</span>
+                      </Button>
+                    </label>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
                     {images.map((img, idx) => (
@@ -615,69 +610,49 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
             </Card>
           </TabsContent>
 
-          {/* CONTACT INFO TAB */}
-          <TabsContent value="contact" className="mt-6">
+          {/* PREVIEW TAB */}
+          <TabsContent value="preview" className="mt-6">
             <Card className="shadow-lg">
               <CardHeader className="bg-background">
                 <CardTitle className="flex items-center text-green-800">
-                  <User className="h-5 w-5 mr-2" />
-                  Contact Information
-                  {!validateCurrentTab("contact").isValid && <AlertCircle className="h-5 w-5 ml-2 text-red-500" />}
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  Preview & Confirm
                 </CardTitle>
-                <CardDescription>Provide your contact details so interested students can reach you</CardDescription>
+                <CardDescription>Review your listing before submitting</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-green-700 font-medium">
-                      Phone Number *
-                    </Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      placeholder="+263 77 123 4567"
-                      className={`border-green-200 focus:border-green-500 ${
-                        !formData.phone.trim() ? "border-red-300 focus:border-red-500" : ""
-                      }`}
-                      required
-                    />
-                    {!formData.phone.trim() && <p className="text-red-500 text-sm">Phone number is required</p>}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-green-700 mb-2">Property Info</h3>
+                    <p><strong>Title:</strong> {formData.title}</p>
+                    <p><strong>Type:</strong> {formData.propertyType}</p>
+                    <p><strong>Description:</strong> {formData.description}</p>
+                    <p><strong>Details:</strong> {formData.longDescription}</p>
+                    <p><strong>Address:</strong> {formData.address}</p>
+                    <p><strong>Campus/Area:</strong> {formData.campusLocation}</p>
+                    <p><strong>Price:</strong> ${formData.price}</p>
+                    <p><strong>Beds:</strong> {formData.beds}</p>
+                    <p><strong>Baths:</strong> {formData.baths}</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-green-700 font-medium">
-                      Email Address *
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      placeholder="your.email@example.com"
-                      className={`border-green-200 focus:border-green-500 ${
-                        !formData.email.trim() || (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
-                          ? "border-red-300 focus:border-red-500"
-                          : ""
-                      }`}
-                      required
-                    />
-                    {(!formData.email.trim() ||
-                      (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))) && (
-                      <p className="text-red-500 text-sm">Valid email address is required</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-green-800 mb-2">Contact Information Summary:</h4>
-                  <div className="text-sm text-green-700 space-y-1">
-                    <p>
-                      <strong>Phone:</strong> {formData.phone || "Not provided"}
-                    </p>
-                    <p>
-                      <strong>Email:</strong> {formData.email || "Not provided"}
-                    </p>
+                  <div>
+                    <h3 className="font-semibold text-green-700 mb-2">Amenities</h3>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {selectedAmenities.map((amenity) => (
+                        <span key={amenity} className="bg-green-200 text-green-800 px-2 py-1 rounded-md text-xs">
+                          {amenity}
+                        </span>
+                      ))}
+                    </div>
+                    <h3 className="font-semibold text-green-700 mb-2">Photos</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {images.map((img, idx) => (
+                        <img key={idx} src={img} alt={`Preview ${idx + 1}`} className="rounded-lg w-full h-24 object-cover border border-green-200" />
+                      ))}
+                    </div>
+                    <h3 className="font-semibold text-green-700 mt-4 mb-2">Seller Info</h3>
+                    <p><strong>Name:</strong> {user?.full_name || user?.email}</p>
+                    <p><strong>Email:</strong> {user?.email}</p>
+                    {user?.phone && <p><strong>Phone:</strong> {user.phone}</p>}
                   </div>
                 </div>
               </CardContent>
@@ -689,13 +664,13 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
           <Button variant="outline" type="button" onClick={handlePrevious} disabled={currentTab === "basic" || isSubmitting}>
             Back
           </Button>
-          {currentTab !== "contact" ? (
+          {currentTab !== "preview" ? (
             <Button type="button" onClick={handleNext} disabled={!isCurrentTabValid() || isSubmitting}>
               Next
             </Button>
           ) : (
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {isSubmitting ? "Submitting..." : "Confirm & Submit"}
             </Button>
           )}
         </div>
