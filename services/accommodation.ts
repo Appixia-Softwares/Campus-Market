@@ -1,26 +1,21 @@
-// Remove all supabase imports and usage. Replace with Firebase equivalents or remove.
+import { db } from '@/lib/firebase';
+import { collection, query, where, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
 
 export async function getRecentAccommodations(campusId?: string | number) {
   try {
-    let query = supabase
-      .from("accommodations")
-      .select("*")
-      .eq("is_available", true)
-      .order("created_at", { ascending: false })
-      .limit(10)
-
+    let q = query(
+      collection(db, 'accommodations'),
+      where('is_available', '==', true),
+      orderBy('created_at', 'desc'),
+    );
     if (campusId) {
-      query = query.eq("campus_id", campusId)
+      q = query(q, where('campus_id', '==', campusId));
     }
-
-    const { data, error } = await query
-
-    if (error) throw error
-
-    return data as Accommodation[]
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
-    console.error("Error fetching recent accommodations:", error)
-    return []
+    console.error('Error fetching recent accommodations:', error);
+    return [];
   }
 }
 
@@ -29,114 +24,98 @@ export async function getAccommodations({
   searchQuery,
   campusId,
 }: {
-  typeId?: string | number
-  searchQuery?: string
-  campusId?: string | number
+  typeId?: string | number;
+  searchQuery?: string;
+  campusId?: string | number;
 }) {
   try {
-    let query = supabase
-      .from("accommodations")
-      .select("*")
-      .eq("is_available", true)
-      .order("created_at", { ascending: false })
-
+    let q = query(
+      collection(db, 'accommodations'),
+      where('is_available', '==', true),
+      orderBy('created_at', 'desc'),
+    );
     if (typeId) {
-      query = query.eq("type_id", typeId)
+      q = query(q, where('type_id', '==', typeId));
     }
-
     if (campusId) {
-      query = query.eq("campus_id", campusId)
+      q = query(q, where('campus_id', '==', campusId));
     }
-
+    // Firestore doesn't support OR queries easily, so filter after fetch
+    const snapshot = await getDocs(q);
+    let results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     if (searchQuery) {
-      query = query.or(`title.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`)
+      const sq = searchQuery.toLowerCase();
+      results = results.filter(
+        (item: any) =>
+          item.title?.toLowerCase().includes(sq) ||
+          item.address?.toLowerCase().includes(sq)
+      );
     }
-
-    const { data, error } = await query
-
-    if (error) throw error
-
-    return data as Accommodation[]
+    return results;
   } catch (error) {
-    console.error("Error fetching accommodations:", error)
-    return []
+    console.error('Error fetching accommodations:', error);
+    return [];
   }
 }
 
 export async function getAccommodationById(id: string | number) {
   try {
-    const { data, error } = await supabase
-      .from("accommodations")
-      .select(`
-        *,
-        landlord:user_id (
-          id,
-          first_name,
-          last_name,
-          avatar_url,
-          is_verified
-        )
-      `)
-      .eq("id", id)
-      .single()
-
-    if (error) throw error
-
-    return data as Accommodation & { landlord: any }
+    const ref = doc(db, 'accommodations', String(id));
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() };
   } catch (error) {
-    console.error("Error fetching accommodation:", error)
-    return null
+    console.error('Error fetching accommodation:', error);
+    return null;
   }
 }
 
 export async function getAccommodationTypes() {
   try {
-    const { data, error } = await supabase.from("accommodation_types").select("*").order("name")
-
-    if (error) throw error
-
-    return data as AccommodationType[]
+    const q = query(collection(db, 'accommodation_types'), orderBy('name'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
-    console.error("Error fetching accommodation types:", error)
-    return []
+    console.error('Error fetching accommodation types:', error);
+    return [];
   }
 }
 
-export async function createAccommodation(accommodation: Partial<Accommodation>) {
+export async function createAccommodation(accommodation: any) {
   try {
-    const { data, error } = await supabase.from("accommodations").insert(accommodation).select().single()
-
-    if (error) throw error
-
-    return data as Accommodation
+    const docRef = await addDoc(collection(db, 'accommodations'), {
+      ...accommodation,
+      created_at: new Date(),
+      updated_at: new Date(),
+      is_available: true,
+    });
+    const snap = await getDoc(docRef);
+    return { id: docRef.id, ...snap.data() };
   } catch (error) {
-    console.error("Error creating accommodation:", error)
-    throw error
+    console.error('Error creating accommodation:', error);
+    throw error;
   }
 }
 
-export async function updateAccommodation(id: string | number, updates: Partial<Accommodation>) {
+export async function updateAccommodation(id: string | number, updates: any) {
   try {
-    const { data, error } = await supabase.from("accommodations").update(updates).eq("id", id).select().single()
-
-    if (error) throw error
-
-    return data as Accommodation
+    const ref = doc(db, 'accommodations', String(id));
+    await updateDoc(ref, { ...updates, updated_at: new Date() });
+    const snap = await getDoc(ref);
+    return { id: snap.id, ...snap.data() };
   } catch (error) {
-    console.error("Error updating accommodation:", error)
-    throw error
+    console.error('Error updating accommodation:', error);
+    throw error;
   }
 }
 
 export async function deleteAccommodation(id: string | number) {
   try {
-    const { error } = await supabase.from("accommodations").delete().eq("id", id)
-
-    if (error) throw error
-
-    return true
+    const ref = doc(db, 'accommodations', String(id));
+    await deleteDoc(ref);
+    return true;
   } catch (error) {
-    console.error("Error deleting accommodation:", error)
-    throw error
+    console.error('Error deleting accommodation:', error);
+    throw error;
   }
 }
