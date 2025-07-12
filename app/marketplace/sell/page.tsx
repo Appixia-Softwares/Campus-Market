@@ -433,16 +433,18 @@ function DetailsStep({ category, form, onNext, user }: any) {
     formState: { errors, isValid },
     watch,
     trigger,
+    reset,
   } = useForm({
-    mode: "onChange",
+    mode: "all",
     reValidateMode: "onChange",
     defaultValues: fields.reduce((acc, f) => ({ ...acc, [f.name]: form?.[f.name] || "" }), {}),
   });
 
-  // Force validation when fields or category change
+  // Always trigger validation on mount, category, or defaultValues change
   useEffect(() => {
+    reset(fields.reduce((acc, f) => ({ ...acc, [f.name]: form?.[f.name] || "" }), {}));
     trigger();
-  }, [category, trigger]);
+  }, [category, form, reset, trigger]);
 
   const onSubmit = (data: any) => {
     onNext(data);
@@ -557,7 +559,9 @@ function PreviewStep({ data, onNext, onBack }: any) {
                     key={i}
                     className={`h-2 w-6 rounded-full ${i === current ? "bg-primary" : "bg-muted-foreground/30"}`}
                     onClick={() => setCurrent(i)}
-                  />
+                  >
+                    <span className="sr-only">Go to image {i + 1}</span>
+                  </button>
                 ))}
               </div>
             )}
@@ -623,8 +627,8 @@ function ReviewStep({ data, onSubmit, onBack, isSubmitting, submitError, submitS
           ))}
         </div>
       </div>
-      {submitError && <div className="text-red-500 text-sm">{submitError}</div>}
-      {submitSuccess && <div className="text-green-600 text-sm font-medium">{submitSuccess}</div>}
+      {submitError ? <div className="text-red-500 text-sm">{submitError}</div> : null}
+      {submitSuccess ? <div className="text-green-600 text-sm font-medium">{submitSuccess}</div> : null}
       <div className="flex justify-between pt-2 gap-2">
         <button type="button" className={outlineBtn} onClick={onBack} disabled={isSubmitting}>Back</button>
         <button type="button" className={primaryBtn} onClick={onSubmit} disabled={isSubmitting}>
