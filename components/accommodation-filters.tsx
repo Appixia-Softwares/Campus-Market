@@ -44,6 +44,9 @@ export interface AccommodationFiltersProps {
   onChange: (next: AccommodationFilterState) => void
   onReset?: () => void
   mobileSheet?: boolean
+  showActions?: boolean
+  onApply?: () => void
+  onCancel?: () => void
 }
 
 export function AccommodationFiltersTrigger({ onClick, badgeCount }: { onClick?: () => void; badgeCount?: number }) {
@@ -55,7 +58,7 @@ export function AccommodationFiltersTrigger({ onClick, badgeCount }: { onClick?:
   )
 }
 
-export default function AccommodationFilters({ value, onChange, onReset, mobileSheet }: AccommodationFiltersProps) {
+export default function AccommodationFilters({ value, onChange, onReset, mobileSheet, showActions, onApply, onCancel }: AccommodationFiltersProps) {
   // Helper to update a field
   const setField = (field: keyof AccommodationFilterState, val: any) => {
     onChange({ ...value, [field]: val })
@@ -184,6 +187,12 @@ export default function AccommodationFilters({ value, onChange, onReset, mobileS
           Reset
         </Button>
       </div>
+      {showActions && (
+        <div className="flex gap-2 mt-4">
+          <Button onClick={onApply} className="w-full">Apply Filters</Button>
+          <Button variant="outline" onClick={onCancel} className="w-full">Cancel</Button>
+        </div>
+      )}
     </div>
   )
 

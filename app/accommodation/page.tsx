@@ -117,9 +117,11 @@ const DEFAULT_FILTERS: AccommodationFilterState = {
 
 export default function AccommodationPage() {
   const [filters, setFilters] = useState<AccommodationFilterState>(DEFAULT_FILTERS)
+  const [filterDraft, setFilterDraft] = useState<AccommodationFilterState>(DEFAULT_FILTERS)
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [showFilters, setShowFilters] = useState(false)
 
   // Filtering logic
   const filteredListings = useMemo(() => {
@@ -146,7 +148,10 @@ export default function AccommodationPage() {
   // Responsive: use bottom sheet for filters on mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
-  const handleReset = () => setFilters(DEFAULT_FILTERS)
+  const handleReset = () => {
+    setFilters(DEFAULT_FILTERS)
+    setFilterDraft(DEFAULT_FILTERS)
+  }
 
   // Active filter badges (reuse logic from filters)
   const activeBadges = [
@@ -156,6 +161,19 @@ export default function AccommodationPage() {
     filters.verifiedOnly ? "Verified Only" : undefined,
     (filters.price[0] > 0 || filters.price[1] < 1000) ? `$${filters.price[0]}-${filters.price[1]}` : undefined,
   ].filter(Boolean)
+
+  // Filter popover/sheet logic
+  const handleOpenFilters = () => {
+    setFilterDraft(filters)
+    setShowFilters(true)
+  }
+  const handleApplyFilters = () => {
+    setFilters(filterDraft)
+    setShowFilters(false)
+  }
+  const handleCancelFilters = () => {
+    setShowFilters(false)
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -192,12 +210,10 @@ export default function AccommodationPage() {
                 onKeyDown={e => e.key === "Enter" && e.preventDefault()}
               />
             </div>
-            <AccommodationFilters
-              value={filters}
-              onChange={setFilters}
-              onReset={handleReset}
-              mobileSheet={isMobile}
-            />
+            {/* Filter trigger button */}
+            <div>
+              <AccommodationFiltersTrigger onClick={handleOpenFilters} badgeCount={activeBadges.length} />
+            </div>
           </div>
           {/* Active filter badges */}
           {activeBadges.length > 0 && (
@@ -233,7 +249,19 @@ export default function AccommodationPage() {
             </div>
           )}
         </div>
-        {/* Sort and view toggle */}
+        {/* Filter popover/sheet (controlled) */}
+        {showFilters && (
+          <AccommodationFilters
+            value={filterDraft}
+            onChange={setFilterDraft}
+            onReset={() => setFilterDraft(DEFAULT_FILTERS)}
+            mobileSheet={isMobile}
+            showActions
+            onApply={handleApplyFilters}
+            onCancel={handleCancelFilters}
+          />
+        )}
+        {/* Sort and view toggle (only one instance) */}
         <div className="flex items-center justify-between mb-4">
           <div className="text-muted-foreground">
             Showing <span className="font-medium text-foreground">{filteredListings.length}</span> results
