@@ -17,68 +17,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Smartphone, Shirt, BookOpen, Package, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
+import { CATEGORY_META, CATEGORY_CONFIG, CategoryKey, CategoryField } from "@/lib/category-config";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
-
-// --- Category Config & Types ---
-const CATEGORY_META = [
-  {
-    key: "electronics",
-    label: "Electronics",
-    description: "Phones, laptops, gadgets, and more.",
-    icon: Smartphone,
-  },
-  {
-    key: "fashion",
-    label: "Fashion",
-    description: "Clothing, shoes, accessories.",
-    icon: Shirt,
-  },
-  {
-    key: "books",
-    label: "Books",
-    description: "Textbooks, novels, study guides.",
-    icon: BookOpen,
-  },
-  {
-    key: "other",
-    label: "Other",
-    description: "Anything else you want to sell.",
-    icon: Package,
-  },
-] as const;
-
-type CategoryKey = typeof CATEGORY_META[number]["key"];
-type CategoryField = {
-  name: string;
-  label: string;
-  placeholder: string;
-  type?: string;
-  required?: boolean;
-};
-
-const CATEGORY_CONFIG: Record<CategoryKey, CategoryField[]> = {
-  electronics: [
-    { name: 'brand', label: 'Brand', placeholder: 'e.g. Apple, Samsung', type: 'text' },
-    { name: 'model', label: 'Model', placeholder: 'e.g. iPhone 14 Pro', type: 'text' },
-    { name: 'specs', label: 'Specs', placeholder: 'e.g. 256GB, 8GB RAM, M1 Chip', type: 'text' },
-  ],
-  fashion: [
-    { name: 'brand', label: 'Brand', placeholder: 'e.g. Nike, Zara', type: 'text' },
-    { name: 'size', label: 'Size', placeholder: 'e.g. M, 32, 8 UK', type: 'text' },
-    { name: 'color', label: 'Color', placeholder: 'e.g. Black, Red', type: 'text' },
-  ],
-  books: [
-    { name: 'brand', label: 'Publisher', placeholder: 'e.g. Pearson', type: 'text' },
-    { name: 'model', label: 'Edition', placeholder: 'e.g. 2nd Edition', type: 'text' },
-  ],
-  other: [],
-};
 
 // --- Stepper/Progress Indicator ---
 function SellStepper({ step }: { step: 1 | 2 }) {

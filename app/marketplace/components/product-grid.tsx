@@ -22,6 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Laptop, Shirt, Home, Book, Dumbbell, Car, Baby, Apple, Watch, Camera, Gamepad2, PawPrint, Sparkles, Briefcase, Globe, Gift, Music, FlaskConical, Wrench, Gem, BedDouble, Bike, Tv, Phone, Wallet, ShoppingBag, Package, Cake } from "lucide-react";
 // Import local university data
 import ZIM_UNIVERSITIES from "@/utils/schools_data";
+import { CATEGORY_META } from "@/lib/category-config";
 
 interface ProductGridProps {
   products: any[]
@@ -78,6 +79,11 @@ const categoryIconMap: Record<string, React.ElementType> = {
 // Helper to get university by id
 function getUniversityById(id: string) {
   return ZIM_UNIVERSITIES.find(u => u.id === id);
+}
+// Helper to get category meta by id or name
+function getCategoryMeta(keyOrName: string) {
+  const key = keyOrName?.toLowerCase();
+  return CATEGORY_META.find(cat => cat.key === key || cat.label.toLowerCase() === key);
 }
 
 export function ProductGrid({
@@ -307,31 +313,28 @@ export function ProductGrid({
 
                   {/* University Badge */}
                   {(() => {
-                    // Prefer Firestore university, fallback to local
-                    let uni = product.universities && product.universities.name !== "Unknown University"
-                      ? product.universities
-                      : getUniversityById(product.university_id);
+                    const university = getUniversityById(product.university_id);
                     return (
                       <div className="absolute top-2 right-2 z-10">
                         <Badge variant="secondary" className="bg-green-100 text-green-700 flex items-center gap-1 px-3 py-1 rounded-full shadow-md">
                           <MapPin className="h-4 w-4 mr-1" />
-                          {uni ? uni.name : "Unknown University"}
+                          {university ? university.name : "Unknown University"}
                         </Badge>
                       </div>
                     );
                   })()}
 
                   {/* Category Badge */}
-                  {product.product_categories && (
-                    <div className="absolute bottom-2 left-2 z-10">
-                      <Badge variant="secondary" className="bg-primary/90 text-primary-foreground flex items-center gap-1 px-3 py-1 rounded-full shadow-md">
-                        {categoryIconMap[product.product_categories.name] && (
-                          React.createElement(categoryIconMap[product.product_categories.name], { className: "h-4 w-4 mr-1" })
-                        )}
-                        {product.product_categories.name}
-                      </Badge>
-                    </div>
-                  )}
+                  {(() => {
+                    const category = getCategoryMeta(product.category_id || product.category);
+                    return (
+                      <div className="absolute bottom-2 left-2 z-10">
+                        <Badge variant="secondary" className="bg-primary/90 text-primary-foreground flex items-center gap-1 px-3 py-1 rounded-full shadow-md">
+                          {category?.icon && <category.icon className="h-4 w-4 mr-1" />} {category ? category.label : "Uncategorized"}
+                        </Badge>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="flex-1">

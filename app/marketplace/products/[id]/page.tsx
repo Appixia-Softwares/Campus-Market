@@ -35,7 +35,9 @@ import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, increment, addDoc, serverTimestamp, DocumentReference } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import { categoryFieldConfig } from "@/app/marketplace/sell/page";
+// Import local university data
+import ZIM_UNIVERSITIES from "@/utils/schools_data";
+import { CATEGORY_CONFIG, CategoryKey, CategoryField } from "@/lib/category-config";
 
 interface ProductDetails {
   id: string
@@ -125,6 +127,20 @@ const formatDate = (date: any) => {
   if (!date) return 'Unknown date'
   if (date.toDate) return date.toDate()
   return new Date(date)
+}
+
+// Helper to get university by id
+function getUniversityById(id: string) {
+  return ZIM_UNIVERSITIES.find(u => u.id === id);
+}
+
+// Helper to map display name to config key
+function getCategoryKey(name: string): CategoryKey | undefined {
+  const key = name?.toLowerCase();
+  if (["electronics", "fashion", "books", "other"].includes(key)) {
+    return key as CategoryKey;
+  }
+  return undefined;
 }
 
 export default function ProductDetailsPage() {
@@ -793,17 +809,20 @@ export default function ProductDetailsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Dynamically render all fields for this category */}
-                  {categoryFieldConfig[product.product_categories.name]?.map((field: any) => {
-                    const value = product[field.name];
-                    if (!value || field.name === "title" || field.name === "price" || field.name === "description") return null;
-                    return (
-                      <div key={field.name} className="flex flex-col">
-                        <span className="font-medium text-muted-foreground">{field.label}</span>
-                        <span className="text-base">{value}</span>
-                      </div>
-                    );
-                  })}
+                  {(() => {
+                    const categoryKey = getCategoryKey(product.product_categories?.name);
+                    if (!categoryKey) return <span className="text-muted-foreground">No extra details for this category.</span>;
+                    return CATEGORY_CONFIG[categoryKey].map((field: CategoryField) => {
+                      const value = (product as Record<string, any>)[field.name];
+                      if (!value || ["title", "price", "description"].includes(field.name)) return null;
+                      return (
+                        <div key={field.name} className="flex flex-col">
+                          <span className="font-medium text-muted-foreground">{field.label}</span>
+                          <span className="text-base">{value}</span>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </CardContent>
             </Card>
@@ -879,9 +898,21 @@ export default function ProductDetailsPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-2">
-                  <span className="font-medium">{product.universities.name}</span>
-                  <span className="text-muted-foreground">{product.universities.location}</span>
-                  <Badge variant="secondary" className="w-fit mt-1">{product.universities.type}</Badge>
+                  <span className="font-medium">{
+                    (product.universities && product.universities.name !== "Unknown University")
+                      ? product.universities.name
+                      : (getUniversityById(product.users.university_id)?.name || "Unknown University")
+                  }</span>
+                  <span className="text-muted-foreground">{
+                    (product.universities && product.universities.name !== "Unknown University")
+                      ? product.universities.location
+                      : (getUniversityById(product.users.university_id)?.location || "Unknown")
+                  }</span>
+                  <Badge variant="secondary" className="w-fit mt-1">{
+                    (product.universities && product.universities.name !== "Unknown University")
+                      ? product.universities.type
+                      : (getUniversityById(product.users.university_id)?.type || "Unknown")
+                  }</Badge>
                 </div>
               </CardContent>
             </Card>
@@ -1062,7 +1093,7 @@ export default function ProductDetailsPage() {
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground mb-1">Category</h4>
                   <p className="flex items-center gap-2">
-                    {product.product_categories.icon} {product.product_categories.name}
+                    {(product.product_categories && product.product_categories.icon) ? product.product_categories.icon : null} {product.product_categories && product.product_categories.name ? product.product_categories.name : "Uncategorized"}
                   </p>
                 </div>
                 <div>
@@ -1090,7 +1121,11 @@ export default function ProductDetailsPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground mb-1">University</h4>
-                  <p>{product.universities.name}</p>
+                  <p>{
+                    (product.universities && product.universities.name !== "Unknown University")
+                      ? product.universities.name
+                      : (getUniversityById(product.users.university_id)?.name || "Unknown University")
+                  }</p>
                 </div>
               </div>
             </CardContent>
