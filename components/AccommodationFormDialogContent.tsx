@@ -16,6 +16,7 @@ import { Home, MapPin, ImageIcon, X, User, Upload, Building, CheckCircle, AlertC
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import { uploadFileToStorage } from "@/lib/firebase"
+import ZIM_UNIVERSITIES from "@/utils/schools_data"
 
 const amenitiesList = [
   "Wifi",
@@ -40,7 +41,19 @@ const amenitiesList = [
   "Smoking Allowed",
 ]
 
-const propertyTypes = ["studio", "apartment", "house", "room", "shared-room", "dormitory"]
+const propertyTypes = [
+  { value: "house", label: "House" },
+  { value: "cottage", label: "Cottage" },
+  { value: "flat", label: "Flat" },
+  { value: "apartment", label: "Apartment" },
+  { value: "boarding_house", label: "Boarding House" },
+  { value: "hostel", label: "Hostel/Dormitory" },
+  { value: "single_room", label: "Full Room (Single)" },
+  { value: "2_sharing", label: "Room - 2 Sharing" },
+  { value: "3_sharing", label: "Room - 3 Sharing" },
+  { value: "4_sharing", label: "Room - 4 Sharing" },
+  { value: "other", label: "Other (specify)" }
+];
 
 interface FormData {
   title: string
@@ -48,12 +61,14 @@ interface FormData {
   description: string
   longDescription: string
   address: string
+  university: string
   campusLocation: string
   price: string
   beds: string
   baths: string
   phone: string
   email: string
+  customPropertyType?: string; // Added for custom property type
 }
 
 export default function AccommodationFormDialogContent({ onSuccess }: { onSuccess?: () => void }) {
@@ -73,6 +88,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     description: "",
     longDescription: "",
     address: "",
+    university: user?.university_id || "",
     campusLocation: "",
     price: "",
     beds: "",
@@ -124,6 +140,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       if (!formData.description.trim()) missingFields.push("Short Description")
       if (!formData.longDescription.trim()) missingFields.push("Detailed Description")
       if (!formData.address.trim()) missingFields.push("Full Address")
+      if (!formData.university) missingFields.push("University")
       if (!formData.campusLocation) missingFields.push("Campus/Area")
     }
 
@@ -201,6 +218,15 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       return
     }
 
+    if (images.length < 3) {
+      toast({
+        title: "Not Enough Images",
+        description: "You must upload at least three images to list your property.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -219,6 +245,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
         description: "",
         longDescription: "",
         address: "",
+        university: user?.university_id || "",
         campusLocation: "",
         price: "",
         beds: "",
@@ -254,6 +281,92 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     { key: "images", label: "Photos", icon: ImageIcon },
     { key: "preview", label: "Preview", icon: CheckCircle },
   ]
+
+  // Expanded mapping for Zimbabwe universities
+  const UNIVERSITY_CAMPUSES: Record<string, string[]> = {
+    uz: [
+      "Mount Pleasant (Main Campus)",
+      "College of Health Sciences",
+      "City Campus",
+      "Faculty of Engineering",
+      "Faculty of Law",
+      "Faculty of Education",
+      "Faculty of Science",
+      "Faculty of Social Studies",
+      "Faculty of Arts",
+      "Faculty of Agriculture",
+      "Faculty of Commerce",
+      "Faculty of Veterinary Science"
+    ],
+    nust: [
+      "Main Campus (Ascot, Bulawayo)",
+      "Extension Campus (City Center, Bulawayo)"
+    ],
+    msu: [
+      "Gweru Main Campus",
+      "Zvishavane Campus",
+      "Harare Campus",
+      "Mutare Campus"
+    ],
+    gzu: [
+      "Masvingo Main Campus",
+      "Mashava Campus",
+      "City Campus"
+    ],
+    chu: [
+      "Chinhoyi Main Campus"
+    ],
+    bindura: [
+      "Bindura Main Campus"
+    ],
+    lsz: [
+      "Lupane Main Campus"
+    ],
+    marondera: [
+      "Main Campus"
+    ],
+    gwanda: [
+      "Epoch Mine Campus"
+    ],
+    manicaland: [
+      "Fern Valley Campus",
+      "Mutare City Campus"
+    ],
+    hit: [
+      "Main Campus (Harare)"
+    ],
+    wua: [
+      "Harare Campus",
+      "Marondera Campus"
+    ],
+    african: [
+      "Mutare Campus"
+    ],
+    solusi: [
+      "Bulawayo Campus"
+    ],
+    zou: [
+      "Harare Regional Campus",
+      "Bulawayo Regional Campus",
+      "Mutare Regional Campus",
+      "Gweru Regional Campus",
+      "Masvingo Regional Campus",
+      "Chinhoyi Regional Campus"
+    ],
+    reformed: [
+      "Masvingo Campus"
+    ],
+    cuz: [
+      "Harare Campus"
+    ],
+    zsm: [
+      "Bulawayo Campus"
+    ],
+    // Add more as needed...
+  };
+
+  const mappedCampuses = formData.university && UNIVERSITY_CAMPUSES[formData.university];
+  const campusOptions = mappedCampuses && mappedCampuses.length > 0 ? mappedCampuses : null;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -335,23 +448,29 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                     <Label className="text-green-700 font-medium">Property Type *</Label>
                     <Select
                       value={formData.propertyType}
-                      onValueChange={(value) => handleInputChange("propertyType", value)}
+                      onValueChange={value => {
+                        handleInputChange("propertyType", value);
+                        if (value !== "other") handleInputChange("customPropertyType", "");
+                      }}
                     >
-                      <SelectTrigger
-                        className={`border-green-200 focus:border-green-500 ${
-                          !formData.propertyType ? "border-red-300 focus:border-red-500" : ""
-                        }`}
-                      >
+                      <SelectTrigger className={`border-green-200 focus:border-green-500 ${!formData.propertyType ? "border-red-300 focus:border-red-500" : ""}`}>
                         <SelectValue placeholder="Select property type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {propertyTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type.charAt(0).toUpperCase() + type.slice(1).replace("-", " ")}
-                          </SelectItem>
+                        {propertyTypes.map(type => (
+                          <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    {formData.propertyType === "other" && (
+                      <Input
+                        value={formData.customPropertyType || ""}
+                        onChange={e => handleInputChange("customPropertyType", e.target.value)}
+                        placeholder="Specify property type"
+                        className="border-green-200 focus:border-green-500 mt-2"
+                        required
+                      />
+                    )}
                     {!formData.propertyType && <p className="text-red-500 text-sm">Property type is required</p>}
                   </div>
                 </div>
@@ -425,29 +544,51 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                       {!formData.address.trim() && <p className="text-red-500 text-sm">Full address is required</p>}
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-green-700 font-medium">Campus/Area *</Label>
+                      <Label className="text-green-700 font-medium">University *</Label>
                       <Select
-                        value={formData.campusLocation}
-                        onValueChange={(value) => handleInputChange("campusLocation", value)}
+                        value={formData.university}
+                        onValueChange={value => setFormData(prev => ({ ...prev, university: value, campusLocation: "" }))}
                       >
-                        <SelectTrigger
-                          className={`border-green-200 focus:border-green-500 ${
-                            !formData.campusLocation ? "border-red-300 focus:border-red-500" : ""
-                          }`}
-                        >
-                          <SelectValue placeholder="Select campus area" />
+                        <SelectTrigger className={`border-green-200 focus:border-green-500 ${!formData.university ? "border-red-300 focus:border-red-500" : ""}`}>
+                          <SelectValue placeholder="Select university" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="main-campus">Main Campus</SelectItem>
-                          <SelectItem value="north-campus">North Campus</SelectItem>
-                          <SelectItem value="south-campus">South Campus</SelectItem>
-                          <SelectItem value="downtown">Downtown</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          {ZIM_UNIVERSITIES.filter(u => u.type === "university").map(u => (
+                            <SelectItem key={u.id} value={u.id}>
+                              {u.name} ({u.location})
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
-                      {!formData.campusLocation && (
-                        <p className="text-red-500 text-sm">Campus/Area selection is required</p>
+                      {!formData.university && <p className="text-red-500 text-sm">University selection is required</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-green-700 font-medium">Campus/Area *</Label>
+                      {campusOptions ? (
+                        <Select
+                          value={formData.campusLocation}
+                          onValueChange={value => setFormData(prev => ({ ...prev, campusLocation: value }))}
+                          disabled={!formData.university}
+                        >
+                          <SelectTrigger className={`border-green-200 focus:border-green-500 ${!formData.campusLocation ? "border-red-300 focus:border-red-500" : ""}`}>
+                            <SelectValue placeholder="Select campus/area" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {campusOptions.map(option => (
+                              <SelectItem key={option} value={option}>{option}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          value={formData.campusLocation}
+                          onChange={e => setFormData(prev => ({ ...prev, campusLocation: e.target.value }))}
+                          placeholder="Enter campus or area name"
+                          className={`border-green-200 focus:border-green-500 ${!formData.campusLocation ? "border-red-300 focus:border-red-500" : ""}`}
+                          disabled={!formData.university}
+                        />
                       )}
+                      {!formData.campusLocation && <p className="text-red-500 text-sm">Campus/Area selection is required</p>}
                     </div>
                   </div>
                 </div>
@@ -583,28 +724,45 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
               </CardHeader>
               <CardContent className="space-y-6 p-6">
                 <div className="flex flex-col items-center">
-                  <div className="w-full max-w-md border-2 border-dashed border-green-400 rounded-lg p-6 flex flex-col items-center justify-center bg-green-50 mb-4">
+                  {/* Instructions */}
+                  <div className="mb-4 text-center">
+                    <p className="text-green-400 font-medium">You must upload at least <span className="font-bold">3 images</span> to list your property.</p>
+                    <p className="text-xs text-muted-foreground">First image will be the main photo. Recommended: 1200x800px, JPG/PNG/WebP.</p>
+                  </div>
+                  {/* Upload area */}
+                  <label htmlFor="accom-image-upload" className="w-full max-w-md cursor-pointer border-2 border-dashed border-green-400 rounded-lg p-6 flex flex-col items-center justify-center bg-green-50 hover:bg-green-100 focus-within:ring-2 focus-within:ring-green-400 transition-all mb-4 outline-none">
+                    <ImageIcon className="h-10 w-10 text-green-400 mb-2" />
+                    <span className="text-green-700 font-medium mb-2">Drag & drop or click to upload</span>
+                    <Button variant="default" asChild tabIndex={0}>
+                      <span><Upload className="h-4 w-4 mr-2" /> Add Image</span>
+                    </Button>
                     <input type="file" accept="image/*" multiple onChange={e => { if (e.target.files) Array.from(e.target.files).forEach(handleImageUpload) }} className="hidden" id="accom-image-upload" />
-                    <label htmlFor="accom-image-upload">
-                      <Button variant="outline" asChild disabled={uploading}>
-                        <span><Upload className="h-4 w-4 mr-2" /> {uploading ? `Uploading... (${uploadProgress}%)` : "Add Image"}</span>
-                      </Button>
-                    </label>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
-                    {images.map((img, idx) => (
-                      <div key={idx} className="relative group">
-                        <img src={img} alt={`Property ${idx + 1}`} className="rounded-lg w-full h-32 object-cover border border-green-200" />
-                        <button
-                          type="button"
-                          className="absolute top-1 right-1 bg-white/80 rounded-full p-1 shadow hover:bg-red-100"
-                          onClick={() => removeImage(idx)}
-                        >
-                          <X className="h-4 w-4 text-red-500" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  </label>
+                  {/* Image previews */}
+                  {images.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-2">
+                      {images.map((img, idx) => (
+                        <div key={idx} className="relative group">
+                          <img src={img} alt={`Property ${idx + 1}`} className="rounded-lg w-full h-32 object-cover border border-green-200" />
+                          <button
+                            type="button"
+                            className="absolute top-1 right-1 bg-white/80 rounded-full p-1 shadow hover:bg-red-100"
+                            onClick={() => removeImage(idx)}
+                            aria-label="Remove image"
+                          >
+                            <X className="h-4 w-4 text-red-500" />
+                          </button>
+                          {idx === 0 && (
+                            <span className="absolute bottom-1 left-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">Main</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* Validation warning if less than 3 images */}
+                  {images.length < 3 && (
+                    <div className="mt-2 text-red-500 text-sm font-medium">You must upload at least three images to continue.</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -676,7 +834,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
         </div>
 
         {/* Debug info (remove in production) */}
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg text-sm">
+        <div className="mt-4 p-4 bg-background text-green-200 rounded-lg text-xs opacity-80">
           <p>
             <strong>Current Tab:</strong> {currentTab}
           </p>
