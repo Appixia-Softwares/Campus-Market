@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ShoppingBag, MessageSquare, Plus, Eye, Heart, TrendingUp, DollarSign } from "lucide-react"
+import { ShoppingBag, MessageSquare, Plus, Eye, Heart, TrendingUp, DollarSign, Home } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/components/ui/use-toast"
@@ -90,6 +90,20 @@ interface QuickAction {
   color: string
 }
 
+// Add Accommodation type
+interface Accommodation {
+  id: string
+  title: string
+  price: number
+  status?: string
+  views?: number
+  created_at?: string
+  images?: string[]
+  propertyType?: string
+  campusLocation?: string
+  university?: string
+}
+
 export default function DashboardClientPage() {
   const { user } = useAuth()
   const { toast } = useToast()
@@ -107,6 +121,7 @@ export default function DashboardClientPage() {
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [showProfileModal, setShowProfileModal] = useState(false)
+  const [accommodations, setAccommodations] = useState<Accommodation[]>([])
 
   // Profile completion logic
   const requiredFields = useMemo(() => {
@@ -252,6 +267,20 @@ export default function DashboardClientPage() {
           }
         })
       ) as Message[]
+
+      // Fetch user's accommodations
+      const accommodationsRef = collection(db, 'accommodation')
+      const accommodationsQuery = query(
+        accommodationsRef,
+        where('seller.id', '==', user.id),
+        orderBy('createdAt', 'desc')
+      )
+      const accommodationsSnapshot = await getDocs(accommodationsQuery)
+      const typedAccommodations = accommodationsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Accommodation[]
+      setAccommodations(typedAccommodations)
 
       setStats({
         totalListings,
@@ -580,6 +609,64 @@ export default function DashboardClientPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Accommodation Listings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Accommodation Listings</CardTitle>
+          <CardDescription>Manage and track your accommodation listings</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {accommodations.length === 0 ? (
+            <div className="text-center py-8">
+              <Home className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">No accommodation listings yet</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Get started by creating your first accommodation listing.</p>
+              <div className="mt-6">
+                <Button asChild>
+                  <Link href="/accommodation/sell">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Accommodation Listing
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-muted-foreground/10">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Title</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Type</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Campus</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Price</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accommodations.map(listing => (
+                    <tr key={listing.id} className="border-b border-muted-foreground/5">
+                      <td className="px-4 py-2 font-medium">
+                        <Link href={`/accommodation/${listing.id}`} className="hover:underline">
+                          {listing.title}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-2">{listing.propertyType}</td>
+                      <td className="px-4 py-2">{listing.campusLocation}</td>
+                      <td className="px-4 py-2">${listing.price}</td>
+                      <td className="px-4 py-2 flex gap-2">
+                        <Button asChild size="sm" variant="outline"><Link href={`/accommodation/${listing.id}`}>View</Link></Button>
+                        <Button asChild size="sm" variant="outline"><Link href={`/accommodation/edit/${listing.id}`}>Edit</Link></Button>
+                        {/* Add delete logic as needed */}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
