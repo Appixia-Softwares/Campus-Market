@@ -313,7 +313,9 @@ export function ProductGrid({
 
                   {/* University Badge */}
                   {(() => {
-                    const university = getUniversityById(product.university_id);
+                    const sellerUniversityId = product.users?.university_id;
+                    console.log('Seller university_id:', sellerUniversityId, 'Lookup result:', getUniversityById(sellerUniversityId));
+                    const university = getUniversityById(sellerUniversityId);
                     return (
                       <div className="absolute top-2 right-2 z-10">
                         <Badge variant="secondary" className="bg-green-100 text-green-700 flex items-center gap-1 px-3 py-1 rounded-full shadow-md">

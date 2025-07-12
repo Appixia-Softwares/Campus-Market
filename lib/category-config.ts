@@ -1,5 +1,5 @@
 // Category config shared between sell and product details pages
-import { Smartphone, Shirt, BookOpen, Package } from "lucide-react";
+import { Smartphone, Shirt, BookOpen, Package, Heart } from "lucide-react";
 
 export const CATEGORY_META = [
   {
@@ -21,6 +21,12 @@ export const CATEGORY_META = [
     icon: BookOpen,
   },
   {
+    key: "health & beauty",
+    label: "Health & Beauty",
+    description: "Cosmetics, skincare, personal care, and more.",
+    icon: Heart,
+  },
+  {
     key: "other",
     label: "Other",
     description: "Anything else you want to sell.",
@@ -37,7 +43,7 @@ export type CategoryField = {
   required?: boolean;
 };
 
-export const CATEGORY_CONFIG: Record<CategoryKey, CategoryField[]> = {
+export const CATEGORY_CONFIG: Record<CategoryKey | "health & beauty", CategoryField[]> = {
   electronics: [
     { name: 'brand', label: 'Brand', placeholder: 'e.g. Apple, Samsung', type: 'text' },
     { name: 'model', label: 'Model', placeholder: 'e.g. iPhone 14 Pro', type: 'text' },
@@ -51,6 +57,10 @@ export const CATEGORY_CONFIG: Record<CategoryKey, CategoryField[]> = {
   books: [
     { name: 'brand', label: 'Publisher', placeholder: 'e.g. Pearson', type: 'text' },
     { name: 'model', label: 'Edition', placeholder: 'e.g. 2nd Edition', type: 'text' },
+  ],
+  "health & beauty": [
+    { name: 'brand', label: 'Brand', placeholder: 'e.g. Maybelline, L’Oreal', type: 'text' },
+    // Add more fields as needed
   ],
   other: [],
 }; 
