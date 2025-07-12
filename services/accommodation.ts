@@ -1,15 +1,16 @@
 import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore'
 
 export async function getRecentAccommodations(campusId?: string | number) {
   try {
     let q = query(
       collection(db, 'rooms'),
       where('is_available', '==', true),
-      orderBy('created_at', 'desc'),
+      orderBy('createdAt', 'desc'), // Use 'createdAt' as in your Firestore
     );
     if (campusId) {
-      q = query(q, where('campus_id', '==', campusId));
+      q = query(q, where('campus', '==', campusId)); // Use 'campus' as in your Firestore
     }
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -39,7 +40,7 @@ export async function getAccommodations({
   sortBy?: string;
 }) {
   try {
-    let orderField = 'created_at';
+    let orderField = 'createdAt'; // Use 'createdAt' as in your Firestore
     let orderDirection: 'asc' | 'desc' = 'desc';
     if (sortBy === 'oldest') {
       orderDirection = 'asc';
@@ -56,10 +57,10 @@ export async function getAccommodations({
       orderBy(orderField, orderDirection),
     );
     if (typeId) {
-      q = query(q, where('type_id', '==', typeId));
+      q = query(q, where('propertyType', '==', typeId)); // Use 'propertyType' as in your Firestore
     }
     if (campusId) {
-      q = query(q, where('campus_id', '==', campusId));
+      q = query(q, where('campus', '==', campusId)); // Use 'campus' as in your Firestore
     }
     if (minPrice !== undefined) {
       q = query(q, where('price', '>=', minPrice));
@@ -78,7 +79,7 @@ export async function getAccommodations({
       results = results.filter(
         (item: any) =>
           item.title?.toLowerCase().includes(sq) ||
-          item.address?.toLowerCase().includes(sq)
+          item.description?.toLowerCase().includes(sq)
       );
     }
     // Amenities filtering (client-side for now)
@@ -154,4 +155,26 @@ export async function deleteAccommodation(id: string | number) {
     console.error('Error deleting accommodation:', error);
     throw error;
   }
+}
+
+// --- MIGRATION UTILITY ---
+// Run this function manually (e.g. from a script or dev tool) to patch all 'rooms' documents with required fields for querying.
+export async function migrateRoomsCollection() {
+  const snapshot = await getDocs(collection(db, 'rooms'))
+  const now = new Date()
+  for (const docSnap of snapshot.docs) {
+    const data = docSnap.data()
+    const updates: any = {}
+    if (typeof data.is_available !== 'boolean') updates.is_available = true
+    if (!data.created_at) updates.created_at = Timestamp.fromDate(now)
+    if (typeof data.price !== 'number') updates.price = 0
+    if (!('type_id' in data)) updates.type_id = ''
+    if (!('campus_id' in data)) updates.campus_id = ''
+    if (typeof data.verified !== 'boolean') updates.verified = false
+    if (Object.keys(updates).length > 0) {
+      await updateDoc(doc(db, 'rooms', docSnap.id), updates)
+      console.log(`Migrated room ${docSnap.id}:`, updates)
+    }
+  }
+  console.log('Migration complete.')
 }
