@@ -1,5 +1,5 @@
 "use client"
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -7,55 +7,78 @@ import { SlidersHorizontal, Search, X, CheckCircle, GraduationCap } from "lucide
 import AccommodationFilters, { AccommodationFilterState, AccommodationFiltersTrigger } from "@/components/accommodation-filters"
 import AccommodationList from "@/components/accommodation-list"
 import { getAccommodations } from "@/services/accommodation"
+import { useToast } from "@/hooks/use-toast"
 
-const DEFAULT_FILTERS: AccommodationFilterState = {
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest" },
+  { value: "oldest", label: "Oldest" },
+  { value: "price_asc", label: "Price: Low to High" },
+  { value: "price_desc", label: "Price: High to Low" },
+]
+
+const DEFAULT_FILTERS: AccommodationFilterState & { sortBy: string } = {
   price: [0, 500],
   types: [],
   amenities: [],
   locations: [],
   verifiedOnly: false,
+  sortBy: "newest",
 }
 
 export default function AccommodationPage() {
-  const [filters, setFilters] = useState<AccommodationFilterState>(DEFAULT_FILTERS)
-  const [filterDraft, setFilterDraft] = useState<AccommodationFilterState>(DEFAULT_FILTERS)
+  const [filters, setFilters] = useState(DEFAULT_FILTERS)
+  const [filterDraft, setFilterDraft] = useState(DEFAULT_FILTERS)
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
   const [accommodations, setAccommodations] = useState<any[]>([])
+  const { toast } = useToast()
+
+  // Efficient backend filtering: map all filter fields
+  const fetchAccommodations = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await getAccommodations({
+        searchQuery: search,
+        typeId: filters.types[0],
+        minPrice: filters.price[0],
+        maxPrice: filters.price[1],
+        campusId: filters.locations[0],
+        verifiedOnly: filters.verifiedOnly,
+        amenities: filters.amenities,
+        sortBy: filters.sortBy,
+      })
+      setAccommodations(data)
+    } catch (e) {
+      setAccommodations([])
+    } finally {
+      setLoading(false)
+    }
+  }, [filters, search])
 
   // Fetch accommodations from backend
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true)
-      try {
-        const data = await getAccommodations({
-          searchQuery: search,
-          // Add more filter mapping as needed
-        })
-        setAccommodations(data)
-      } catch (e) {
-        setAccommodations([])
-      } finally {
-        setLoading(false)
-      }
+    fetchAccommodations()
+  }, [fetchAccommodations])
+
+  // Auto-refresh after add (listen for custom event)
+  useEffect(() => {
+    const handler = () => {
+      fetchAccommodations()
+      toast({ title: "Accommodation added!", description: "Your listing is now live." })
     }
-    fetchData()
-  }, [filters, search])
+    window.addEventListener("accommodation:refresh", handler)
+    return () => window.removeEventListener("accommodation:refresh", handler)
+  }, [fetchAccommodations, toast])
 
   // Filtering logic (client-side for now, can be moved to backend)
   const filteredListings = useMemo(() => {
     return accommodations.filter((listing) => {
-      // Price
       if (listing.price < filters.price[0] || listing.price > filters.price[1]) return false
-      // Type
       if (filters.types.length && !filters.types.includes(listing.type)) return false
-      // Amenities (all selected must be present)
       if (filters.amenities && filters.amenities.length && !filters.amenities.every((a: string) => (listing.amenities || []).includes(a))) return false
-      // Location
       if (filters.locations.length && !filters.locations.includes((listing.location || '').replace(/ /g, '-').toLowerCase())) return false
-      // Verified
       if (filters.verifiedOnly && !listing.verified) return false
       return true
     })
@@ -89,6 +112,12 @@ export default function AccommodationPage() {
   }
   const handleCancelFilters = () => {
     setShowFilters(false)
+  }
+
+  // Sort dropdown handler
+  const handleSortChange = (sortBy: string) => {
+    setFilters((prev) => ({ ...prev, sortBy }))
+    setFilterDraft((prev) => ({ ...prev, sortBy }))
   }
 
   return (
@@ -175,6 +204,8 @@ export default function AccommodationPage() {
             showActions
             onApply={handleApplyFilters}
             onCancel={handleCancelFilters}
+            sortBy={filterDraft.sortBy}
+            onSortChange={handleSortChange}
           />
         )}
         {/* Sort and view toggle (only one instance) */}
@@ -183,10 +214,17 @@ export default function AccommodationPage() {
             Showing <span className="font-medium text-foreground">{filteredListings.length}</span> results
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="flex items-center">
-              <SlidersHorizontal className="h-4 w-4 mr-2" />
-              Sort by: Newest
-            </Button>
+            <div className="relative">
+              <select
+                className="bg-background border border-muted rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                value={filters.sortBy}
+                onChange={e => handleSortChange(e.target.value)}
+              >
+                {SORT_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
             <Button variant={view === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setView('grid')}>Grid</Button>
             <Button variant={view === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setView('list')}>List</Button>
           </div>
