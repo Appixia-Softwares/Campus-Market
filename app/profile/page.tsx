@@ -200,22 +200,22 @@ export default function ProfilePage() {
         <DashboardHeader onMobileMenu={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
           {/* Profile content below */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-                <p className="text-muted-foreground">Manage your account settings and preferences</p>
-              </div>
-              <Button
-                variant={isEditing ? "default" : "outline"}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+          <p className="text-muted-foreground">Manage your account settings and preferences</p>
+        </div>
+        <Button
+          variant={isEditing ? "default" : "outline"}
                 onClick={() => setIsEditing(true)}
-                disabled={saving}
-              >
-                {saving ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
-              </Button>
-            </div>
+          disabled={saving}
+        >
+          {saving ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
+        </Button>
+      </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
               {/* Modern Avatar Card with Upload */}
               <Card className="md:col-span-1 flex flex-col items-center py-8 bg-gradient-to-b from-background to-muted/60 shadow-lg">
                 <div className="relative w-32 h-32 mb-4">
@@ -230,90 +230,90 @@ export default function ProfilePage() {
                       />
                     ) : (
                       <Avatar className="h-32 w-32">
-                        <AvatarImage src={user?.avatar_url || "/placeholder.svg"} />
+                <AvatarImage src={user?.avatar_url || "/placeholder.svg"} />
                         <AvatarFallback className="text-3xl">
-                          {(user?.full_name || user?.email || "U")
-                            .split(" ")
-                            .map((n: string) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
+                  {(user?.full_name || user?.email || "U")
+                    .split(" ")
+                    .map((n: string) => n[0])
+                    .join("")}
+                </AvatarFallback>
+              </Avatar>
                     )}
                   </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                    id="avatar-upload"
-                  />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                  id="avatar-upload"
+                />
                   <label
                     htmlFor="avatar-upload"
                     className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:bg-primary/90 transition-colors shadow-lg border-2 border-white"
                   >
                     <Camera className="h-5 w-5" />
-                  </label>
+                </label>
                 </div>
                 <div className="text-center">
                   <h3 className="text-lg font-semibold">Profile Photo</h3>
                   <p className="text-xs text-muted-foreground">Click the camera to upload a new photo</p>
                 </div>
-              </Card>
+        </Card>
 
-              {/* Profile Details */}
-              <div className="md:col-span-2">
-                <Tabs defaultValue="personal" className="space-y-4">
-                  <TabsList>
-                    <TabsTrigger value="personal">Personal Info</TabsTrigger>
-                    <TabsTrigger value="preferences">Preferences</TabsTrigger>
-                    <TabsTrigger value="security">Security</TabsTrigger>
-                  </TabsList>
+        {/* Profile Details */}
+        <div className="md:col-span-2">
+          <Tabs defaultValue="personal" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="personal">Personal Info</TabsTrigger>
+              <TabsTrigger value="preferences">Preferences</TabsTrigger>
+              <TabsTrigger value="security">Security</TabsTrigger>
+            </TabsList>
 
-                  <TabsContent value="personal" className="space-y-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Personal Information</CardTitle>
-                        <CardDescription>Update your personal details and contact information</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="fullName">Full Name</Label>
-                            <Input
-                              id="fullName"
+            <TabsContent value="personal" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Personal Information</CardTitle>
+                  <CardDescription>Update your personal details and contact information</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input
+                        id="fullName"
                               value={user?.full_name || ""}
                               disabled className="bg-muted"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" value={user?.email || ""} disabled className="bg-muted" />
-                          </div>
-                        </div>
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" value={user?.email || ""} disabled className="bg-muted" />
+                    </div>
+                  </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="phone">Phone Number</Label>
-                            <Input
-                              id="phone"
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
                               value={user?.phone || ""}
                               disabled className="bg-muted"
-                              placeholder="+263 77 123 4567"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="location">Location</Label>
-                            <Input
-                              id="location"
+                        placeholder="+263 77 123 4567"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location</Label>
+                      <Input
+                        id="location"
                               value={user?.location || ""}
                               disabled className="bg-muted"
-                              placeholder="Harare, Zimbabwe"
-                            />
-                          </div>
-                        </div>
+                        placeholder="Harare, Zimbabwe"
+                      />
+                    </div>
+                  </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="university">University</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="university">University</Label>
                           <div className="bg-muted rounded px-3 py-2 min-h-[40px] flex items-center">
                             {(() => {
                               if (!user?.university_id || user.university_id === 'none') return 'No University Selected';
@@ -321,183 +321,183 @@ export default function ProfilePage() {
                               return uni ? uni.name + (uni.location ? ` (${uni.location})` : '') : 'No University Selected';
                             })()}
                           </div>
-                        </div>
+                  </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="bio">Bio</Label>
-                          <Textarea
-                            id="bio"
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    <Textarea
+                      id="bio"
                             value={user?.bio || ""}
                             disabled className="bg-muted"
-                            rows={3}
-                            placeholder="Tell others about yourself..."
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
+                      rows={3}
+                      placeholder="Tell others about yourself..."
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                  <TabsContent value="preferences" className="space-y-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Notification Preferences</CardTitle>
-                        <CardDescription>Choose what notifications you want to receive</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
+            <TabsContent value="preferences" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Notification Preferences</CardTitle>
+                  <CardDescription>Choose what notifications you want to receive</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
                         {/* Notification preferences toggles */}
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <Label>Email Notifications</Label>
-                            <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-                          </div>
-                          <Switch
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Email Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                    </div>
+                    <Switch
                             checked={user?.email_notifications ?? false}
                             onCheckedChange={async (checked) => {
                               if (!user) return;
                               await updateDoc(doc(db, 'users', user.id), { email_notifications: checked });
                             }}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <Label>Push Notifications</Label>
-                            <p className="text-sm text-muted-foreground">Receive push notifications</p>
-                          </div>
-                          <Switch
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Push Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Receive push notifications</p>
+                    </div>
+                    <Switch
                             checked={user?.push_notifications ?? false}
                             onCheckedChange={async (checked) => {
                               if (!user) return;
                               await updateDoc(doc(db, 'users', user.id), { push_notifications: checked });
                             }}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <Label>Message Notifications</Label>
-                            <p className="text-sm text-muted-foreground">Get notified of new messages</p>
-                          </div>
-                          <Switch
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Message Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Get notified of new messages</p>
+                    </div>
+                    <Switch
                             checked={user?.message_notifications ?? false}
                             onCheckedChange={async (checked) => {
                               if (!user) return;
                               await updateDoc(doc(db, 'users', user.id), { message_notifications: checked });
                             }}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <Label>Marketing Emails</Label>
-                            <p className="text-sm text-muted-foreground">Receive promotional content</p>
-                          </div>
-                          <Switch
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Marketing Emails</Label>
+                      <p className="text-sm text-muted-foreground">Receive promotional content</p>
+                    </div>
+                    <Switch
                             checked={user?.marketing_emails ?? false}
                             onCheckedChange={async (checked) => {
                               if (!user) return;
                               await updateDoc(doc(db, 'users', user.id), { marketing_emails: checked });
                             }}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Privacy Settings</CardTitle>
-                        <CardDescription>Control who can see your information</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Privacy Settings</CardTitle>
+                  <CardDescription>Control who can see your information</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
                         {/* Privacy settings toggles */}
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <Label>Profile Visibility</Label>
-                            <p className="text-sm text-muted-foreground">Make your profile visible to other users</p>
-                          </div>
-                          <Switch
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Profile Visibility</Label>
+                      <p className="text-sm text-muted-foreground">Make your profile visible to other users</p>
+                    </div>
+                    <Switch
                             checked={user?.profile_visible ?? true}
                             onCheckedChange={async (checked) => {
                               if (!user) return;
                               await updateDoc(doc(db, 'users', user.id), { profile_visible: checked });
                             }}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <Label>Show Online Status</Label>
-                            <p className="text-sm text-muted-foreground">Let others see when you're online</p>
-                          </div>
-                          <Switch
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Show Online Status</Label>
+                      <p className="text-sm text-muted-foreground">Let others see when you're online</p>
+                    </div>
+                    <Switch
                             checked={user?.show_online_status ?? true}
                             onCheckedChange={async (checked) => {
                               if (!user) return;
                               await updateDoc(doc(db, 'users', user.id), { show_online_status: checked });
                             }}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <Label>Show Contact Info</Label>
-                            <p className="text-sm text-muted-foreground">Display your contact information</p>
-                          </div>
-                          <Switch
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Show Contact Info</Label>
+                      <p className="text-sm text-muted-foreground">Display your contact information</p>
+                    </div>
+                    <Switch
                             checked={user?.show_contact_info ?? false}
                             onCheckedChange={async (checked) => {
                               if (!user) return;
                               await updateDoc(doc(db, 'users', user.id), { show_contact_info: checked });
                             }}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                  <TabsContent value="security" className="space-y-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Account Security</CardTitle>
-                        <CardDescription>Manage your account security settings</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>Current Password</Label>
-                          <Input type="password" placeholder="Enter current password" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>New Password</Label>
-                          <Input type="password" placeholder="Enter new password" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Confirm New Password</Label>
-                          <Input type="password" placeholder="Confirm new password" />
-                        </div>
-                        <Button>Update Password</Button>
-                      </CardContent>
-                    </Card>
+            <TabsContent value="security" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Account Security</CardTitle>
+                  <CardDescription>Manage your account security settings</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Current Password</Label>
+                    <Input type="password" placeholder="Enter current password" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>New Password</Label>
+                    <Input type="password" placeholder="Enter new password" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Confirm New Password</Label>
+                    <Input type="password" placeholder="Confirm new password" />
+                  </div>
+                  <Button>Update Password</Button>
+                </CardContent>
+              </Card>
 
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Account Verification</CardTitle>
-                        <CardDescription>Verify your student status</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {user?.verified ? (
-                          <div className="flex items-center gap-2 text-green-600">
-                            <Shield className="h-4 w-4" />
-                            <span className="text-sm font-medium">Your account is verified</span>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            <p className="text-sm text-muted-foreground">
-                              Verify your student status to gain access to exclusive features and build trust with other
-                              users.
-                            </p>
-                            <Button onClick={requestVerification}>Start Verification</Button>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Account Verification</CardTitle>
+                  <CardDescription>Verify your student status</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {user?.verified ? (
+                    <div className="flex items-center gap-2 text-green-600">
+                      <Shield className="h-4 w-4" />
+                      <span className="text-sm font-medium">Your account is verified</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Verify your student status to gain access to exclusive features and build trust with other
+                        users.
+                      </p>
+                      <Button onClick={requestVerification}>Start Verification</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
             </div>
             <Dialog open={isEditing} onOpenChange={setIsEditing}>
               <DialogContent className="max-w-2xl p-0">
