@@ -26,13 +26,18 @@ const DEFAULT_FILTERS: AccommodationFilterState & { sortBy: string } = {
 }
 
 export default function AccommodationPage() {
-  const [filters, setFilters] = useState(DEFAULT_FILTERS)
-  const [filterDraft, setFilterDraft] = useState(DEFAULT_FILTERS)
+  const [filters, setFilters] = useState<AccommodationFilterState>({
+    price: [0, 500],
+    types: [],
+    amenities: [],
+    locations: [],
+    verifiedOnly: false,
+  })
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState<'grid' | 'list'>('grid')
-  const [showFilters, setShowFilters] = useState(false)
   const [accommodations, setAccommodations] = useState<any[]>([])
+  const [sortBy, setSortBy] = useState("newest")
   const { toast } = useToast()
 
   // Efficient backend filtering: map all filter fields
@@ -47,7 +52,7 @@ export default function AccommodationPage() {
         campusId: filters.locations[0],
         verifiedOnly: filters.verifiedOnly,
         amenities: filters.amenities,
-        sortBy: filters.sortBy,
+        sortBy: sortBy,
       })
       setAccommodations(data)
     } catch (e) {
@@ -55,7 +60,7 @@ export default function AccommodationPage() {
     } finally {
       setLoading(false)
     }
-  }, [filters, search])
+  }, [filters, search, sortBy])
 
   // Fetch accommodations from backend
   useEffect(() => {
@@ -89,7 +94,6 @@ export default function AccommodationPage() {
 
   const handleReset = () => {
     setFilters(DEFAULT_FILTERS)
-    setFilterDraft(DEFAULT_FILTERS)
   }
 
   // Active filter badges (reuse logic from filters)
@@ -101,23 +105,9 @@ export default function AccommodationPage() {
     (filters.price[0] > 0 || filters.price[1] < 1000) ? `$${filters.price[0]}-${filters.price[1]}` : undefined,
   ].filter(Boolean)
 
-  // Filter popover/sheet logic
-  const handleOpenFilters = () => {
-    setFilterDraft(filters)
-    setShowFilters(true)
-  }
-  const handleApplyFilters = () => {
-    setFilters(filterDraft)
-    setShowFilters(false)
-  }
-  const handleCancelFilters = () => {
-    setShowFilters(false)
-  }
-
   // Sort dropdown handler
   const handleSortChange = (sortBy: string) => {
-    setFilters((prev) => ({ ...prev, sortBy }))
-    setFilterDraft((prev) => ({ ...prev, sortBy }))
+    setSortBy(sortBy)
   }
 
   return (
@@ -155,10 +145,12 @@ export default function AccommodationPage() {
                 onKeyDown={e => e.key === "Enter" && e.preventDefault()}
               />
             </div>
-            {/* Filter trigger button */}
-            <div>
-              <AccommodationFiltersTrigger onClick={handleOpenFilters} badgeCount={activeBadges.length} />
-            </div>
+            {/* Filter trigger and sheet/popover */}
+            <AccommodationFilters
+              value={filters}
+              onChange={setFilters}
+              onReset={handleReset}
+            />
           </div>
           {/* Active filter badges */}
           {activeBadges.length > 0 && (
@@ -194,20 +186,6 @@ export default function AccommodationPage() {
             </div>
           )}
         </div>
-        {/* Filter popover/sheet (controlled) */}
-        {showFilters && (
-          <AccommodationFilters
-            value={filterDraft}
-            onChange={setFilterDraft}
-            onReset={() => setFilterDraft(DEFAULT_FILTERS)}
-            mobileSheet={isMobile}
-            showActions
-            onApply={handleApplyFilters}
-            onCancel={handleCancelFilters}
-            sortBy={filterDraft.sortBy}
-            onSortChange={handleSortChange}
-          />
-        )}
         {/* Sort and view toggle (only one instance) */}
         <div className="flex items-center justify-between mb-4">
           <div className="text-muted-foreground">
@@ -217,7 +195,7 @@ export default function AccommodationPage() {
             <div className="relative">
               <select
                 className="bg-background border border-muted rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                value={filters.sortBy}
+                value={sortBy}
                 onChange={e => handleSortChange(e.target.value)}
               >
                 {SORT_OPTIONS.map(opt => (
