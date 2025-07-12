@@ -816,9 +816,9 @@ export default function SellPage() {
         specifications: specs,
         created_at: new Date(),
         updated_at: new Date(),
-        images: [],
-        seller: undefined,
-        category: undefined
+        images: [], // This will be updated after image upload
+        seller: null,
+        category: category // <-- set full category object
       }
 
       console.log("Debug - Creating product in Firebase:", newProduct)
@@ -875,7 +875,7 @@ export default function SellPage() {
         uploadedImages.push(url as string);
       }
       // 2. Build product object
-      const productData = {
+      let productData: any = {
         title: formData.title,
         description: formData.description,
         price: Number(formData.price),
@@ -891,13 +891,13 @@ export default function SellPage() {
         specifications: {},
         created_at: new Date(),
         updated_at: new Date(),
-        images: [],
-        seller: undefined,
-        category: undefined,
-      } as { [key: string]: any };
+        images: [], // This will be updated after image upload
+        seller: null,
+        category: category // <-- set full category object
+      };
       // Add category-specific fields
       Object.keys(formData).forEach((key: string) => {
-        if (!(key in productData) && formData[key]) {
+        if (Object.prototype.hasOwnProperty.call(productData, key) === false && formData[key]) {
           productData[key] = formData[key];
         }
       });

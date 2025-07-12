@@ -35,6 +35,7 @@ import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, increment, addDoc, serverTimestamp, DocumentReference } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { categoryFieldConfig } from "@/app/marketplace/sell/page";
 
 interface ProductDetails {
   id: string
@@ -783,6 +784,30 @@ export default function ProductDetailsPage() {
               </CardContent>
             </Card>
 
+            {/* Product Details */}
+            <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  Product Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Dynamically render all fields for this category */}
+                  {categoryFieldConfig[product.product_categories.name]?.map((field: any) => {
+                    const value = product[field.name];
+                    if (!value || field.name === "title" || field.name === "price" || field.name === "description") return null;
+                    return (
+                      <div key={field.name} className="flex flex-col">
+                        <span className="font-medium text-muted-foreground">{field.label}</span>
+                        <span className="text-base">{value}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Seller Info */}
             <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader>
@@ -841,6 +866,22 @@ export default function ProductDetailsPage() {
                       )}
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* University Info */}
+            <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  University
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-2">
+                  <span className="font-medium">{product.universities.name}</span>
+                  <span className="text-muted-foreground">{product.universities.location}</span>
+                  <Badge variant="secondary" className="w-fit mt-1">{product.universities.type}</Badge>
                 </div>
               </CardContent>
             </Card>
