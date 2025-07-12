@@ -136,8 +136,17 @@ function getUniversityById(id: string) {
 
 // Helper to map display name to config key
 function getCategoryKey(name: string): CategoryKey | undefined {
-  const key = name?.toLowerCase();
-  if (["electronics", "fashion", "books", "other"].includes(key)) {
+  if (!name) return undefined;
+  const key = name.trim().toLowerCase();
+  const validKeys: CategoryKey[] = [
+    "electronics", "fashion", "home & garden", "books & media", "beauty & personal care",
+    "sports & outdoors", "toys & games", "groceries", "automotive", "health & wellness",
+    "jewelry & accessories", "office & school", "baby & kids", "pet supplies", "gifts & occasions",
+    "music & instruments", "watches", "cameras", "gaming", "health & beauty", "travel & luggage",
+    "furniture", "weddings & events", "tv & audio", "phones & tablets", "bikes & scooters",
+    "tools & diy", "bags & wallets", "shoes", "other"
+  ];
+  if (validKeys.includes(key as CategoryKey)) {
     return key as CategoryKey;
   }
   return undefined;
@@ -812,7 +821,7 @@ export default function ProductDetailsPage() {
                   {(() => {
                     const categoryKey = getCategoryKey(product.product_categories?.name);
                     if (!categoryKey) return <span className="text-muted-foreground">No extra details for this category.</span>;
-                    return CATEGORY_CONFIG[categoryKey].map((field: CategoryField) => {
+                    return (CATEGORY_CONFIG as Record<CategoryKey, CategoryField[]>)[categoryKey as CategoryKey].map((field: CategoryField) => {
                       const value = (product as Record<string, any>)[field.name];
                       if (!value || ["title", "price", "description"].includes(field.name)) return null;
                       return (
