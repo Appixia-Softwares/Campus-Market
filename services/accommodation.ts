@@ -4,7 +4,7 @@ import { collection, query, where, orderBy, getDocs, addDoc, updateDoc, deleteDo
 export async function getRecentAccommodations(campusId?: string | number) {
   try {
     let q = query(
-      collection(db, 'accommodations'),
+      collection(db, 'rooms'),
       where('is_available', '==', true),
       orderBy('created_at', 'desc'),
     );
@@ -51,7 +51,7 @@ export async function getAccommodations({
       orderDirection = 'desc';
     }
     let q = query(
-      collection(db, 'accommodations'),
+      collection(db, 'rooms'),
       where('is_available', '==', true),
       orderBy(orderField, orderDirection),
     );
@@ -96,7 +96,7 @@ export async function getAccommodations({
 
 export async function getAccommodationById(id: string | number) {
   try {
-    const ref = doc(db, 'accommodations', String(id));
+    const ref = doc(db, 'rooms', String(id));
     const snap = await getDoc(ref);
     if (!snap.exists()) return null;
     return { id: snap.id, ...snap.data() };
@@ -119,7 +119,7 @@ export async function getAccommodationTypes() {
 
 export async function createAccommodation(accommodation: any) {
   try {
-    const docRef = await addDoc(collection(db, 'accommodations'), {
+    const docRef = await addDoc(collection(db, 'rooms'), {
       ...accommodation,
       created_at: new Date(),
       updated_at: new Date(),
@@ -135,7 +135,7 @@ export async function createAccommodation(accommodation: any) {
 
 export async function updateAccommodation(id: string | number, updates: any) {
   try {
-    const ref = doc(db, 'accommodations', String(id));
+    const ref = doc(db, 'rooms', String(id));
     await updateDoc(ref, { ...updates, updated_at: new Date() });
     const snap = await getDoc(ref);
     return { id: snap.id, ...snap.data() };
@@ -147,7 +147,7 @@ export async function updateAccommodation(id: string | number, updates: any) {
 
 export async function deleteAccommodation(id: string | number) {
   try {
-    const ref = doc(db, 'accommodations', String(id));
+    const ref = doc(db, 'rooms', String(id));
     await deleteDoc(ref);
     return true;
   } catch (error) {

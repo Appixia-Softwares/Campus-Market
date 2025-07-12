@@ -107,32 +107,65 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     if (!user) return
-
     try {
       setLoading(true)
-      // Replace supabase logic with Firestore logic
-      // const { data, error } = await supabase
-      //   .from("orders")
-      //   .select(`
-      //     *,
-      //     products (
-      //       id,
-      //       title,
-      //       price,
-      //       product_images (url, is_primary)
-      //     ),
-      //     buyer:users!orders_buyer_id_fkey (id, full_name, avatar_url),
-      //     seller:users!orders_seller_id_fkey (id, full_name, avatar_url)
-      //   `)
-      //   .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-      //   .order("created_at", { ascending: false })
-
-      // if (error) throw error
-
-      setOrders([])
+      // Query orders where user is buyer or seller
+      const q = query(
+        collection(db, 'orders'),
+        where('participants', 'array-contains', user.id)
+      )
+      const snapshot = await getDocs(q)
+      const ordersData: Order[] = await Promise.all(snapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data()
+        // Fetch product info
+        let product = null
+        if (data.product_id) {
+          const productDoc = await getDoc(doc(db, 'products', data.product_id))
+          if (productDoc.exists()) {
+            const prodData = productDoc.data()
+            const imagesQuery = query(collection(db, 'product_images'), where('product_id', '==', data.product_id))
+            const imagesSnap = await getDocs(imagesQuery)
+            const images = imagesSnap.docs.map(img => img.data())
+            product = { id: productDoc.id, title: prodData.title, price: prodData.price, product_images: images }
+          }
+        }
+        // Fetch buyer info
+        let buyer = { id: data.buyer_id, full_name: '', avatar_url: null }
+        if (data.buyer_id) {
+          const buyerDoc = await getDoc(doc(db, 'users', data.buyer_id))
+          if (buyerDoc.exists()) {
+            const buyerData = buyerDoc.data()
+            buyer = { id: data.buyer_id, full_name: buyerData.full_name, avatar_url: buyerData.avatar_url }
+          }
+        }
+        // Fetch seller info
+        let seller = { id: data.seller_id, full_name: '', avatar_url: null }
+        if (data.seller_id) {
+          const sellerDoc = await getDoc(doc(db, 'users', data.seller_id))
+          if (sellerDoc.exists()) {
+            const sellerData = sellerDoc.data()
+            seller = { id: data.seller_id, full_name: sellerData.full_name, avatar_url: sellerData.avatar_url }
+          }
+        }
+        return {
+          id: docSnap.id,
+          quantity: data.quantity,
+          total_amount: data.total_amount,
+          status: data.status,
+          pickup_location: data.pickup_location,
+          pickup_time: data.pickup_time,
+          notes: data.notes,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          products: product,
+          buyer,
+          seller,
+        }
+      }))
+      setOrders(ordersData)
     } catch (error) {
-      console.error("Error fetching orders:", error)
-      toast.error("Failed to load orders")
+      console.error('Error fetching orders:', error)
+      toast.error('Failed to load orders')
     } finally {
       setLoading(false)
     }
@@ -155,7 +188,7 @@ export default function OrdersPage() {
   }
 
   const filteredOrders = orders.filter((order) => {
-    const matchesSearch = order.products.title.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = order.products?.title.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === "all" || order.status === statusFilter
     const matchesTab =
       activeTab === "all" ||
@@ -366,11 +399,11 @@ export default function OrdersPage() {
                               <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                                 <img
                                   src={
-                                    order.products.product_images?.find((img) => img.is_primary)?.url ||
+                                    order.products?.product_images?.find((img) => img.is_primary)?.url ||
                                     "/placeholder.svg?height=80&width=80" ||
                                     "/placeholder.svg"
                                   }
-                                  alt={order.products.title}
+                                  alt={order.products?.title}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
@@ -379,7 +412,7 @@ export default function OrdersPage() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between mb-2">
                                   <div>
-                                    <h3 className="font-semibold text-lg line-clamp-1">{order.products.title}</h3>
+                                    <h3 className="font-semibold text-lg line-clamp-1">{order.products?.title}</h3>
                                     <p className="text-sm text-muted-foreground">
                                       Order #{order.id.slice(-8).toUpperCase()}
                                     </p>
