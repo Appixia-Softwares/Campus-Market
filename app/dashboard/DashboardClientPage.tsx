@@ -11,13 +11,15 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ShoppingBag, MessageSquare, Plus, Eye, Heart, TrendingUp, DollarSign, Home } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { useToast } from "@/components/ui/use-toast"
 import { formatDistanceToNow } from "date-fns"
 import { collection, query, where, orderBy, getDocs, limit, getDoc, doc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { ProfileCompletionBanner } from "@/components/profile-completion-banner"
 import ProfileForm from "@/components/profile-form"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/ui/sheet"
+import { deleteAccommodation } from "@/services/accommodation"
+import { useToast } from "@/hooks/use-toast"
 
 interface DashboardStats {
   totalListings: number
@@ -123,6 +125,10 @@ export default function DashboardClientPage() {
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
 
+  // Accommodation Listings state
+  const [accommodationToDelete, setAccommodationToDelete] = useState<Accommodation | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   // Profile completion logic
   const requiredFields = useMemo(() => {
     const base = ["full_name", "email"];
@@ -134,7 +140,8 @@ export default function DashboardClientPage() {
   }, [user]);
   const profileProgress = useMemo(() => {
     if (!user) return 0;
-    const filled = requiredFields.filter((field) => user[field]);
+    // Type assertion to allow dynamic key access
+    const filled = requiredFields.filter((field) => (user as any)[field]);
     return Math.round((filled.length / requiredFields.length) * 100);
   }, [user, requiredFields]);
   const isProfileComplete = profileProgress === 100;
@@ -657,7 +664,44 @@ export default function DashboardClientPage() {
                       <td className="px-4 py-2 flex gap-2">
                         <Button asChild size="sm" variant="outline"><Link href={`/accommodation/${listing.id}`}>View</Link></Button>
                         <Button asChild size="sm" variant="outline"><Link href={`/accommodation/edit/${listing.id}`}>Edit</Link></Button>
-                        {/* Add delete logic as needed */}
+                        <Sheet>
+                          <SheetTrigger asChild>
+                            <Button size="sm" variant="destructive" onClick={() => setAccommodationToDelete(listing)}>Delete</Button>
+                          </SheetTrigger>
+                          <SheetContent side="bottom">
+                            <SheetHeader>
+                              <SheetTitle>Delete Accommodation</SheetTitle>
+                              <SheetDescription>
+                                Are you sure you want to delete <span className="font-semibold">{accommodationToDelete?.title}</span>? This action cannot be undone.
+                              </SheetDescription>
+                            </SheetHeader>
+                            <SheetFooter>
+                              <SheetClose asChild>
+                                <Button variant="outline">Cancel</Button>
+                              </SheetClose>
+                              <Button
+                                variant="destructive"
+                                disabled={isDeleting}
+                                onClick={async () => {
+                                  if (!accommodationToDelete) return
+                                  setIsDeleting(true)
+                                  try {
+                                    await deleteAccommodation(accommodationToDelete.id)
+                                    setAccommodations(prev => prev.filter(a => a.id !== accommodationToDelete.id))
+                                    toast({ title: "Deleted", description: "Accommodation listing deleted successfully." })
+                                  } catch (err) {
+                                    toast({ title: "Error", description: "Failed to delete accommodation.", variant: "destructive" })
+                                  } finally {
+                                    setIsDeleting(false)
+                                    setAccommodationToDelete(null)
+                                  }
+                                }}
+                              >
+                                {isDeleting ? "Deleting..." : "Delete"}
+                              </Button>
+                            </SheetFooter>
+                          </SheetContent>
+                        </Sheet>
                       </td>
                     </tr>
                   ))}
