@@ -8,6 +8,8 @@ import AccommodationFilters, { AccommodationFilterState, AccommodationFiltersTri
 import AccommodationList from "@/components/accommodation-list"
 import { getAccommodations } from "@/services/accommodation"
 import { useToast } from "@/hooks/use-toast"
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
+import { AccommodationFilterForm } from "@/components/accommodation-filters"
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
@@ -39,6 +41,7 @@ export default function AccommodationPage() {
   const [accommodations, setAccommodations] = useState<any[]>([])
   const [sortBy, setSortBy] = useState("newest")
   const { toast } = useToast()
+  const [showFilters, setShowFilters] = useState(false)
 
   // Efficient backend filtering: map all filter fields
   const fetchAccommodations = useCallback(async () => {
@@ -145,12 +148,31 @@ export default function AccommodationPage() {
                 onKeyDown={e => e.key === "Enter" && e.preventDefault()}
               />
             </div>
-            {/* Filter trigger and sheet/popover */}
-            <AccommodationFilters
-              value={filters}
-              onChange={setFilters}
-              onReset={handleReset}
-            />
+            {/* Filters button opens Dialog */}
+            <Dialog open={showFilters} onOpenChange={setShowFilters}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2 h-12">
+                  <SlidersHorizontal className="h-4 w-4" /> Filters
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Filter Accommodation</DialogTitle>
+                </DialogHeader>
+                <AccommodationFilterForm
+                  value={filters}
+                  onChange={setFilters}
+                  onReset={handleReset}
+                  showActions={false}
+                />
+                <DialogFooter>
+                  <Button onClick={() => setShowFilters(false)} type="button">Apply</Button>
+                  <DialogClose asChild>
+                    <Button variant="outline" type="button">Cancel</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
           {/* Active filter badges */}
           {activeBadges.length > 0 && (
