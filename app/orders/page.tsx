@@ -28,7 +28,6 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where } from 'firebase/firestore';
-import { error } from "console"
 
 interface Order {
   id: string

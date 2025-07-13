@@ -79,7 +79,7 @@ export default function ReviewsSection({ accommodationId, revieweeId, landlordId
 
       {isLoading ? (
         <div className="flex justify-center py-5">
-          <Loader2 className="h-5 w-5 animate-spin" style={{ color: Colors[colorScheme ?? "light"].tint }} />
+          <Loader2 className="h-5 w-5 animate-spin" style={{ color: Colors[colorScheme ?? "light"] }} />
         </div>
       ) : reviews && reviews.length > 0 ? (
         <>

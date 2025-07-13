@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Bath, Bed, CheckCircle, Heart, MapPin, Star, Wifi, Home, Users, KeyRound, ParkingCircle, Utensils, WashingMachine, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
+import { useAuth } from "@/lib/auth-context"
+import { db } from "@/lib/firebase"
+import { collection, query, where, getDocs, addDoc, deleteDoc } from "firebase/firestore"
+import { useEffect } from "react"
 
 // Amenity icon map for DRYness
 const AMENITY_ICONS: Record<string, any> = {
@@ -48,10 +52,42 @@ export interface AccommodationListProps {
 }
 
 export default function AccommodationList({ listings, isLoading, view = 'grid' }: AccommodationListProps & { view?: 'grid' | 'list' }) {
+  const { user } = useAuth()
   const [favorites, setFavorites] = useState<string[]>([])
 
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
+  // Fetch user's favourite accommodation IDs
+  useEffect(() => {
+    if (!user) return
+    async function fetchFavorites() {
+      const favSnap = await getDocs(query(
+        collection(db, "user_favorites"),
+        where("user_id", "==", user.id),
+        where("type", "==", "accommodation")
+      ))
+      setFavorites(favSnap.docs.map(doc => doc.data().item_id))
+    }
+    fetchFavorites()
+  }, [user])
+
+  // Toggle favourite status
+  const toggleFavorite = async (id: string) => {
+    if (!user) return
+    const favRef = collection(db, "user_favorites")
+    if (favorites.includes(id)) {
+      // Remove favourite
+      const favSnap = await getDocs(query(
+        favRef,
+        where("user_id", "==", user.id),
+        where("item_id", "==", id),
+        where("type", "==", "accommodation")
+      ))
+      favSnap.forEach(docu => deleteDoc(docu.ref))
+      setFavorites(favs => favs.filter(f => f !== id))
+    } else {
+      // Add favourite
+      await addDoc(favRef, { user_id: user.id, item_id: id, type: "accommodation" })
+      setFavorites(favs => [...favs, id])
+    }
   }
 
   if (isLoading) {
@@ -105,16 +141,17 @@ export default function AccommodationList({ listings, isLoading, view = 'grid' }
                   Verified
                 </Badge>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`absolute top-2 left-2 rounded-full bg-background/80 hover:bg-background ${
-                  favorites.includes(listing.id) ? "text-red-500" : "text-muted-foreground"
-                }`}
-                onClick={() => toggleFavorite(listing.id)}
-              >
-                <Heart className={`h-5 w-5 ${favorites.includes(listing.id) ? "fill-current" : ""}`} />
-              </Button>
+              {user && (
+                <Button
+                  variant={favorites.includes(listing.id) ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => toggleFavorite(listing.id)}
+                  aria-label={favorites.includes(listing.id) ? "Unfavourite" : "Favourite"}
+                  className="ml-2"
+                >
+                  <Heart className={`h-5 w-5 ${favorites.includes(listing.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                </Button>
+              )}
             </div>
             <div className="p-4 md:w-2/3 flex flex-col">
               <div className="mb-2">

@@ -36,18 +36,27 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
   const { user } = useAuth()
   const [property, setProperty] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
+  const [paramId, setParamId] = useState<string | null>(null)
 
   useEffect(() => {
+    async function getParams() {
+      // Await params if needed (for Next.js dynamic route)
+      if (typeof params?.id === 'undefined') return
+      setParamId(params.id)
+    }
+    getParams()
+  }, [params])
+
+  useEffect(() => {
+    if (!paramId) return
     async function fetchProperty() {
       setLoading(true)
       try {
-        // FIX: Use correct collection name 'accommodations'
-        console.log('Fetching accommodation with id:', params.id)
-        const docRef = doc(db, "accommodations", params.id)
+        if (!paramId) return // Guard for Firestore doc()
+        const docRef = doc(db, "accommodations", paramId as string)
         const docSnap = await getDoc(docRef)
-        console.log('Document exists:', docSnap.exists())
         if (docSnap.exists()) {
-          setProperty({ id: params.id, ...docSnap.data() })
+          setProperty({ id: paramId, ...docSnap.data() })
         } else {
           setProperty(null)
         }
@@ -59,7 +68,7 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
       }
     }
     fetchProperty()
-  }, [params.id])
+  }, [paramId])
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
   if (!property) return <div className="p-8 text-center text-red-500">Accommodation not found.</div>

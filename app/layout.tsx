@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth-context"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "sonner"
 import { SessionProvider } from '@/providers/session-provider'
+import QueryProvider from "@/providers/query-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -51,15 +52,26 @@ export const metadata: Metadata = {
   verification: {
     google: "your-google-verification-code",
   },
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
-      <AuthProvider>
-        {children}
-      </AuthProvider>
-    </SessionProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <SessionProvider>
+          <AuthProvider>
+          <QueryProvider>
+
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+              {children}
+              <Toaster />
+              <SonnerToaster />
+            </ThemeProvider>
+            </QueryProvider>
+
+          </AuthProvider>
+        </SessionProvider>
+      </body>
+    </html>
   )
 }

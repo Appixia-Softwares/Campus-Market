@@ -10,6 +10,7 @@ import { getAccommodations } from "@/services/accommodation"
 import { useToast } from "@/hooks/use-toast"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { AccommodationFilterForm } from "@/components/accommodation-filters"
+import Link from "next/link"
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
@@ -116,6 +117,20 @@ export default function AccommodationPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <main className="flex-1 container py-0">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Accommodation</h1>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link href="/accommodation/my-listings">My Listings</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/accommodation/favorites">Favourites</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/accommodation/sell">+ New Listing</Link>
+            </Button>
+          </div>
+        </div>
         {/* Hero/Header Section */}
         <div className="relative bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-xl p-8 md:p-12 shadow-xl overflow-hidden mb-8 mt-8">
           <div className="flex flex-col gap-4">

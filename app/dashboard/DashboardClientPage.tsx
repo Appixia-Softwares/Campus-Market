@@ -128,6 +128,10 @@ export default function DashboardClientPage() {
   // Accommodation Listings state
   const [accommodationToDelete, setAccommodationToDelete] = useState<Accommodation | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [accommodationStats, setAccommodationStats] = useState({
+    total: 0,
+    bookings: 0,
+  })
 
   // Profile completion logic
   const requiredFields = useMemo(() => {
@@ -276,11 +280,11 @@ export default function DashboardClientPage() {
       ) as Message[]
 
       // Fetch user's accommodations
-      const accommodationsRef = collection(db, 'accommodation')
+      const accommodationsRef = collection(db, 'accommodations')
       const accommodationsQuery = query(
         accommodationsRef,
         where('seller.id', '==', user.id),
-        orderBy('createdAt', 'desc')
+        orderBy('created_at', 'desc')
       )
       const accommodationsSnapshot = await getDocs(accommodationsQuery)
       const typedAccommodations = accommodationsSnapshot.docs.map(doc => ({
@@ -288,6 +292,11 @@ export default function DashboardClientPage() {
         ...doc.data()
       })) as Accommodation[]
       setAccommodations(typedAccommodations)
+      // Accommodation stats
+      setAccommodationStats({
+        total: typedAccommodations.length,
+        bookings: 0, // TODO: fetch real bookings count
+      })
 
       setStats({
         totalListings,
@@ -397,7 +406,8 @@ export default function DashboardClientPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        {/* Product Stats Cards */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Listings</CardTitle>
@@ -445,6 +455,19 @@ export default function DashboardClientPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatPrice(stats.totalEarnings)}</div>
             <p className="text-xs text-muted-foreground">From {stats.soldListings} sales</p>
+          </CardContent>
+        </Card>
+        {/* Accommodation Stats Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Accommodations</CardTitle>
+            <Home className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{accommodationStats.total}</div>
+            <p className="text-xs text-muted-foreground">
+              {accommodationStats.bookings} bookings
+            </p>
           </CardContent>
         </Card>
       </div>
