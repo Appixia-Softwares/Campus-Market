@@ -21,7 +21,7 @@ type ReviewsSectionProps = {
 }
 
 export default function ReviewsSection({ accommodationId, revieweeId, landlordId, className }: ReviewsSectionProps) {
-  const { session } = useSession()
+  const { session } = useSession() as { session: { user: { id: string } } | null }
   const colorScheme = useColorScheme()
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
