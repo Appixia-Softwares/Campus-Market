@@ -29,8 +29,10 @@ import { doc, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
 import { toast } from "@/components/ui/use-toast"
+import { useAuth } from "@/lib/auth-context"
 
 export default function AccommodationDetailPage({ params }: { params: { id: string } }) {
+  const { user } = useAuth()
   const [property, setProperty] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -132,7 +134,10 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <BookingForm propertyId={property.id} />
+                      {/* Only show BookingForm if user is not the seller */}
+                      {(!user || !property.seller || user.id !== property.seller.id) && (
+                        <BookingForm propertyId={property.id} landlordId={property.seller?.id} userId={user?.id} />
+                      )}
                     </CardContent>
                   </Card>
                 </div>

@@ -69,29 +69,44 @@ export async function getReviewsForListing(listingId: string | number) {
   }
 }
 
+// Firestore version for accommodation reviews
+import { db } from '@/lib/firebase';
+import { collection, query, where, orderBy, getDocs, addDoc } from 'firebase/firestore';
+
 export async function getReviewsForAccommodation(accommodationId: string | number) {
-  try {
-    const { data, error } = await supabase
-      .from("reviews")
-      .select(`
-        *,
-        reviewer:reviewer_id(
-          id,
-          first_name,
-          last_name,
-          avatar_url
-        )
-      `)
-      .eq("accommodation_id", accommodationId)
-      .order("created_at", { ascending: false })
+  const reviewsQuery = query(
+    collection(db, 'accommodation_reviews'),
+    where('accommodation_id', '==', accommodationId),
+    orderBy('created_at', 'desc')
+  );
+  const snapshot = await getDocs(reviewsQuery);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
 
-    if (error) throw error
-
-    return data as (Review & { reviewer: any })[]
-  } catch (error) {
-    console.error("Error fetching reviews:", error)
-    return []
+// Only allow review if user is not the seller and has a completed booking
+export async function createAccommodationReview(review: Omit<Review, 'id'> & { reviewer_id: string, accommodation_id: string, landlord_id: string }) {
+  // Check reviewer is not the seller
+  if (review.reviewer_id === review.landlord_id) {
+    throw new Error('You cannot review your own property.');
   }
+  // Check for completed booking
+  const bookingsQuery = query(
+    collection(db, 'accommodation_bookings'),
+    where('propertyId', '==', review.accommodation_id),
+    where('customerId', '==', review.reviewer_id),
+    where('status', '==', 'completed')
+  );
+  const bookingsSnap = await getDocs(bookingsQuery);
+  if (bookingsSnap.empty) {
+    throw new Error('You can only review after completing a stay.');
+  }
+  const reviewData = {
+    ...review,
+    created_at: new Date(),
+    updated_at: new Date()
+  };
+  const docRef = await addDoc(collection(db, 'accommodation_reviews'), reviewData);
+  return { id: docRef.id, ...reviewData };
 }
 
 export async function updateReview(id: string | number, updates: Partial<Review>) {
