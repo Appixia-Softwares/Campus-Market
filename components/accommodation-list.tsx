@@ -39,6 +39,7 @@ export interface AccommodationListing {
   rating: number
   reviewCount: number
   image: string
+  images?: string[] // Added images to the interface
 }
 
 export interface AccommodationListProps {
@@ -46,9 +47,8 @@ export interface AccommodationListProps {
   isLoading?: boolean
 }
 
-export default function AccommodationList({ listings, isLoading }: AccommodationListProps) {
+export default function AccommodationList({ listings, isLoading, view = 'grid' }: AccommodationListProps & { view?: 'grid' | 'list' }) {
   const [favorites, setFavorites] = useState<string[]>([])
-  const [view, setView] = useState<'grid' | 'list'>('grid')
 
   const toggleFavorite = (id: string) => {
     setFavorites((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
@@ -87,10 +87,7 @@ export default function AccommodationList({ listings, isLoading }: Accommodation
 
   return (
     <div>
-      <div className="flex items-center justify-end mb-4 gap-2">
-        <Button variant={view === 'grid' ? 'default' : 'outline'} size="sm" onClick={() => setView('grid')}>Grid</Button>
-        <Button variant={view === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setView('list')}>List</Button>
-      </div>
+      {/* Remove the internal Grid/List toggle button block */}
       {view === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {listings.map((listing) => (
@@ -98,7 +95,7 @@ export default function AccommodationList({ listings, isLoading }: Accommodation
           <div className="flex flex-col md:flex-row">
             <div className="relative md:w-1/3">
               <img
-                src={listing.image || "/placeholder.svg"}
+                src={Array.isArray(listing.images) && listing.images.length > 0 ? listing.images[0] : listing.image || "/placeholder.svg"}
                 alt={listing.title}
                 className="w-full h-48 md:h-full object-cover"
               />
@@ -190,7 +187,7 @@ export default function AccommodationList({ listings, isLoading }: Accommodation
               <div className="flex flex-col md:flex-row">
                 <div className="relative md:w-1/4">
                   <img
-                    src={listing.image || "/placeholder.svg"}
+                    src={Array.isArray(listing.images) && listing.images.length > 0 ? listing.images[0] : listing.image || "/placeholder.svg"}
                     alt={listing.title}
                     className="w-full h-48 md:h-full object-cover"
                   />

@@ -38,7 +38,6 @@ import { doc, getDoc } from "firebase/firestore"
 import { useEffect, useState } from "react"
 import { User as UserType } from "@/lib/auth-service"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import AccommodationFormDialogContent from "./AccommodationFormDialogContent"
 

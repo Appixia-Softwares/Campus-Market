@@ -403,7 +403,7 @@ export default function NewListingPage() {
                           {categories.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               <div className="flex items-center gap-2">
-                                <span>{category.icon || '📦'}</span>
+                                <span>{category.icon}</span>
                                 {category.name}
                               </div>
                             </SelectItem>

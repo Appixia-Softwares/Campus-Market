@@ -38,8 +38,11 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
     async function fetchProperty() {
       setLoading(true)
       try {
-        const docRef = doc(db, "accommodation", params.id)
+        // FIX: Use correct collection name 'accommodations'
+        console.log('Fetching accommodation with id:', params.id)
+        const docRef = doc(db, "accommodations", params.id)
         const docSnap = await getDoc(docRef)
+        console.log('Document exists:', docSnap.exists())
         if (docSnap.exists()) {
           setProperty({ id: params.id, ...docSnap.data() })
         } else {
@@ -63,23 +66,6 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b sticky top-0 z-10 bg-background">
-        <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Building className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">Agripa</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <ModeToggle />
-            <Link href="/profile">
-              <Button variant="outline" size="icon" className="rounded-full">
-                <span className="sr-only">Profile</span>
-                <img src="/placeholder.svg?height=32&width=32" alt="Profile" className="rounded-full h-8 w-8" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
       <main className="flex-1">
         <div className="container py-6">
           <div className="flex flex-col gap-6">
@@ -150,23 +136,6 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                     </CardContent>
                   </Card>
                 </div>
-                {/* Seller Info */}
-                {property.seller && (
-                  <Card className="mt-4">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <User className="h-5 w-5 text-green-700" /> Seller Info
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-1">
-                        <div><strong>Name:</strong> {property.seller.full_name || property.seller.email}</div>
-                        <div><strong>Email:</strong> {property.seller.email}</div>
-                        {property.seller.phone && <div><strong>Phone:</strong> {property.seller.phone}</div>}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               </div>
               <div className="md:col-span-2 order-2 md:order-none">
                 <PropertyGallery images={property.images || []} />
@@ -212,6 +181,36 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                               <span>Available from {property.availableFrom && new Date(property.availableFrom).toLocaleDateString()}</span>
                             </div>
                           </div>
+                          {property.seller && (
+                            <div className="mt-8 flex items-center gap-4 p-4 bg-muted rounded-lg shadow-sm">
+                              <div className="flex-shrink-0">
+                                {property.seller.avatar_url ? (
+                                  <img
+                                    src={property.seller.avatar_url}
+                                    alt={property.seller.full_name || property.seller.email}
+                                    className="h-14 w-14 rounded-full object-cover border-2 border-primary shadow"
+                                  />
+                                ) : (
+                                  <div className="h-14 w-14 rounded-full flex items-center justify-center bg-primary text-white text-2xl font-bold border-2 border-primary shadow">
+                                    {(property.seller.full_name || property.seller.email || "U").charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-semibold text-lg text-primary flex items-center gap-2">
+                                  {property.seller.full_name || "Verified User"}
+                                  <Badge variant="secondary" className="ml-2">Seller</Badge>
+                                </div>
+                                {/* Hide contact details for privacy */}
+                                <div className="text-xs text-muted-foreground mt-1 italic">Contact details are hidden for your safety. Connect via platform messaging.</div>
+                                <Link href={`/messages?user=${property.seller.id}&property=${property.id}`}>
+                                  <Button className="mt-3 w-full" variant="default" size="lg">
+                                    Message Seller
+                                  </Button>
+                                </Link>
+                              </div>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     </TabsContent>

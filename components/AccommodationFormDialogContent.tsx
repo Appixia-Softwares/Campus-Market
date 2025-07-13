@@ -9,15 +9,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import { Home, MapPin, ImageIcon, X, User, Upload, Building, CheckCircle, AlertCircle, Check, Bed, Users, Wifi, ParkingCircle, Utensils, WashingMachine, Sparkles, ShieldCheck } from "lucide-react"
+import { Home, MapPin, ImageIcon, X, Upload, Building, CheckCircle, AlertCircle, Check, Bed, Wifi, ParkingCircle, Utensils, WashingMachine, Sparkles, ShieldCheck } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import { uploadFileToStorage } from "@/lib/firebase"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
 import confetti from "canvas-confetti"
+import { createAccommodation } from '@/services/accommodation'
 
 const amenitiesList = [
   "Wifi",
@@ -231,9 +231,37 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
+      // Build accommodation object for backend
+      const accommodation = {
+        title: formData.title,
+        propertyType: formData.propertyType,
+        customPropertyType: formData.customPropertyType || null,
+        description: formData.description,
+        longDescription: formData.longDescription,
+        address: formData.address,
+        university: formData.university,
+        campusLocation: formData.campusLocation,
+        price: Number(formData.price),
+        beds: formData.beds ? Number(formData.beds) : null,
+        baths: formData.baths ? Number(formData.baths) : null,
+        phone: formData.phone,
+        email: formData.email,
+        amenities: selectedAmenities,
+        images,
+        seller: {
+          id: user?.id,
+          full_name: user?.full_name || user?.email,
+          email: user?.email,
+          phone: user?.phone || null,
+          avatar_url: user?.avatar_url || null, // Ensure avatar is saved
+        },
+        is_available: true,
+        verified: false,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }
+      // Create accommodation in Firestore
+      const created = await createAccommodation(accommodation)
       toast({
         title: "Property Listed Successfully!",
         description: "Your accommodation has been added to our platform.",
@@ -243,7 +271,6 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
         spread: 80,
         origin: { y: 0.7 },
       })
-
       // Reset form
       setFormData({
         title: "",
@@ -262,7 +289,8 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       setSelectedAmenities([])
       setImages([])
       setCurrentTab("basic")
-
+      // Fire event for auto-refresh
+      window.dispatchEvent(new Event("accommodation:refresh"))
       if (onSuccess) onSuccess()
     } catch (error) {
       toast({

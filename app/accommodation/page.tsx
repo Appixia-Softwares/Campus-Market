@@ -47,16 +47,6 @@ export default function AccommodationPage() {
   const fetchAccommodations = useCallback(async () => {
     setLoading(true)
     try {
-      console.log('Fetching accommodations with filters:', {
-        searchQuery: search,
-        typeId: filters.types[0],
-        minPrice: filters.price[0],
-        maxPrice: filters.price[1],
-        campusId: filters.locations[0],
-        verifiedOnly: filters.verifiedOnly,
-        amenities: filters.amenities,
-        sortBy: sortBy,
-      })
       const data = await getAccommodations({
         searchQuery: search,
         typeId: filters.types[0],
@@ -67,10 +57,8 @@ export default function AccommodationPage() {
         amenities: filters.amenities,
         sortBy: sortBy,
       })
-      console.log('Fetched accommodations:', data)
       setAccommodations(data)
     } catch (e) {
-      console.error('Error fetching accommodations:', e)
       setAccommodations([])
     } finally {
       setLoading(false)
@@ -242,7 +230,7 @@ export default function AccommodationPage() {
           </div>
         </div>
         {/* Listings */}
-        <AccommodationList listings={filteredListings} isLoading={loading} />
+        <AccommodationList listings={filteredListings} isLoading={loading} view={view} />
       </main>
     </div>
   )
