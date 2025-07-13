@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Text } from "@/components/themed"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { getReviewsForUser, getReviewsForListing, getReviewsForAccommodation, createReview } from "@/services/reviews"
+import { getReviewsForUser, getReviewsForListing, getReviewsForAccommodation, createReview, createAccommodationReview } from "@/services/reviews"
 import { useSession } from "@/providers/session-provider"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import Colors from "@/constants/Colors"
@@ -23,7 +23,7 @@ type ReviewsSectionProps = {
   className?: string
 }
 
-export default function ReviewsSection({ userId, listingId, accommodationId, revieweeId, className }: ReviewsSectionProps) {
+export default function ReviewsSection({ accommodationId, revieweeId, landlordId, className }: ReviewsSectionProps & { landlordId?: string }) {
   const { session } = useSession()
   const colorScheme = useColorScheme()
   const queryClient = useQueryClient()
@@ -66,21 +66,19 @@ export default function ReviewsSection({ userId, listingId, accommodationId, rev
   })
 
   const handleSubmitReview = async (rating: number, comment: string) => {
-    if (!session || !revieweeId) return
-
-    const review = {
+    if (!session || !revieweeId || !accommodationId || !landlordId) return
+    await createAccommodationReview({
       reviewer_id: session.user.id,
       reviewee_id: revieweeId,
+      accommodation_id: accommodationId,
+      landlord_id: landlordId,
       rating,
       comment: comment || null,
-      ...(listingId ? { listing_id: listingId } : {}),
-      ...(accommodationId ? { accommodation_id: accommodationId } : {}),
-    }
-
-    createReviewMutation.mutate(review)
+    })
   }
 
-  const canReview = session && revieweeId && session.user.id !== revieweeId
+  // Only allow review if user is not the seller and has a completed booking
+  const canReview = session && revieweeId && session.user.id !== revieweeId && landlordId && session.user.id !== landlordId
 
   const averageRating =
     reviews && reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0

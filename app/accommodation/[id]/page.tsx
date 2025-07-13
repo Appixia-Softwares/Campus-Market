@@ -30,6 +30,7 @@ import { db } from "@/lib/firebase"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
 import { toast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context"
+import ReviewsSection from '@/components/reviews/reviews-section'
 
 export default function AccommodationDetailPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
@@ -223,7 +224,8 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                       <PropertyAmenities amenities={property.amenities || []} />
                     </TabsContent>
                     <TabsContent value="reviews" className="mt-4">
-                      <div className="text-muted-foreground">Reviews coming soon...</div>
+                      {/* Pass accommodationId, revieweeId (landlord id), and landlordId to ReviewsSection */}
+                      <ReviewsSection accommodationId={property.id} revieweeId={property.seller?.id} landlordId={property.seller?.id} />
                     </TabsContent>
                     <TabsContent value="location" className="mt-4">
                       <Card>
