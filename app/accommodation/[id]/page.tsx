@@ -109,16 +109,7 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                 <Button variant="outline" size="icon">
                   <Share2 className="h-5 w-5" />
                 </Button>
-                {property.seller?.phone && (
-                  <Button variant="outline" asChild>
-                    <a href={`tel:${property.seller.phone}`}><Phone className="h-4 w-4 mr-2" />Call</a>
-                  </Button>
-                )}
-                {property.seller?.email && (
-                  <Button variant="outline" asChild>
-                    <a href={`mailto:${property.seller.email}`}><MessageSquare className="h-4 w-4 mr-2" />Email</a>
-                  </Button>
-                )}
+                {/* Remove direct contact buttons for privacy */}
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -199,14 +190,14 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                                 ) : (
                                   <div className="h-14 w-14 rounded-full flex items-center justify-center bg-primary text-white text-2xl font-bold border-2 border-primary shadow">
                                     {(property.seller.full_name || property.seller.email || "U").charAt(0).toUpperCase()}
-                                  </div>
+                                </div>
                                 )}
                               </div>
                               <div className="flex-1">
                                 <div className="font-semibold text-lg text-primary flex items-center gap-2">
                                   {property.seller.full_name || "Verified User"}
                                   <Badge variant="secondary" className="ml-2">Seller</Badge>
-                                </div>
+                            </div>
                                 {/* Hide contact details for privacy */}
                                 <div className="text-xs text-muted-foreground mt-1 italic">Contact details are hidden for your safety. Connect via platform messaging.</div>
                                 <Link href={`/messages?user=${property.seller.id}&property=${property.id}`}>
@@ -217,8 +208,8 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                               </div>
                             </div>
                           )}
-                        </CardContent>
-                      </Card>
+                          </CardContent>
+                        </Card>
                     </TabsContent>
                     <TabsContent value="amenities" className="mt-4">
                       <PropertyAmenities amenities={property.amenities || []} />
@@ -245,13 +236,13 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                             </div>
                           </div>
                           <h3 className="font-medium mt-6">Nearby</h3>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="flex items-center gap-2">
-                              <div className="h-2 w-2 rounded-full bg-primary" />
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-primary" />
                               <span className="text-sm">{university?.name || property.university}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="h-2 w-2 rounded-full bg-primary" />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-primary" />
                               <span className="text-sm">{property.campusLocation}</span>
                             </div>
                           </div>
