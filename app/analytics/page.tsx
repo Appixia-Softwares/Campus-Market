@@ -84,10 +84,8 @@ export default function AnalyticsPage() {
         orderBy("created_at", "desc")
       )
       const productsSnapshot = await getDocs(productsQuery)
-      const products = productsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
+      // Explicitly type as any to allow property access (Firestore returns loose objects)
+      const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }))
 
       // Fetch messages count for user's products
       const conversationsQuery = query(
