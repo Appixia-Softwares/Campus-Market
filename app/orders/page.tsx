@@ -411,7 +411,9 @@ export default function OrdersPage() {
                                   <div>
                                     <p className="text-sm text-muted-foreground">Order Date</p>
                                     <p className="font-medium">
-                                      {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+                                      {order.created_at && !isNaN(new Date(order.created_at).getTime())
+                                        ? formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
+                                        : "Unknown"}
                                     </p>
                                   </div>
                                 </div>
