@@ -94,17 +94,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname === "/admin/dashboard"} tooltip="Dashboard">
-                      <a href="/admin/dashboard">
-                        <LayoutDashboard />
+                      <a href="/admin/dashboard" className="flex items-center gap-2">
+                        <LayoutDashboard className="h-4 w-4" />
                         <span>Dashboard</span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname === "/admin/users"} tooltip="Users">
-                      <a href="/admin/users">
-                        <Users />
+                      <a href="/admin/users" className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
                         <span>Users</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === "/admin/products"} tooltip="Products">
+                      <a href="/admin/products" className="flex items-center gap-2">
+                        <ShoppingBag className="h-4 w-4" />
+                        <span>Products</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === "/admin/orders"} tooltip="Orders">
+                      <a href="/admin/orders" className="flex items-center gap-2">
+                        <Home className="h-4 w-4" />
+                        <span>Orders</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === "/admin/settings"} tooltip="Settings">
+                      <a href="/admin/settings" className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        <span>Settings</span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
