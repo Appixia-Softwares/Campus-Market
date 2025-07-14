@@ -333,8 +333,8 @@ export function ProductGrid({
                       <div className="absolute bottom-2 left-2 z-10">
                         <Badge variant="secondary" className="bg-primary/90 text-primary-foreground flex items-center gap-1 px-3 py-1 rounded-full shadow-md">
                           {category?.icon && <category.icon className="h-4 w-4 mr-1" />} {category ? category.label : "Uncategorized"}
-                        </Badge>
-                      </div>
+                      </Badge>
+                    </div>
                     );
                   })()}
                 </div>
@@ -431,30 +431,30 @@ export function ProductGrid({
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 text-green-600 border-green-200 hover:bg-green-50"
-                            onClick={(e) => contactWhatsApp(product, e)}
-                          >
-                            <Phone className="h-4 w-4 mr-1" />
-                            WhatsApp
-                          </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-green-600 border-green-200 hover:bg-green-50"
+                        onClick={(e) => contactWhatsApp(product, e)}
+                      >
+                        <Phone className="h-4 w-4 mr-1" />
+                        WhatsApp
+                      </Button>
                         </TooltipTrigger>
                         <TooltipContent>Contact seller on WhatsApp</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => startConversation(product, e)}
-                            disabled={product.status === "sold" || product.seller_id === user?.id}
-                          >
-                            <MessageCircle className="h-4 w-4 mr-1" />
-                            {product.status === "sold" ? "Sold" : "Message"}
-                          </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex-1"
+                      onClick={(e) => startConversation(product, e)}
+                      disabled={product.status === "sold" || product.seller_id === user?.id}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      {product.status === "sold" ? "Sold" : "Message"}
+                    </Button>
                         </TooltipTrigger>
                         <TooltipContent>Send a message to the seller</TooltipContent>
                       </Tooltip>
