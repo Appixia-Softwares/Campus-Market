@@ -7,15 +7,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
-import { MessageSquare, Search, Send, Phone, MoreVertical, Archive, Trash2, Star, CheckCheck, Plus, Check, Paperclip, X, Mic, StopCircle, PlayCircle } from "lucide-react"
+import { MessageSquare, Search, Send, MoreVertical, Archive, Trash2, Star, CheckCheck, Check, Paperclip, X, Mic, StopCircle } from "lucide-react"
+import { SiWhatsapp } from "react-icons/si";
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, addDoc, onSnapshot, serverTimestamp, orderBy } from 'firebase/firestore';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, addDoc, onSnapshot, orderBy } from 'firebase/firestore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useSearchParams } from "next/navigation"
 import { ModeToggle } from "@/components/mode-toggle"
 import React, { useRef } from "react"
@@ -681,7 +682,7 @@ export default function MessagesPage() {
                             <DropdownMenuContent align="end">
                               {conversation.other_user.whatsapp_number && (
                                 <DropdownMenuItem onClick={() => contactWhatsApp(conversation)}>
-                                  <Phone className="h-4 w-4 mr-2 text-green-600" />
+                                  <SiWhatsapp className="h-4 w-4 mr-2 text-green-600" />
                                   WhatsApp
                                 </DropdownMenuItem>
                               )}
@@ -735,7 +736,7 @@ export default function MessagesPage() {
                           onClick={() => contactWhatsApp(selectedConversation)}
                           className="text-green-600 border-green-200 hover:bg-green-50"
                         >
-                          <Phone className="h-4 w-4 mr-1" />
+                          <SiWhatsapp className="h-4 w-4 mr-1" />
                           WhatsApp
                         </Button>
                       )}
