@@ -320,22 +320,25 @@ export default function MarketplacePage() {
               // Get seller info
               const sellerRef = productData.seller_id ? doc(db, 'users', productData.seller_id) : null;
               const sellerDoc = sellerRef ? await getDoc(sellerRef) : null;
-              const sellerDocData = sellerDoc && sellerDoc.exists() ? sellerDoc.data() : null;
-              const sellerData = sellerDocData ? {
-                id: sellerDoc.id,
-                ...sellerDocData
-              } : null;
-
-              // Get category info
+              let sellerData = null;
+              if (sellerDoc && sellerDoc.exists()) {
+                const sellerDocData = sellerDoc.data();
+                sellerData = {
+                  id: sellerDoc.id,
+                  ...sellerDocData
+                };
+              }
               const categoryRef = productData.category_id ? doc(db, 'product_categories', productData.category_id) : null;
               const categoryDoc = categoryRef ? await getDoc(categoryRef) : null;
               const categoryDocData = categoryDoc && categoryDoc.exists() ? categoryDoc.data() : null;
-              const categoryData = categoryDocData ? {
-                id: categoryDoc.id,
-                ...categoryDocData
-              } : {
-                id: "",
-                name: "Uncategorized",
+              const categoryData = categoryDocData && categoryDoc
+                ? {
+                    id: categoryDoc.id,
+                    ...categoryDocData
+                  }
+                : {
+                    id: "",
+                    name: "Uncategorized",
                 description: "",
                 icon: ""
               };
@@ -344,7 +347,7 @@ export default function MarketplacePage() {
               const universityRef = productData.university_id ? doc(db, 'universities', productData.university_id) : null;
               const universityDoc = universityRef ? await getDoc(universityRef) : null;
               const universityDocData = universityDoc && universityDoc.exists() ? universityDoc.data() : null;
-              const universityData = universityDocData ? {
+              const universityData = universityDocData && universityDoc ? {
                 id: universityDoc.id,
                 ...universityDocData
               } : {
