@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ShoppingBag, Eye, Heart, MessageSquare, Download, TrendingUp } from "lucide-react"
+import { ShoppingBag, Eye, Heart, MessageSquare, Download, TrendingUp, Home, DollarSign } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { db } from "@/lib/firebase"
 import { collection, query, where, orderBy, getDocs, doc, getDoc } from "firebase/firestore"
@@ -51,9 +51,18 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState("30") // days
 
+  // Accommodation analytics state
+  const [accomStats, setAccomStats] = useState({
+    total: 0,
+    bookings: 0,
+    revenue: 0,
+    occupancy: 0,
+  })
+
   useEffect(() => {
     if (user) {
       fetchAnalyticsData()
+      fetchAccommodationStats()
     }
   }, [user, dateRange])
 
@@ -75,10 +84,8 @@ export default function AnalyticsPage() {
         orderBy("created_at", "desc")
       )
       const productsSnapshot = await getDocs(productsQuery)
-      const products = productsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
+      // Explicitly type as any to allow property access (Firestore returns loose objects)
+      const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }))
 
       // Fetch messages count for user's products
       const conversationsQuery = query(
@@ -173,6 +180,45 @@ export default function AnalyticsPage() {
     }
   }
 
+  // Fetch accommodation stats (mocked for now, structure for easy real data swap)
+  const fetchAccommodationStats = async () => {
+    if (!user) return
+    // Fetch user's accommodations
+    const accomQuery = query(
+      collection(db, 'accommodations'),
+      where('seller.id', '==', user.id)
+    )
+    const accomSnap = await getDocs(accomQuery)
+    const accommodations = accomSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    const total = accommodations.length
+    if (total === 0) {
+      setAccomStats({ total: 0, bookings: 0, revenue: 0, occupancy: 0 })
+      return
+    }
+    // Fetch bookings for these accommodations
+    const accomIds = accommodations.map(a => a.id)
+    // Firestore doesn't support 'in' with too many values, but for most users this is fine
+    let bookings = []
+    let revenue = 0
+    let completedCount = 0
+    for (const accomId of accomIds) {
+      const bookingsQuery = query(
+        collection(db, 'accommodation_bookings'),
+        where('propertyId', '==', accomId)
+      )
+      const bookingsSnap = await getDocs(bookingsQuery)
+      const theseBookings = bookingsSnap.docs.map(doc => doc.data())
+      bookings = bookings.concat(theseBookings)
+      for (const b of theseBookings) {
+        if (b.amount) revenue += Number(b.amount)
+        if (b.status === 'completed') completedCount++
+      }
+    }
+    // Occupancy: percent of completed bookings over total possible (mocked as total listings * 4)
+    const occupancy = total > 0 ? Math.round((completedCount / (total * 4)) * 100) : 0
+    setAccomStats({ total, bookings: bookings.length, revenue, occupancy })
+  }
+
   const exportData = async () => {
     if (!analyticsData) return
 
@@ -254,6 +300,7 @@ export default function AnalyticsPage() {
 
       {/* Overview Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Product Analytics */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Views</CardTitle>
@@ -264,7 +311,6 @@ export default function AnalyticsPage() {
             <p className="text-xs text-muted-foreground">All time views</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Likes</CardTitle>
@@ -275,7 +321,6 @@ export default function AnalyticsPage() {
             <p className="text-xs text-muted-foreground">All time likes</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
@@ -286,7 +331,6 @@ export default function AnalyticsPage() {
             <p className="text-xs text-muted-foreground">All time messages</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Listings</CardTitle>
@@ -299,6 +343,47 @@ export default function AnalyticsPage() {
             </p>
           </CardContent>
         </Card>
+        {/* Accommodation Analytics */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Accommodations</CardTitle>
+            <Home className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{accomStats.total}</div>
+            <p className="text-xs text-muted-foreground">Total Listings</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Bookings</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{accomStats.bookings}</div>
+            <p className="text-xs text-muted-foreground">Total Bookings (mock)</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${accomStats.revenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Mocked Revenue</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Occupancy</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{accomStats.occupancy}%</div>
+            <p className="text-xs text-muted-foreground">Occupancy Rate (mock)</p>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
@@ -307,6 +392,7 @@ export default function AnalyticsPage() {
           <TabsTrigger value="listings">Top Listings</TabsTrigger>
           <TabsTrigger value="trends">Trends</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="accommodation">Accommodation</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -457,6 +543,35 @@ export default function AnalyticsPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="accommodation" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Accommodation Analytics</CardTitle>
+              <CardDescription>Stats for your accommodation listings (mocked)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-muted-foreground">Listings</p>
+                  <p className="font-bold text-2xl">{accomStats.total}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Bookings</p>
+                  <p className="font-bold text-2xl">{accomStats.bookings}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Revenue</p>
+                  <p className="font-bold text-2xl">${accomStats.revenue.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Occupancy</p>
+                  <p className="font-bold text-2xl">{accomStats.occupancy}%</p>
+                </div>
               </div>
             </CardContent>
           </Card>
