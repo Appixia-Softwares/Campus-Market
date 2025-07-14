@@ -17,6 +17,7 @@ import {
   Bell,
   Search,
   UserIcon,
+  Loader2,
 } from "lucide-react"
 import {
   Sidebar,
@@ -45,29 +46,36 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { useAuth } from "@/lib/auth-context";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const searchParams = useSearchParams()
+  const { user, loading } = useAuth();
 
-  // Prevent hydration errors
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Check if the user is authenticated as admin
-  // In a real app, this would be a proper auth check
   useEffect(() => {
-    // Mock authentication check
-    const isAuthenticated = true // This would be a real check in production
-    if (!isAuthenticated) {
-      router.push("/login")
+    if (!loading && mounted) {
+      if (!user) {
+        router.replace("/login?redirectTo=" + encodeURIComponent(pathname));
+      } else if (user.role !== "admin") {
+        router.replace("/");
+      }
     }
-  }, [router])
+  }, [user, loading, mounted, router, pathname]);
 
-  if (!mounted) return null
+  if (!mounted || loading || !user || user.role !== "admin") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider defaultOpen={true}>
