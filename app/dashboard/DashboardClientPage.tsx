@@ -257,10 +257,12 @@ export default function DashboardClientPage() {
       const typedMessages = await Promise.all(
         messagesSnapshot.docs.map(async (messageDoc) => {
           const messageData = messageDoc.data()
-          const senderDoc = await getDoc(doc(db, 'users', messageData.sender_id as string))
-          const conversationDoc = await getDoc(doc(db, 'conversations', messageData.conversation_id as string))
-          const productDoc = conversationDoc.exists() ? 
-            await getDoc(doc(db, 'products', conversationDoc.data()?.product_id as string)) : null
+          const senderDoc = await getDoc(doc(db, 'users', String(messageData.sender_id || '')))
+          const conversationDoc = await getDoc(doc(db, 'conversations', String(messageData.conversation_id || '')))
+          const productId = conversationDoc.exists() ? conversationDoc.data()?.product_id : null;
+          const productDoc = productId
+            ? await getDoc(doc(db, 'products', String(productId)))
+            : null;
 
           return {
             id: messageDoc.id,
