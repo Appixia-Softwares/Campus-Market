@@ -352,9 +352,11 @@ export default function ProfilePage() {
                           <Label htmlFor="university">University</Label>
                           <div className="bg-muted rounded px-3 py-2 min-h-[40px] flex items-center">
                             {(() => {
-                              if (!user?.university_id || user.university_id === "none") return "No University Selected"
-                              const uni = ZIM_UNIVERSITIES.find((u) => u.id === user.university_id)
-                              return uni ? `${uni.name} (${uni.location})` : "No University Selected"
+                              if (!user?.university_id || user.university_id === "none") {
+                                return "No University Selected";
+                              }
+                              const uni = ZIM_UNIVERSITIES.find((u) => u.id === user.university_id);
+                              return uni ? `${uni.name} (${uni.location})` : "No University Selected";
                             })()}
                           </div>
                         </div>
