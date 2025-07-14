@@ -498,15 +498,14 @@ export default function ProfilePage() {
             </TabsContent>
           </Tabs>
         </div>
-            </div>
-            <Dialog open={isEditing} onOpenChange={setIsEditing}>
-              <DialogContent className="max-w-2xl p-0">
-                {/* ProfileForm expects onSubmit to receive ProfileFormValues */}
-                <ProfileForm onSubmit={handleProfileSave} />
-              </DialogContent>
-            </Dialog>
-          </main>
-        </div>
+          </div>
+          <Dialog open={isEditing} onOpenChange={setIsEditing}>
+            <DialogContent className="max-w-2xl p-0">
+              {/* ProfileForm expects onSubmit to receive ProfileFormValues */}
+              <ProfileForm onSubmit={handleProfileSave} />
+            </DialogContent>
+          </Dialog>
+        </main>
       </div>
     </div>
   )
