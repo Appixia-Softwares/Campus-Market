@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import { useEffect, useState } from 'react';
 import { getAllReports } from '@/lib/api/reports';
 import { Badge } from '@/components/ui/badge';
