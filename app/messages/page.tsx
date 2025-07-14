@@ -15,6 +15,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, addDoc, onSnapshot, serverTimestamp, orderBy } from 'firebase/firestore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useSearchParams } from "next/navigation"
 
 interface Conversation {
   id: string
@@ -38,6 +40,7 @@ interface Conversation {
     price: number
     product_images: { url: string; is_primary: boolean }[]
   } | null
+  order_id: string | null
 }
 
 interface Message {
@@ -58,12 +61,105 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [sendingMessage, setSendingMessage] = useState(false)
+  const [showNewMessage, setShowNewMessage] = useState(false)
+  const [userSearch, setUserSearch] = useState("")
+  const [userResults, setUserResults] = useState<any[]>([])
+  const [searching, setSearching] = useState(false)
+  const searchParams = useSearchParams()
+  const orderIdParam = searchParams?.get("order")
+  const [orderInfo, setOrderInfo] = useState<any>(null)
 
   useEffect(() => {
     if (user) {
       fetchConversations()
     }
   }, [user])
+
+  // Auto-select or create conversation for ?order=...
+  useEffect(() => {
+    if (!user || !orderIdParam) return
+    (async () => {
+      // Try to find existing conversation for this order
+      const q = query(
+        collection(db, "conversations"),
+        where("participants", "array-contains", user.id),
+        where("order_id", "==", orderIdParam)
+      )
+      const snap = await getDocs(q)
+      let conv = null
+      if (!snap.empty) {
+        const docSnap = snap.docs[0]
+        const data = docSnap.data()
+        if (!data) return
+        // Find the other participant
+        const otherUserId = data.participants.find((id: string) => id !== user.id)
+        const otherUserDoc = await getDoc(doc(db, 'users', otherUserId))
+        const otherUser = otherUserDoc.exists() ? otherUserDoc.data() : { full_name: 'Unknown', avatar_url: null, whatsapp_number: null }
+        conv = {
+          id: docSnap.id,
+          participant_1_id: data.participant_1_id,
+          participant_2_id: data.participant_2_id,
+          product_id: data.product_id || null,
+          last_message: data.last_message || null,
+          last_message_time: data.last_message_time || null,
+          unread_count: 0,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          other_user: {
+            id: otherUserId,
+            full_name: otherUser.full_name,
+            avatar_url: otherUser.avatar_url,
+            whatsapp_number: otherUser.whatsapp_number || null,
+          },
+          products: null,
+          order_id: orderIdParam,
+        }
+      } else {
+        // Fetch order info to get participants
+        const orderDoc = await getDoc(doc(db, "orders", orderIdParam))
+        if (!orderDoc.exists()) return
+        const order = orderDoc.data()
+        setOrderInfo(order)
+        const otherUserId = order.seller_id === user.id ? order.buyer_id : order.seller_id
+        // Create conversation
+        const docRef = await addDoc(collection(db, "conversations"), {
+          participants: [user.id, otherUserId],
+          participant_1_id: user.id,
+          participant_2_id: otherUserId,
+          order_id: orderIdParam,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          last_message: null,
+          last_message_time: null,
+        })
+        const newDoc = await getDoc(docRef)
+        const data = newDoc.data()
+        if (!data) return
+        const otherUserDoc = await getDoc(doc(db, 'users', otherUserId))
+        const otherUser = otherUserDoc.exists() ? otherUserDoc.data() : { full_name: 'Unknown', avatar_url: null, whatsapp_number: null }
+        conv = {
+          id: newDoc.id,
+          participant_1_id: data.participant_1_id,
+          participant_2_id: data.participant_2_id,
+          product_id: data.product_id || null,
+          last_message: data.last_message || null,
+          last_message_time: data.last_message_time || null,
+          unread_count: 0,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          other_user: {
+            id: otherUserId,
+            full_name: otherUser.full_name,
+            avatar_url: otherUser.avatar_url,
+            whatsapp_number: otherUser.whatsapp_number || null,
+          },
+          products: null,
+          order_id: orderIdParam,
+        }
+      }
+      if (conv) setSelectedConversation(conv)
+    })()
+  }, [user, orderIdParam])
 
   useEffect(() => {
     if (selectedConversation) {
@@ -97,7 +193,7 @@ export default function MessagesPage() {
             const prodData = productDoc.data()
             const imagesQuery = query(collection(db, 'product_images'), where('product_id', '==', data.product_id))
             const imagesSnap = await getDocs(imagesQuery)
-            const images = imagesSnap.docs.map(img => img.data())
+            const images = imagesSnap.docs.map(img => img.data()) as { url: string; is_primary: boolean }[]
             product = { id: productDoc.id, title: prodData.title, price: prodData.price, product_images: images }
           }
         }
@@ -121,6 +217,7 @@ export default function MessagesPage() {
             whatsapp_number: otherUser.whatsapp_number || null,
           },
           products: product,
+          order_id: data.order_id || null,
         }
       }))
       setConversations(convs.sort((a, b) => (b.last_message_time || '').localeCompare(a.last_message_time || '')))
@@ -207,6 +304,86 @@ export default function MessagesPage() {
 
   const totalUnread = conversations.reduce((sum, conv) => sum + conv.unread_count, 0)
 
+  const searchUsers = async (query: string) => {
+    setSearching(true)
+    setUserResults([])
+    if (!query.trim()) {
+      setSearching(false)
+      return
+    }
+    const q = query(
+      collection(db, "users"),
+      where("full_name", ">=", query),
+      where("full_name", "<=", query + "\uf8ff")
+    )
+    const snap = await getDocs(q)
+    setUserResults(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+    setSearching(false)
+  }
+
+  const startConversation = async (otherUser: any, orderId?: string) => {
+    if (!user) return
+    // Check if conversation exists
+    let convQuery
+    if (orderId) {
+      convQuery = query(
+        collection(db, "conversations"),
+        where("participants", "array-contains", user.id),
+        where("order_id", "==", orderId)
+      )
+    } else {
+      convQuery = query(
+        collection(db, "conversations"),
+        where("participants", "array-contains", user.id)
+      )
+    }
+    const snap = await getDocs(convQuery)
+    let existing = null
+    snap.forEach(docSnap => {
+      const data = docSnap.data()
+      if (data && data.participants.includes(otherUser.id) && (!orderId || data.order_id === orderId)) existing = { id: docSnap.id, participant_1_id: data.participant_1_id, participant_2_id: data.participant_2_id, product_id: data.product_id || null, last_message: data.last_message || null, last_message_time: data.last_message_time || null, unread_count: 0, created_at: data.created_at, updated_at: data.updated_at, other_user: { id: otherUser.id, full_name: otherUser.full_name, avatar_url: otherUser.avatar_url, whatsapp_number: otherUser.whatsapp_number || null }, products: null, order_id: data.order_id || null }
+    })
+    let convId = existing?.id
+    if (!convId) {
+      const docRef = await addDoc(collection(db, "conversations"), {
+        participants: [user.id, otherUser.id],
+        participant_1_id: user.id,
+        participant_2_id: otherUser.id,
+        order_id: orderId || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_message: null,
+        last_message_time: null,
+      })
+      convId = docRef.id
+    }
+    // Fetch the new conversation object
+    const docSnap = await getDoc(doc(db, "conversations", convId))
+    if (docSnap.exists()) {
+      const data = docSnap.data()
+      setSelectedConversation({
+        id: docSnap.id,
+        participant_1_id: data.participant_1_id,
+        participant_2_id: data.participant_2_id,
+        product_id: data.product_id || null,
+        last_message: data.last_message || null,
+        last_message_time: data.last_message_time || null,
+        unread_count: 0,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        other_user: {
+          id: otherUser.id,
+          full_name: otherUser.full_name,
+          avatar_url: otherUser.avatar_url,
+          whatsapp_number: otherUser.whatsapp_number || null,
+        },
+        products: null,
+        order_id: orderId || null,
+      })
+      setShowNewMessage(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="container py-8">
@@ -222,7 +399,7 @@ export default function MessagesPage() {
               )}
             </p>
           </div>
-          <Button>
+          <Button onClick={() => setShowNewMessage(true)}>
             <Plus className="mr-2 h-4 w-4" />
             New Message
           </Button>
@@ -497,6 +674,43 @@ export default function MessagesPage() {
           </div>
         </div>
       </div>
+      <Dialog open={showNewMessage} onOpenChange={setShowNewMessage}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Start a New Conversation</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Search users by name..."
+            value={userSearch}
+            onChange={e => {
+              setUserSearch(e.target.value)
+              searchUsers(e.target.value)
+            }}
+            className="mb-4"
+          />
+          {searching ? (
+            <div className="text-center text-muted-foreground">Searching...</div>
+          ) : userResults.length === 0 && userSearch ? (
+            <div className="text-center text-muted-foreground">No users found</div>
+          ) : (
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {userResults.map(u => (
+                <div
+                  key={u.id}
+                  className="flex items-center gap-3 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                  onClick={() => startConversation(u)}
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={u.avatar_url || undefined} />
+                    <AvatarFallback>{u.full_name?.charAt(0) || "?"}</AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium">{u.full_name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
