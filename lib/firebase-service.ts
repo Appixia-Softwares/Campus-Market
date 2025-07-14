@@ -61,6 +61,35 @@ export interface ProductImage {
 const productsCollection = 'products';
 const productImagesCollection = 'product_images';
 
+// Deep clean utility to remove Symbols, functions, and undefined from nested objects/arrays
+function deepClean(value: any): any {
+  if (Array.isArray(value)) {
+    return value.map(deepClean).filter(v => v !== undefined);
+  }
+  if (value && typeof value === 'object' && !(value instanceof Date)) {
+    const result: Record<string, any> = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (
+        typeof v !== 'function' &&
+        typeof v !== 'symbol' &&
+        typeof v !== 'undefined'
+      ) {
+        const cleaned = deepClean(v);
+        if (cleaned !== undefined) result[k] = cleaned;
+      }
+    }
+    return result;
+  }
+  if (
+    typeof value === 'function' ||
+    typeof value === 'symbol' ||
+    typeof value === 'undefined'
+  ) {
+    return undefined;
+  }
+  return value;
+}
+
 // Product Functions
 export const getProducts = async (filters: any = {}) => {
   try {
@@ -177,17 +206,7 @@ export const getProducts = async (filters: any = {}) => {
 
 export const createProduct = async (productData: Omit<Product, 'id'>) => {
   try {
-    // Remove any Symbol or non-serializable values
-    const cleanData: Record<string, any> = {};
-    Object.entries(productData).forEach(([key, value]) => {
-      if (
-        typeof value !== 'function' &&
-        typeof value !== 'symbol' &&
-        typeof value !== 'undefined'
-      ) {
-        cleanData[key] = value;
-      }
-    });
+    const cleanData = deepClean(productData);
     console.log('createProduct data:', cleanData);
     const docRef = await addDoc(collection(db, productsCollection), {
       ...cleanData,
