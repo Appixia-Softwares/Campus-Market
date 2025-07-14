@@ -15,7 +15,8 @@ import {
   DocumentSnapshot,
   getDoc,
   DocumentReference,
-  Timestamp
+  Timestamp,
+  serverTimestamp
 } from 'firebase/firestore';
 
 // Types
@@ -176,12 +177,24 @@ export const getProducts = async (filters: any = {}) => {
 
 export const createProduct = async (productData: Omit<Product, 'id'>) => {
   try {
-    const docRef = await addDoc(collection(db, productsCollection), {
-      ...productData,
-      created_at: new Date(),
-      updated_at: new Date()
+    // Remove any Symbol or non-serializable values
+    const cleanData: Record<string, any> = {};
+    Object.entries(productData).forEach(([key, value]) => {
+      if (
+        typeof value !== 'function' &&
+        typeof value !== 'symbol' &&
+        typeof value !== 'undefined'
+      ) {
+        cleanData[key] = value;
+      }
     });
-    return docRef.id;
+    console.log('createProduct data:', cleanData);
+    const docRef = await addDoc(collection(db, productsCollection), {
+      ...cleanData,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    });
+    return docRef;
   } catch (error) {
     console.error('Error creating product:', error);
     throw error;

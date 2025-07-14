@@ -16,11 +16,7 @@ import {
   Shield,
   Info,
   ArrowRight,
-  Bed,
-  MessageCircle,
-  BarChart2,
-  List,
-  Star,
+  ShoppingCart,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -45,7 +41,6 @@ import { User as UserType } from "@/lib/auth-service"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useRouter } from "next/navigation"
 import AccommodationFormDialogContent from "./AccommodationFormDialogContent"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface DashboardSidebarProps {
   collapsed: boolean
@@ -75,60 +70,383 @@ type AuthUser = UserType & {
   user_metadata: UserMetadata
 }
 
-function SidebarNav() {
-  const pathname = usePathname()
-  const { user, logout } = useAuth()
-  const navLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: Home },
-    { href: "/marketplace", label: "Products", icon: ShoppingBag },
-    { href: "/accommodation", label: "Accommodation", icon: Bed },
-    { href: "/orders", label: "Orders", icon: List },
-    { href: "/messages", label: "Messages", icon: MessageCircle },
-    { href: "/analytics", label: "Analytics", icon: BarChart2 },
-    { href: "/settings", label: "Settings", icon: Settings },
-  ]
+export default function DashboardSidebar({ collapsed, onToggle, isMobile }: DashboardSidebarProps) {
+  const pathname = usePathname() || ""
+  const { user, signOut } = useAuth()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const actuallyCollapsed = isMobile ? false : collapsed
+  const router = useRouter();
+  const [sellDialogOpen, setSellDialogOpen] = useState(false);
+  const [showAccommodationForm, setShowAccommodationForm] = useState(false);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) return
+      
+      try {
+        const profileDoc = await getDoc(doc(db, "users", user.id))
+        if (profileDoc.exists()) {
+          setProfile(profileDoc.data() as UserProfile)
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+      }
+    }
+
+    fetchProfile()
+  }, [user])
+
+  const getInitials = (fullName: string) => {
+    return fullName
+      .split(" ")
+      .map((name) => name.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join("")
+  }
+
+  const getDisplayName = () => {
+    if (profile?.full_name) {
+      return profile.full_name
+    }
+    if (user?.full_name) {
+      return user.full_name
+    }
+    if (user?.email) {
+      return user.email.split("@")[0]
+    }
+    return "User"
+  }
+
+  const getUserInitials = () => {
+    const displayName = getDisplayName()
+    return getInitials(displayName)
+  }
+
+  const getVerificationStatus = () => {
+    if (!profile) return { verified: false, count: 0, total: 3, details: [] }
+
+    const details = []
+    let verifiedCount = 0
+
+    // Email verification
+    if (user?.email) {
+      verifiedCount++
+      details.push({ type: "Email", verified: true })
+    } else {
+      details.push({ type: "Email", verified: false })
+    }
+
+    // Phone verification
+    if (profile.phone_verified) {
+      verifiedCount++
+      details.push({ type: "Phone", verified: true })
+    } else {
+      details.push({ type: "Phone", verified: false })
+    }
+
+    // Student ID verification
+    if (profile.verified) {
+      verifiedCount++
+      details.push({ type: "Student ID", verified: true })
+    } else {
+      details.push({ type: "Student ID", verified: false })
+    }
+
+    return {
+      verified: verifiedCount === 3,
+      count: verifiedCount,
+      total: 3,
+      details,
+    }
+  }
+
+  const verificationStatus = getVerificationStatus()
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
+
   return (
-    <aside className="w-full max-w-[260px] min-h-screen bg-white dark:bg-gray-950 border-r shadow-lg flex flex-col gap-4 p-4 rounded-r-2xl">
-      {/* User avatar and dropdown */}
-      <div className="flex items-center gap-3 mb-6">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="focus:outline-none">
-              <Avatar src={user?.avatar_url || "/placeholder-user.jpg"} alt={user?.full_name || "User"} className="w-12 h-12 border shadow" />
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className={`flex items-center gap-2 px-4 py-2 ${actuallyCollapsed ? "justify-center px-2 py-2" : ""}`}>
+            <Building className="h-6 w-6 text-primary animate-bounce-slow" />
+            {!actuallyCollapsed && <span className="font-bold text-xl">CampusMarket</span>}
+            <button
+              onClick={onToggle}
+              className={`ml-auto p-1 rounded hover:bg-muted transition ${actuallyCollapsed ? "" : ""}`}
+              aria-label={actuallyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <svg
+                className={`w-5 h-5 transition-transform ${actuallyCollapsed ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5" />
+              </svg>
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem asChild>
-              <Link href="/profile"><User className="mr-2 w-4 h-4" />Profile</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/settings"><Settings className="mr-2 w-4 h-4" />Settings</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={logout}><LogOut className="mr-2 w-4 h-4" />Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <div>
-          <div className="font-semibold text-lg">{user?.full_name || "User"}</div>
-          <div className="text-xs text-muted-foreground">{user?.email || ""}</div>
+          </div>
+
+          {!actuallyCollapsed && (
+            <div className="px-4 py-3 bg-muted/30 rounded-lg mx-2">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={profile?.avatar_url || user?.avatar_url} />
+                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{getDisplayName()}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  {profile?.university && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <GraduationCap className="h-3 w-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground truncate">
+                        {profile.university.abbreviation || profile.university.name}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-      {/* Navigation links */}
-      <nav className="flex flex-col gap-2">
-        {navLinks.map(link => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors font-medium text-base ${pathname.startsWith(link.href) ? 'bg-primary/10 text-primary shadow' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'}`}
-            tabIndex={0}
-          >
-            <link.icon className="w-5 h-5" />
-            {link.label}
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center gap-2">
+                  {profile?.status && (
+                    <Badge variant={profile.status === "active" ? "default" : "secondary"} className="text-xs">
+                      {profile.status}
+                    </Badge>
+                  )}
+                  {profile?.role && profile.role !== "student" && (
+                    <Badge variant="outline" className="text-xs">
+                      {profile.role}
+                    </Badge>
+                  )}
+                  {verificationStatus.verified && (
+                    <Badge variant="default" className="text-xs bg-green-600">
+                      <Shield className="h-3 w-3 mr-1" />
+                      Verified
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {verificationStatus.verified ? (
+                    <span className="text-green-600 font-medium">✓ Fully Verified</span>
+                  ) : (
+                    <span>
+                      {verificationStatus.count}/{verificationStatus.total} verified
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </SidebarHeader>
+
+        <SidebarContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/dashboard"} tooltip="Dashboard">
+                <Link href="/dashboard" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Home className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Dashboard</span>}
                 </Link>
-        ))}
-      </nav>
-      <div className="flex-1" />
-      {/* Optional: Add stats, version, or help link here */}
-    </aside>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/analytics"} tooltip="Analytics">
+                <Link href="/analytics" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <BarChart3 className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Analytics</span>}
+                </Link>
+              </SidebarMenuButton>
+
+              <SidebarMenuButton asChild isActive={pathname === "/orders"} tooltip="Orders">
+                <Link href="/orders" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <ShoppingCart className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Orders</span>}
+                </Link>
+              </SidebarMenuButton>
+
+            </SidebarMenuItem>
+            <Separator className="my-2" />
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/marketplace" || pathname.startsWith("/marketplace/")} tooltip="Browse Marketplace">
+                <Link href="/marketplace" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Search className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Browse Products</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Dialog open={sellDialogOpen} onOpenChange={(open) => { setSellDialogOpen(open); if (!open) setShowAccommodationForm(false); }}>
+                <DialogTrigger asChild>
+                  <SidebarMenuButton
+                    isActive={pathname === "/marketplace/sell" || pathname.startsWith("/marketplace/sell")}
+                    tooltip="Sell Product"
+                    onClick={() => setSellDialogOpen(true)}
+                  >
+                    <div className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                      <Plus className="h-4 w-4" />
+                      {!actuallyCollapsed && <span>Sell Product</span>}
+                    </div>
+                  </SidebarMenuButton>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Plus className="h-5 w-5 text-primary" />
+                      What do you want to sell?
+                    </DialogTitle>
+                    <p className="text-muted-foreground text-sm mt-1 flex items-center gap-1">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      Choose a category to get started. You can list products or accommodation for students.
+                    </p>
+                  </DialogHeader>
+                  {!showAccommodationForm ? (
+                    <div className="mt-6">
+                      <div className="grid grid-cols-1 gap-4">
+                        {/* Product Option Row */}
+                        <button
+                          className="group w-full rounded-lg border border-primary/30 bg-background hover:bg-primary/5 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
+                          onClick={() => {
+                            setSellDialogOpen(false);
+                            router.push("/marketplace/sell");
+                          }}
+                        >
+                          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mr-4">
+                            <ShoppingBag className="h-7 w-7 text-primary" />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <div className="font-semibold text-base">Product</div>
+                            <div className="text-xs text-muted-foreground">Sell books, electronics, clothing, and more</div>
+                          </div>
+                          <ArrowRight className="h-5 w-5 ml-4 text-muted-foreground group-hover:text-primary" />
+                        </button>
+                        {/* Accommodation Option Row */}
+                        <button
+                          className="group w-full rounded-lg border border-accent bg-background hover:bg-accent/10 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
+                          onClick={() => setShowAccommodationForm(true)}
+                        >
+                          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mr-4">
+                            <Building className="h-7 w-7 text-accent" />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <div className="font-semibold text-base">Accommodation</div>
+                            <div className="text-xs text-muted-foreground">List a room, flat, or student housing</div>
+                          </div>
+                          <ArrowRight className="h-5 w-5 ml-4 text-muted-foreground group-hover:text-accent" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <AccommodationFormDialogContent onSuccess={() => { setSellDialogOpen(false); setShowAccommodationForm(false); }} />
+                  )}
+                </DialogContent>
+              </Dialog>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/marketplace/my-listings"} tooltip="My Listings">
+                <Link href="/marketplace/my-listings" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <ShoppingBag className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>My Listings</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/marketplace/favorites"} tooltip="Favorites">
+                <Link href="/marketplace/favorites" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Heart className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Favorites</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <Separator className="my-2" />
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/accommodation"} tooltip="Accommodation">
+                <Link href="/accommodation" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Building className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Accommodation</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => setShowAccommodationForm(true)}>
+                <Home className="h-5 w-5" />
+                <span>Add Accommodation</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <Separator className="my-2" />
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/community"} tooltip="Community">
+                <Link href="/community" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Users className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Community</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/messages"} tooltip="Messages">
+                <Link href="/messages" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <MessageSquare className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Messages</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/verification"} tooltip="Verification">
+                <Link href="/verification" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Shield className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Verification</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/profile"} tooltip="Profile">
+                <Link href="/profile" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <User className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Profile</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === "/settings"} tooltip="Settings">
+                <Link href="/settings" className="transition-all hover:text-primary flex items-center gap-2 justify-center md:justify-start">
+                  <Settings className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Settings</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Logout" onClick={handleSignOut}>
+                <button className="transition-all hover:text-destructive w-full flex items-center gap-2 justify-center md:justify-start">
+                  <LogOut className="h-4 w-4" />
+                  {!actuallyCollapsed && <span>Logout</span>}
+                </button>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+        <Dialog open={showAccommodationForm} onOpenChange={setShowAccommodationForm}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add Accommodation</DialogTitle>
+            </DialogHeader>
+            <AccommodationFormDialogContent onSuccess={() => setShowAccommodationForm(false)} />
+          </DialogContent>
+        </Dialog>
+      </Sidebar>
+    </SidebarProvider>
   )
 }
-export default SidebarNav
