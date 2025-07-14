@@ -31,9 +31,11 @@ import ZIM_UNIVERSITIES from "@/utils/schools_data"
 import { toast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import ReviewsSection from '@/components/reviews/reviews-section'
+import { useRouter } from "next/navigation"
 
 export default function AccommodationDetailPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
+  const router = useRouter();
   const [property, setProperty] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const [paramId, setParamId] = useState<string | null>(null)
@@ -135,9 +137,15 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {/* Only show BookingForm if user is not the seller */}
-                      {(!user || !property.seller || user.id !== property.seller.id) && (
-                        <BookingForm propertyId={property.id} landlordId={property.seller?.id} userId={user?.id} />
+                      {/* Only show BookingForm if user is logged in and not the seller; otherwise show login prompt */}
+                      {user ? (
+                        (!property.seller || user.id !== property.seller.id) && (
+                          <BookingForm propertyId={property.id} landlordId={property.seller?.id} userId={user?.id} />
+                        )
+                      ) : (
+                        <Button className="w-full" onClick={() => router.push('/login')}>
+                          Sign in to book this accommodation
+                        </Button>
                       )}
                     </CardContent>
                   </Card>
@@ -224,8 +232,14 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                       <PropertyAmenities amenities={property.amenities || []} />
                     </TabsContent>
                     <TabsContent value="reviews" className="mt-4">
-                      {/* Pass accommodationId, revieweeId (landlord id), and landlordId to ReviewsSection */}
-                      <ReviewsSection accommodationId={property.id} revieweeId={property.seller?.id} landlordId={property.seller?.id} />
+                        {user ? (
+                          <ReviewsSection accommodationId={property.id} revieweeId={property.seller?.id} landlordId={property.seller?.id} />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-8">
+                            <p className="mb-4 text-muted-foreground">Sign in to view and write reviews for this accommodation.</p>
+                            <Button onClick={() => router.push('/login')}>Sign in</Button>
+                          </div>
+                        )}
                     </TabsContent>
                     <TabsContent value="location" className="mt-4">
                       <Card>

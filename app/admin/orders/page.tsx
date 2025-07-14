@@ -1,5 +1,4 @@
 "use client"
-<<<<<<< HEAD
 
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -526,7 +525,6 @@ export default function OrdersPage() {
           </div>
         </Tabs>
       </div>
-=======
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -619,7 +617,6 @@ export default function AdminOrdersPage() {
           )}
         </DialogContent>
       </Dialog>
->>>>>>> 00bffc707ba50f312112d1b9c8526af6551c9cf8
     </div>
   )
 }

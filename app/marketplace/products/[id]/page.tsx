@@ -713,14 +713,25 @@ export default function ProductDetailsPage() {
 
                 {/* Action Buttons */}
                 <div className="absolute top-4 right-4 flex gap-2">
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="bg-background/80 hover:bg-background shadow-lg backdrop-blur-sm"
-                    onClick={toggleFavorite}
-                  >
-                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
-                  </Button>
+                  {user ? (
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="bg-background/80 hover:bg-background shadow-lg backdrop-blur-sm"
+                      onClick={toggleFavorite}
+                    >
+                      <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="bg-background/80 hover:bg-background shadow-lg backdrop-blur-sm"
+                      onClick={() => router.push('/login')}
+                    >
+                      <Heart className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="secondary"
                     size="icon"
@@ -942,127 +953,141 @@ export default function ProductDetailsPage() {
                 )}
 
                 <div className="grid grid-cols-2 gap-3">
-                  <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        className="flex items-center gap-2 bg-primary hover:bg-primary/90 transition-colors" 
-                        disabled={isSold}
-                      >
-                        <ShoppingCart className="h-4 w-4" />
-                        {isSold ? "Sold Out" : "Place Order"}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-sm">
-                      <DialogHeader>
-                        <DialogTitle>Place Order</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="quantity">Quantity</Label>
-                          <Input
-                            id="quantity"
-                            type="number"
-                            min="1"
-                            value={orderForm.quantity}
-                            onChange={(e) =>
-                              setOrderForm((prev) => ({ ...prev, quantity: Number.parseInt(e.target.value) || 1 }))
-                            }
-                            className="bg-background/50"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="pickup_location">Pickup Location</Label>
-                          <Input
-                            id="pickup_location"
-                            value={orderForm.pickup_location}
-                            onChange={(e) => setOrderForm((prev) => ({ ...prev, pickup_location: e.target.value }))}
-                            placeholder="Where would you like to meet?"
-                            className="bg-background/50"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="pickup_time">Preferred Pickup Time</Label>
-                          <Input
-                            id="pickup_time"
-                            type="datetime-local"
-                            value={orderForm.pickup_time}
-                            onChange={(e) => setOrderForm((prev) => ({ ...prev, pickup_time: e.target.value }))}
-                            className="bg-background/50"
-                          />
-                        </div>
-
-                        {product.delivery_available && (
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="delivery_requested"
-                              checked={orderForm.delivery_requested}
-                              onChange={(e) =>
-                                setOrderForm((prev) => ({ ...prev, delivery_requested: e.target.checked }))
-                              }
-                              className="rounded border-primary/50"
-                            />
-                            <Label htmlFor="delivery_requested">
-                              Request delivery (+${product.delivery_fee.toFixed(2)})
-                            </Label>
-                          </div>
-                        )}
-
-                        <div>
-                          <Label htmlFor="notes">Additional Notes</Label>
-                          <Textarea
-                            id="notes"
-                            value={orderForm.notes}
-                            onChange={(e) => setOrderForm((prev) => ({ ...prev, notes: e.target.value }))}
-                            placeholder="Any special requests or questions?"
-                            className="bg-background/50"
-                          />
-                        </div>
-
-                        <div className="bg-muted/50 p-3 rounded-lg backdrop-blur-sm">
-                          <div className="flex justify-between items-center">
-                            <span>Subtotal:</span>
-                            <span>${(product.price * orderForm.quantity).toFixed(2)}</span>
-                          </div>
-                          {orderForm.delivery_requested && (
-                            <div className="flex justify-between items-center">
-                              <span>Delivery:</span>
-                              <span>${product.delivery_fee.toFixed(2)}</span>
+                  {user ? (
+                    <>
+                      <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            className="flex items-center gap-2 bg-primary hover:bg-primary/90 transition-colors" 
+                            disabled={isSold}
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                            {isSold ? "Sold Out" : "Place Order"}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-sm">
+                          <DialogHeader>
+                            <DialogTitle>Place Order</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="quantity">Quantity</Label>
+                              <Input
+                                id="quantity"
+                                type="number"
+                                min="1"
+                                value={orderForm.quantity}
+                                onChange={(e) =>
+                                  setOrderForm((prev) => ({ ...prev, quantity: Number.parseInt(e.target.value) || 1 }))
+                                }
+                                className="bg-background/50"
+                              />
                             </div>
-                          )}
-                          <Separator className="my-2" />
-                          <div className="flex justify-between items-center font-semibold">
-                            <span>Total:</span>
-                            <span>
-                              $
-                              {(
-                                product.price * orderForm.quantity +
-                                (orderForm.delivery_requested ? product.delivery_fee : 0)
-                              ).toFixed(2)}
-                            </span>
+
+                            <div>
+                              <Label htmlFor="pickup_location">Pickup Location</Label>
+                              <Input
+                                id="pickup_location"
+                                value={orderForm.pickup_location}
+                                onChange={(e) => setOrderForm((prev) => ({ ...prev, pickup_location: e.target.value }))}
+                                placeholder="Where would you like to meet?"
+                                className="bg-background/50"
+                              />
+                            </div>
+
+                            <div>
+                              <Label htmlFor="pickup_time">Preferred Pickup Time</Label>
+                              <Input
+                                id="pickup_time"
+                                type="datetime-local"
+                                value={orderForm.pickup_time}
+                                onChange={(e) => setOrderForm((prev) => ({ ...prev, pickup_time: e.target.value }))}
+                                className="bg-background/50"
+                              />
+                            </div>
+
+                            {product.delivery_available && (
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id="delivery_requested"
+                                  checked={orderForm.delivery_requested}
+                                  onChange={(e) =>
+                                    setOrderForm((prev) => ({ ...prev, delivery_requested: e.target.checked }))
+                                  }
+                                  className="rounded border-primary/50"
+                                />
+                                <Label htmlFor="delivery_requested">
+                                  Request delivery (+${product.delivery_fee.toFixed(2)})
+                                </Label>
+                              </div>
+                            )}
+
+                            <div>
+                              <Label htmlFor="notes">Additional Notes</Label>
+                              <Textarea
+                                id="notes"
+                                value={orderForm.notes}
+                                onChange={(e) => setOrderForm((prev) => ({ ...prev, notes: e.target.value }))}
+                                placeholder="Any special requests or questions?"
+                                className="bg-background/50"
+                              />
+                            </div>
+
+                            <div className="bg-muted/50 p-3 rounded-lg backdrop-blur-sm">
+                              <div className="flex justify-between items-center">
+                                <span>Subtotal:</span>
+                                <span>${(product.price * orderForm.quantity).toFixed(2)}</span>
+                              </div>
+                              {orderForm.delivery_requested && (
+                                <div className="flex justify-between items-center">
+                                  <span>Delivery:</span>
+                                  <span>${product.delivery_fee.toFixed(2)}</span>
+                                </div>
+                              )}
+                              <Separator className="my-2" />
+                              <div className="flex justify-between items-center font-semibold">
+                                <span>Total:</span>
+                                <span>
+                                  $
+                                  {(
+                                    product.price * orderForm.quantity +
+                                    (orderForm.delivery_requested ? product.delivery_fee : 0)
+                                  ).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <Button 
+                              onClick={createOrder} 
+                              className="w-full bg-primary hover:bg-primary/90 transition-colors"
+                            >
+                              Confirm Order
+                            </Button>
                           </div>
-                        </div>
+                        </DialogContent>
+                      </Dialog>
 
-                        <Button 
-                          onClick={createOrder} 
-                          className="w-full bg-primary hover:bg-primary/90 transition-colors"
-                        >
-                          Confirm Order
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  <Button 
-                    variant="outline" 
-                    onClick={startConversation} 
-                    className="flex items-center gap-2 border-primary/50 hover:bg-primary/10 transition-colors"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    Message
-                  </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={startConversation} 
+                        className="flex items-center gap-2 border-primary/50 hover:bg-primary/10 transition-colors"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        Message
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button onClick={() => router.push('/login')} className="w-full bg-primary hover:bg-primary/90 transition-colors">
+                        Sign in to order
+                      </Button>
+                      <Button onClick={() => router.push('/login')} className="flex items-center gap-2 border-primary/50 hover:bg-primary/10 transition-colors">
+                        <MessageSquare className="h-4 w-4" />
+                        Message
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
