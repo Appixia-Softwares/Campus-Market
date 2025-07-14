@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
-import { MessageSquare, Search, Send, Phone, MoreVertical, Archive, Trash2, Star, CheckCheck, Plus, Check, Paperclip, X, Mic, StopCircle, PlayCircle, PauseCircle } from "lucide-react"
+import { MessageSquare, Search, Send, Phone, MoreVertical, Archive, Trash2, Star, CheckCheck, Plus, Check, Paperclip, X, Mic, StopCircle, PlayCircle } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
@@ -56,6 +56,41 @@ interface Message {
   audio?: string | null
 }
 
+// Robust waveform generator with error handling
+const generateWaveform = (audioUrl: string, cb: (data: number[]) => void) => {
+  if (!audioUrl || typeof audioUrl !== "string" || audioUrl.trim() === "") {
+    cb([]);
+    return;
+  }
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    fetch(audioUrl)
+      .then(res => res.arrayBuffer())
+      .then(buffer => audioCtx.decodeAudioData(buffer))
+      .then(decoded => {
+        const raw = decoded.getChannelData(0)
+        const samples = 64
+        const blockSize = Math.floor(raw.length / samples)
+        const waveform = Array(samples).fill(0).map((_, i) => {
+          const blockStart = i * blockSize
+          let sum = 0
+          for (let j = 0; j < blockSize; j++) {
+            sum += Math.abs(raw[blockStart + j])
+          }
+          return sum / blockSize
+        })
+        cb(waveform)
+      })
+      .catch((err) => {
+        console.error('Waveform generation failed:', err)
+        cb([])
+      })
+  } catch (err) {
+    console.error('Waveform generation error:', err)
+    cb([])
+  }
+}
+
 export default function MessagesPage() {
   const { user } = useAuth()
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -93,37 +128,6 @@ export default function MessagesPage() {
   // Waveform state
   const [waveform, setWaveform] = useState<number[]>([])
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-
-  // Robust waveform generator with error handling
-  const generateWaveform = (audioUrl: string, cb: (data: number[]) => void) => {
-    try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
-      fetch(audioUrl)
-        .then(res => res.arrayBuffer())
-        .then(buffer => audioCtx.decodeAudioData(buffer))
-        .then(decoded => {
-          const raw = decoded.getChannelData(0)
-          const samples = 64
-          const blockSize = Math.floor(raw.length / samples)
-          const waveform = Array(samples).fill(0).map((_, i) => {
-            const blockStart = i * blockSize
-            let sum = 0
-            for (let j = 0; j < blockSize; j++) {
-              sum += Math.abs(raw[blockStart + j])
-            }
-            return sum / blockSize
-          })
-          cb(waveform)
-        })
-        .catch((err) => {
-          console.error('Waveform generation failed:', err)
-          cb([])
-        })
-    } catch (err) {
-      console.error('Waveform generation error:', err)
-      cb([])
-    }
-  }
 
   // When audioUrl changes, generate waveform
   useEffect(() => {
@@ -615,74 +619,74 @@ export default function MessagesPage() {
                         className={`p-4 cursor-pointer flex items-center gap-3 transition-colors rounded-lg border-l-4 ${selectedConversation?.id === conversation.id ? "bg-primary/10 border-primary" : "hover:bg-muted/50 border-transparent"}`}
                         onClick={() => setSelectedConversation(conversation)}
                       >
-                          <div className="relative">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage src={conversation.other_user.avatar_url || undefined} />
-                              <AvatarFallback>{conversation.other_user.full_name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            {conversation.unread_count > 0 && (
-                              <Badge
-                                variant="destructive"
-                                className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center"
-                              >
-                                {conversation.unread_count}
-                              </Badge>
+                        <div className="relative">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={conversation.other_user.avatar_url || undefined} />
+                            <AvatarFallback>{conversation.other_user.full_name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          {conversation.unread_count > 0 && (
+                            <Badge
+                              variant="destructive"
+                              className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center"
+                            >
+                              {conversation.unread_count}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className="font-medium truncate">{conversation.other_user.full_name}</h4>
+                            {conversation.last_message_time && (
+                              <span className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(conversation.last_message_time), { addSuffix: true })}
+                              </span>
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className="font-medium truncate">{conversation.other_user.full_name}</h4>
-                              {conversation.last_message_time && (
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDistanceToNow(new Date(conversation.last_message_time), { addSuffix: true })}
-                                </span>
-                              )}
-                            </div>
-                            {conversation.products && (
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className="w-6 h-6 rounded overflow-hidden bg-muted">
-                                  <img
-                                  src={conversation.products.product_images?.find((img) => img.is_primary)?.url || "/placeholder.svg?height=24&width=24" || "/placeholder.svg"}
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <span className="text-xs text-muted-foreground truncate">
-                                  {conversation.products.title}
-                                </span>
+                          {conversation.products && (
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-6 h-6 rounded overflow-hidden bg-muted">
+                                <img
+                                  src={conversation.products.product_images?.find((img) => img.is_primary)?.url || "/placeholder.svg?height=24&width=24"}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
+                              <span className="text-xs text-muted-foreground truncate">
+                                {conversation.products.title}
+                              </span>
+                            </div>
+                          )}
+                          <p className="text-sm text-muted-foreground truncate">
+                            {conversation.last_message || "No messages yet"}
+                          </p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {conversation.other_user.whatsapp_number && (
+                              <DropdownMenuItem onClick={() => contactWhatsApp(conversation)}>
+                                <Phone className="h-4 w-4 mr-2 text-green-600" />
+                                WhatsApp
+                              </DropdownMenuItem>
                             )}
-                            <p className="text-sm text-muted-foreground truncate">
-                              {conversation.last_message || "No messages yet"}
-                            </p>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {conversation.other_user.whatsapp_number && (
-                                <DropdownMenuItem onClick={() => contactWhatsApp(conversation)}>
-                                  <Phone className="h-4 w-4 mr-2 text-green-600" />
-                                  WhatsApp
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuItem>
-                                <Star className="h-4 w-4 mr-2" />
-                                Star
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Archive className="h-4 w-4 mr-2" />
-                                Archive
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            <DropdownMenuItem>
+                              <Star className="h-4 w-4 mr-2" />
+                              Star
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Archive className="h-4 w-4 mr-2" />
+                              Archive
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </motion.div>
                     ))}
                   </div>
@@ -800,17 +804,17 @@ export default function MessagesPage() {
                       {recording ? <StopCircle className="h-5 w-5 text-red-500" /> : <Mic className="h-5 w-5 text-primary" />}
                     </button>
                     <div className="flex-1">
-                    <Textarea
-                      placeholder="Type a message..."
-                      value={newMessage}
+                      <Textarea
+                        placeholder="Type a message..."
+                        value={newMessage}
                         onChange={handleInputChange}
                         onBlur={handleInputBlur}
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault()
-                          sendMessage()
-                        }
-                      }}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault()
+                            sendMessage()
+                          }
+                        }}
                         className="min-h-[40px] max-h-[120px] resize-none bg-white/90 dark:bg-gray-900 border rounded focus:ring-2 focus:ring-primary"
                         disabled={recording}
                       />
@@ -955,8 +959,10 @@ function WaveformPlayer({ audioUrl }: { audioUrl: string }) {
   const [waveform, setWaveform] = useState<number[]>([])
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   useEffect(() => {
-    if (audioUrl) {
+    if (audioUrl && typeof audioUrl === "string" && audioUrl.trim() !== "") {
       generateWaveform(audioUrl, setWaveform)
+    } else {
+      setWaveform([])
     }
   }, [audioUrl])
   useEffect(() => {
