@@ -29,6 +29,9 @@ import {
   Phone,
   AlertCircle,
   MessageSquare,
+  Sparkles,
+  ThumbsUp,
+  Wrench,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
@@ -36,6 +39,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { collection, query, where, orderBy, getDocs, addDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { uploadFileToStorage } from '@/lib/firebase'
+import { CATEGORY_META } from "@/lib/category-config";
 
 interface Category {
   id: string
@@ -63,17 +67,17 @@ const STEPS = [
 ]
 
 const CONDITIONS = [
-  { value: "New", label: "New", description: "Brand new, never used", emoji: "✨" },
-  { value: "Like New", label: "Like New", description: "Barely used, excellent condition", emoji: "🌟" },
-  { value: "Good", label: "Good", description: "Used but in good condition", emoji: "👍" },
-  { value: "Fair", label: "Fair", description: "Shows wear but still functional", emoji: "👌" },
-  { value: "Poor", label: "Poor", description: "Heavy wear, may need repairs", emoji: "🔧" },
+  { value: "New", label: "New", description: "Brand new, never used", icon: Sparkles },
+  { value: "Like New", label: "Like New", description: "Barely used, excellent condition", icon: ThumbsUp },
+  { value: "Good", label: "Good", description: "Used but in good condition", icon: Check },
+  { value: "Fair", label: "Fair", description: "Shows wear but still functional", icon: Package },
+  { value: "Poor", label: "Poor", description: "Heavy wear, may need repairs", icon: Wrench },
 ]
 
 export default function NewListingPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState(1)
   const [categories, setCategories] = useState<Category[]>([])
   const [universities, setUniversities] = useState<University[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -296,6 +300,14 @@ export default function NewListingPage() {
 
   const progress = (currentStep / STEPS.length) * 100
 
+  // Helper to get category meta by id
+  function getCategoryMetaById(id: string) {
+    // Try to match by id to the loaded categories, then by name to CATEGORY_META
+    const cat = categories.find(c => c.id === id);
+    if (!cat) return undefined;
+    return CATEGORY_META.find(meta => meta.label === cat.name || meta.key === cat.name?.toLowerCase());
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="container max-w-4xl py-8">
@@ -400,14 +412,18 @@ export default function NewListingPage() {
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              <div className="flex items-center gap-2">
-                                <span>{category.icon || "📦"}</span>
-                                {category.name}
-                              </div>
-                            </SelectItem>
-                          ))}
+                          {categories.map((category) => {
+                            const meta = CATEGORY_META.find(cat => cat.label === category.name || cat.key === category.name?.toLowerCase());
+                            const Icon = meta?.icon || Package;
+                            return (
+                              <SelectItem key={category.id} value={category.id}>
+                                <div className="flex items-center gap-2">
+                                  <Icon className="h-5 w-5" />
+                                  {category.name}
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
@@ -422,17 +438,20 @@ export default function NewListingPage() {
                           <SelectValue placeholder="Select condition" />
                         </SelectTrigger>
                         <SelectContent>
-                          {CONDITIONS.map((condition) => (
-                            <SelectItem key={condition.value} value={condition.value}>
-                              <div className="flex items-center gap-2">
-                                <span>{condition.emoji}</span>
-                                <div>
-                                  <div className="font-medium">{condition.label}</div>
-                                  <div className="text-xs text-muted-foreground">{condition.description}</div>
+                          {CONDITIONS.map((condition) => {
+                            const Icon = condition.icon;
+                            return (
+                              <SelectItem key={condition.value} value={condition.value}>
+                                <div className="flex items-center gap-2">
+                                  <Icon className="h-4 w-4" />
+                                  <div>
+                                    <div className="font-medium">{condition.label}</div>
+                                    <div className="text-xs text-muted-foreground">{condition.description}</div>
+                                  </div>
                                 </div>
-                              </div>
-                            </SelectItem>
-                          ))}
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
@@ -788,7 +807,14 @@ export default function NewListingPage() {
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Category:</span>
-                              <span>{categories.find((c) => c.id === formData.category_id)?.name}</span>
+                              <span className="flex items-center gap-2">
+                                {(() => {
+                                  const meta = getCategoryMetaById(formData.category_id);
+                                  const Icon = meta?.icon || Package;
+                                  return <Icon className="h-4 w-4" />;
+                                })()}
+                                {categories.find((c) => c.id === formData.category_id)?.name}
+                              </span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Condition:</span>
