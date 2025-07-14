@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
-import { MessageSquare, Search, Send, Phone, MoreVertical, Archive, Trash2, Star, CheckCheck, Plus } from "lucide-react"
+import { MessageSquare, Search, Send, Phone, MoreVertical, Archive, Trash2, Star, CheckCheck, Plus, Check, Paperclip, X, Mic, StopCircle, PlayCircle, PauseCircle } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
@@ -18,6 +18,7 @@ import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, addD
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useSearchParams } from "next/navigation"
 import { ModeToggle } from "@/components/mode-toggle"
+import React, { useRef } from "react"
 
 interface Conversation {
   id: string
@@ -51,6 +52,8 @@ interface Message {
   content: string
   read: boolean
   created_at: string
+  attachment?: string | null
+  audio?: string | null
 }
 
 export default function MessagesPage() {
@@ -69,6 +72,76 @@ export default function MessagesPage() {
   const searchParams = useSearchParams()
   const orderIdParam = searchParams?.get("order")
   const [orderInfo, setOrderInfo] = useState<any>(null)
+
+  // Typing indicator state
+  const [otherTyping, setOtherTyping] = useState(false)
+  let typingTimeout: NodeJS.Timeout | null = null
+
+  // Attachment state
+  const [attachment, setAttachment] = useState<File | null>(null)
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+
+  // Voice note state
+  const [recording, setRecording] = useState(false)
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const [recordingInterval, setRecordingInterval] = useState<NodeJS.Timeout | null>(null)
+
+  // Waveform state
+  const [waveform, setWaveform] = useState<number[]>([])
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  // Generate waveform from audio data (for playback)
+  const generateWaveform = (audioUrl: string, cb: (data: number[]) => void) => {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    fetch(audioUrl)
+      .then(res => res.arrayBuffer())
+      .then(buffer => audioCtx.decodeAudioData(buffer))
+      .then(decoded => {
+        const raw = decoded.getChannelData(0)
+        const samples = 64
+        const blockSize = Math.floor(raw.length / samples)
+        const waveform = Array(samples).fill(0).map((_, i) => {
+          const blockStart = i * blockSize
+          let sum = 0
+          for (let j = 0; j < blockSize; j++) {
+            sum += Math.abs(raw[blockStart + j])
+          }
+          return sum / blockSize
+        })
+        cb(waveform)
+      })
+  }
+
+  // When audioUrl changes, generate waveform
+  useEffect(() => {
+    if (audioUrl) {
+      generateWaveform(audioUrl, setWaveform)
+    }
+  }, [audioUrl])
+
+  // Draw waveform on canvas
+  useEffect(() => {
+    if (!canvasRef.current || waveform.length === 0) return
+    const ctx = canvasRef.current.getContext('2d')
+    if (!ctx) return
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+    ctx.strokeStyle = '#6366f1'
+    ctx.lineWidth = 2
+    const w = canvasRef.current.width
+    const h = canvasRef.current.height
+    waveform.forEach((v, i) => {
+      const x = (i / waveform.length) * w
+      const y = h - v * h
+      ctx.beginPath()
+      ctx.moveTo(x, h)
+      ctx.lineTo(x, y)
+      ctx.stroke()
+    })
+  }, [waveform])
 
   useEffect(() => {
     if (user) {
@@ -169,6 +242,17 @@ export default function MessagesPage() {
     }
   }, [selectedConversation])
 
+  // Listen for typing status in conversation
+  useEffect(() => {
+    if (!selectedConversation) return
+    const unsub = onSnapshot(doc(db, 'conversations', selectedConversation.id), (docSnap) => {
+      const data = docSnap.data()
+      if (!data) return
+      setOtherTyping(data.typing === selectedConversation.other_user.id)
+    })
+    return () => unsub()
+  }, [selectedConversation])
+
   // --- Firestore Conversation & Message Logic ---
   const fetchConversations = async () => {
     if (!user) return
@@ -257,19 +341,69 @@ export default function MessagesPage() {
     }
   }
 
+  const startRecording = async () => {
+    if (!navigator.mediaDevices) return
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const recorder = new MediaRecorder(stream)
+    setMediaRecorder(recorder)
+    setRecording(true)
+    setRecordingTime(0)
+    const interval = setInterval(() => setRecordingTime(t => t + 1), 1000)
+    setRecordingInterval(interval)
+    const chunks: Blob[] = []
+    recorder.ondataavailable = (e) => chunks.push(e.data)
+    recorder.onstop = () => {
+      clearInterval(interval)
+      setRecording(false)
+      const blob = new Blob(chunks, { type: 'audio/webm' })
+      setAudioBlob(blob)
+      setAudioUrl(URL.createObjectURL(blob))
+    }
+    recorder.start()
+  }
+  const stopRecording = () => {
+    mediaRecorder?.stop()
+    setMediaRecorder(null)
+  }
+  const removeAudio = () => {
+    setAudioBlob(null)
+    setAudioUrl(null)
+    setRecordingTime(0)
+  }
+
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || !user) return
+    if ((!newMessage.trim() && !attachment && !audioBlob) || !selectedConversation || !user) return
     setSendingMessage(true)
+    let attachmentUrl = null
+    if (attachment) {
+      setUploading(true)
+      // Mock upload logic: in real app, upload to storage and get URL
+      await new Promise(res => setTimeout(res, 1200))
+      attachmentUrl = attachmentPreview
+      setUploading(false)
+      setAttachment(null)
+      setAttachmentPreview(null)
+    }
+    let audioFileUrl = null
+    if (audioBlob) {
+      setUploading(true)
+      await new Promise(res => setTimeout(res, 1200))
+      audioFileUrl = audioUrl
+      setUploading(false)
+      setAudioBlob(null)
+      setAudioUrl(null)
+      setRecordingTime(0)
+    }
     try {
-      // Add message to Firestore
       await addDoc(collection(db, 'messages'), {
         conversation_id: selectedConversation.id,
         sender_id: user.id,
         content: newMessage.trim(),
         read: false,
         created_at: new Date().toISOString(),
+        attachment: attachmentUrl,
+        audio: audioFileUrl,
       })
-      // Update conversation last message
       await updateDoc(doc(db, 'conversations', selectedConversation.id), {
         last_message: newMessage.trim(),
         last_message_time: new Date().toISOString(),
@@ -299,23 +433,23 @@ export default function MessagesPage() {
 
   const filteredConversations = conversations.filter(
     (conv) =>
-      conv.other_user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.products?.title.toLowerCase().includes(searchQuery.toLowerCase()),
+      typeof conv.other_user.full_name === 'string' && conv.other_user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (conv.products && typeof conv.products.title === 'string' && conv.products.title.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   const totalUnread = conversations.reduce((sum, conv) => sum + conv.unread_count, 0)
 
-  const searchUsers = async (query: string) => {
+  const searchUsers = async (searchTerm: string) => {
     setSearching(true)
     setUserResults([])
-    if (!query.trim()) {
+    if (!searchTerm.trim()) {
       setSearching(false)
       return
     }
     const q = query(
       collection(db, "users"),
-      where("full_name", ">=", query),
-      where("full_name", "<=", query + "\uf8ff")
+      where("full_name", ">=", searchTerm),
+      where("full_name", "<=", searchTerm + "\uf8ff")
     )
     const snap = await getDocs(q)
     setUserResults(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })))
@@ -339,7 +473,7 @@ export default function MessagesPage() {
       )
     }
     const snap = await getDocs(convQuery)
-    let existing = null
+    let existing: any = null
     snap.forEach(docSnap => {
       const data = docSnap.data()
       if (data && data.participants.includes(otherUser.id) && (!orderId || data.order_id === orderId)) existing = { id: docSnap.id, participant_1_id: data.participant_1_id, participant_2_id: data.participant_2_id, product_id: data.product_id || null, last_message: data.last_message || null, last_message_time: data.last_message_time || null, unread_count: 0, created_at: data.created_at, updated_at: data.updated_at, other_user: { id: otherUser.id, full_name: otherUser.full_name, avatar_url: otherUser.avatar_url, whatsapp_number: otherUser.whatsapp_number || null }, products: null, order_id: data.order_id || null }
@@ -383,6 +517,33 @@ export default function MessagesPage() {
       })
       setShowNewMessage(false)
     }
+  }
+
+  // Handle typing events
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value)
+    if (!selectedConversation || !user) return
+    // Set typing status in Firestore
+    setDoc(doc(db, 'conversations', selectedConversation.id), { typing: user.id }, { merge: true })
+    if (typingTimeout) clearTimeout(typingTimeout)
+    typingTimeout = setTimeout(() => {
+      setDoc(doc(db, 'conversations', selectedConversation.id), { typing: null }, { merge: true })
+    }, 2000)
+  }
+  const handleInputBlur = () => {
+    if (!selectedConversation || !user) return
+    setDoc(doc(db, 'conversations', selectedConversation.id), { typing: null }, { merge: true })
+  }
+
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAttachment(file)
+    setAttachmentPreview(URL.createObjectURL(file))
+  }
+  const removeAttachment = () => {
+    setAttachment(null)
+    setAttachmentPreview(null)
   }
 
   // --- UI POLISH ---
@@ -436,7 +597,7 @@ export default function MessagesPage() {
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    {filteredConversations.map((conversation, index) => (
+                    {(filteredConversations as Conversation[]).map((conversation, index) => (
                       <motion.div
                         key={conversation.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -445,74 +606,74 @@ export default function MessagesPage() {
                         className={`p-4 cursor-pointer flex items-center gap-3 transition-colors rounded-lg border-l-4 ${selectedConversation?.id === conversation.id ? "bg-primary/10 border-primary" : "hover:bg-muted/50 border-transparent"}`}
                         onClick={() => setSelectedConversation(conversation)}
                       >
-                        <div className="relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={conversation.other_user.avatar_url || undefined} />
-                            <AvatarFallback>{conversation.other_user.full_name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          {conversation.unread_count > 0 && (
-                            <Badge
-                              variant="destructive"
-                              className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center"
-                            >
-                              {conversation.unread_count}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-medium truncate">{conversation.other_user.full_name}</h4>
-                            {conversation.last_message_time && (
-                              <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(conversation.last_message_time), { addSuffix: true })}
-                              </span>
+                          <div className="relative">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={conversation.other_user.avatar_url || undefined} />
+                              <AvatarFallback>{conversation.other_user.full_name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            {conversation.unread_count > 0 && (
+                              <Badge
+                                variant="destructive"
+                                className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center"
+                              >
+                                {conversation.unread_count}
+                              </Badge>
                             )}
                           </div>
-                          {conversation.products && (
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="w-6 h-6 rounded overflow-hidden bg-muted">
-                                <img
-                                  src={conversation.products.product_images?.find((img) => img.is_primary)?.url || "/placeholder.svg?height=24&width=24" || "/placeholder.svg"}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <span className="text-xs text-muted-foreground truncate">
-                                {conversation.products.title}
-                              </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-medium truncate">{conversation.other_user.full_name}</h4>
+                              {conversation.last_message_time && (
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDistanceToNow(new Date(conversation.last_message_time), { addSuffix: true })}
+                                </span>
+                              )}
                             </div>
-                          )}
-                          <p className="text-sm text-muted-foreground truncate">
-                            {conversation.last_message || "No messages yet"}
-                          </p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {conversation.other_user.whatsapp_number && (
-                              <DropdownMenuItem onClick={() => contactWhatsApp(conversation)}>
-                                <Phone className="h-4 w-4 mr-2 text-green-600" />
-                                WhatsApp
-                              </DropdownMenuItem>
+                            {conversation.products && (
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="w-6 h-6 rounded overflow-hidden bg-muted">
+                                  <img
+                                  src={conversation.products.product_images?.find((img) => img.is_primary)?.url || "/placeholder.svg?height=24&width=24" || "/placeholder.svg"}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {conversation.products.title}
+                                </span>
+                              </div>
                             )}
-                            <DropdownMenuItem>
-                              <Star className="h-4 w-4 mr-2" />
-                              Star
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Archive className="h-4 w-4 mr-2" />
-                              Archive
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {conversation.last_message || "No messages yet"}
+                            </p>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {conversation.other_user.whatsapp_number && (
+                                <DropdownMenuItem onClick={() => contactWhatsApp(conversation)}>
+                                  <Phone className="h-4 w-4 mr-2 text-green-600" />
+                                  WhatsApp
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem>
+                                <Star className="h-4 w-4 mr-2" />
+                                Star
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Archive className="h-4 w-4 mr-2" />
+                                Archive
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                       </motion.div>
                     ))}
                   </div>
@@ -525,7 +686,7 @@ export default function MessagesPage() {
             {selectedConversation ? (
               <Card className="bg-white/95 border shadow-lg rounded-xl h-full flex flex-col">
                 {/* Chat Header */}
-                <CardHeader className="border-b bg-gray-50 rounded-t-xl sticky top-0 z-10 flex flex-col gap-1 shadow-md">
+                <CardHeader className="border-b bg-primary/10 dark:bg-primary/20 rounded-t-xl sticky top-0 z-10 flex flex-col gap-1 shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
@@ -599,62 +760,69 @@ export default function MessagesPage() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.02 }}
-                            className={`flex items-end gap-2 ${message.sender_id === user?.id ? "justify-end" : "justify-start"}`}
                           >
-                            {/* Avatar for other user */}
-                            {message.sender_id !== user?.id && (
-                              <Avatar className="h-8 w-8 mb-1">
-                                <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
-                                <AvatarFallback>{selectedConversation.other_user.full_name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                            )}
-                            {/* Message bubble */}
-                            <div
-                              className={`relative max-w-xs lg:max-w-md px-4 py-2 rounded-2xl shadow-sm border transition-colors group
-                                ${message.sender_id === user?.id
-                                  ? "bg-primary text-primary-foreground border-primary/30 rounded-br-none after:content-[''] after:absolute after:right-[-8px] after:bottom-2 after:border-8 after:border-transparent after:border-l-primary"
-                                  : "bg-white text-gray-900 border-muted-foreground/10 rounded-bl-none after:content-[''] after:absolute after:left-[-8px] after:bottom-2 after:border-8 after:border-transparent after:border-r-white dark:bg-gray-800 dark:text-white dark:after:border-r-gray-800"}
-                                hover:bg-primary/20 dark:hover:bg-gray-700/80`}
-                            >
-                              <p className="text-sm break-words whitespace-pre-line">{message.content}</p>
-                              <div className="flex items-center justify-between mt-1 gap-2">
-                                <span className="text-xs opacity-70">
-                                  {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                                </span>
-                                {message.sender_id === user?.id && (
-                                  <CheckCheck className={`h-3 w-3 ${message.read ? "text-blue-400" : "opacity-50"}`} />
-                                )}
-                              </div>
-                            </div>
-                            {/* Avatar for self (optional, can comment out if not wanted) */}
-                            {message.sender_id === user?.id && (
-                              <Avatar className="h-8 w-8 mb-1">
-                                <AvatarImage src={user.avatar_url || undefined} />
-                                <AvatarFallback>{user.full_name?.charAt(0) || "U"}</AvatarFallback>
-                              </Avatar>
-                            )}
+                            <MessageBubble
+                              message={message}
+                              isSelf={message.sender_id === user?.id}
+                              avatarUrl={message.sender_id === user?.id ? user.avatar_url : selectedConversation.other_user.avatar_url}
+                              name={message.sender_id === user?.id ? user.full_name : selectedConversation.other_user.full_name}
+                            />
                           </motion.div>
                         ))}
                       </AnimatePresence>
                     )}
+                    {otherTyping && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse mt-2">
+                        <span>{selectedConversation.other_user.full_name} is typing…</span>
+                        <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 {/* Message Input */}
-                <div className="border-t p-4 bg-gray-50 rounded-b-xl">
-                  <div className="flex gap-2">
+                <div className="border-t bg-primary/10 dark:bg-primary/20 rounded-b-xl p-4">
+                  <div className="flex gap-2 items-end">
+                    <label className="cursor-pointer flex items-center justify-center h-10 w-10 rounded bg-white/80 hover:bg-primary/20 border shadow" title="Attach file">
+                      <Paperclip className="h-5 w-5 text-primary" />
+                      <input type="file" className="hidden" onChange={handleAttachmentChange} accept="image/*,application/pdf" />
+                    </label>
+                    {/* Mic button */}
+                    <button type="button" onClick={recording ? stopRecording : startRecording} className="flex items-center justify-center h-10 w-10 rounded bg-white/80 hover:bg-primary/20 border shadow" title={recording ? "Stop recording" : "Record voice note"}>
+                      {recording ? <StopCircle className="h-5 w-5 text-red-500" /> : <Mic className="h-5 w-5 text-primary" />}
+                    </button>
+                    <div className="flex-1">
                     <Textarea
                       placeholder="Type a message..."
                       value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                        onChange={handleInputChange}
+                        onBlur={handleInputBlur}
                       onKeyPress={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault()
                           sendMessage()
                         }
                       }}
-                      className="min-h-[40px] max-h-[120px] resize-none bg-white border rounded focus:ring-2 focus:ring-primary"
-                    />
-                    <Button onClick={sendMessage} disabled={sendingMessage || !newMessage.trim()} className="bg-primary text-white hover:bg-primary/90">
+                        className="min-h-[40px] max-h-[120px] resize-none bg-white/90 dark:bg-gray-900 border rounded focus:ring-2 focus:ring-primary"
+                        disabled={recording}
+                      />
+                      {/* Show attachment preview ... */}
+                      {audioUrl && (
+                        <div className="relative mt-2 flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded p-2 shadow">
+                          <audio src={audioUrl} controls className="h-8" />
+                          <button type="button" onClick={removeAudio} className="ml-2 bg-white/80 rounded-full p-1 shadow">
+                            <X className="h-4 w-4 text-red-500" />
+                          </button>
+                          <span className="text-xs text-muted-foreground">{Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
+                        </div>
+                      )}
+                      {recording && (
+                        <div className="flex items-center gap-2 mt-2 animate-pulse">
+                          <canvas ref={canvasRef} width={120} height={32} className="bg-gray-200 rounded" />
+                          <span className="text-xs text-muted-foreground">Recording… {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
+                        </div>
+                      )}
+                    </div>
+                    <Button onClick={sendMessage} disabled={sendingMessage || (!newMessage.trim() && !attachment && !audioBlob)} className="bg-primary text-white hover:bg-primary/90 shadow-md">
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
@@ -712,4 +880,93 @@ export default function MessagesPage() {
       </Dialog>
     </div>
   )
+}
+
+// --- MessageBubble component for DRYness ---
+function MessageBubble({ message, isSelf, avatarUrl, name }: { message: any; isSelf: boolean; avatarUrl?: string | null; name?: string }) {
+  return (
+    <div className={`flex items-end gap-2 ${isSelf ? 'justify-end' : 'justify-start'} group`}>
+      {!isSelf && (
+        <img
+          src={avatarUrl || '/placeholder-user.jpg'}
+          alt={name || 'User'}
+          className="w-8 h-8 rounded-full border shadow-sm bg-white object-cover"
+        />
+      )}
+      <div className={`relative max-w-[70%] px-4 py-2 rounded-2xl shadow-md transition-all duration-200 ${isSelf ? 'bg-primary text-white rounded-br-none ml-auto' : 'bg-white text-gray-900 rounded-bl-none mr-auto'} group-hover:scale-105 group-hover:shadow-lg animate-fade-in-slide`}
+        style={{ borderBottomRightRadius: isSelf ? 4 : 16, borderBottomLeftRadius: isSelf ? 16 : 4 }}
+      >
+        <div className="whitespace-pre-line break-words">{message.content}</div>
+        {message.attachment && (
+          <div className="mt-2">
+            {message.attachment.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+              <img src={message.attachment} alt="Attachment" className="max-h-40 rounded shadow border" />
+            ) : (
+              <a href={message.attachment} target="_blank" rel="noopener noreferrer" className="text-primary underline">View attachment</a>
+            )}
+          </div>
+        )}
+        {message.audio && (
+          <div className="mt-2 flex flex-col items-center">
+            <WaveformPlayer audioUrl={message.audio} />
+            <audio src={message.audio} controls className="w-full max-w-xs rounded shadow border mt-1" />
+          </div>
+        )}
+        <div className="flex items-center justify-between mt-1 gap-2">
+          <span className="text-xs text-muted-foreground">
+            {message.created_at ? formatDistanceToNow(new Date(message.created_at), { addSuffix: true }) : ''}
+          </span>
+          {/* Tick indicator for self messages */}
+          {isSelf && (
+            <span className="flex items-center gap-1 ml-2">
+              {message.read ? (
+                <CheckCheck className="w-4 h-4 text-blue-500" />
+              ) : (
+                <Check className="w-4 h-4 text-gray-400" />
+              )}
+            </span>
+          )}
+        </div>
+        {/* Bubble tail */}
+        <span className={`absolute bottom-0 ${isSelf ? 'right-0' : 'left-0'} w-3 h-3 bg-inherit rounded-br-2xl rounded-bl-2xl z-0`} style={{ transform: isSelf ? 'translateY(50%) rotate(45deg)' : 'translateY(50%) rotate(-45deg)' }} />
+      </div>
+      {isSelf && (
+        <img
+          src={avatarUrl || '/placeholder-user.jpg'}
+          alt={name || 'You'}
+          className="w-8 h-8 rounded-full border shadow-sm bg-white object-cover"
+        />
+      )}
+    </div>
+  )
+}
+
+// --- WaveformPlayer component ---
+function WaveformPlayer({ audioUrl }: { audioUrl: string }) {
+  const [waveform, setWaveform] = useState<number[]>([])
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  useEffect(() => {
+    if (audioUrl) {
+      generateWaveform(audioUrl, setWaveform)
+    }
+  }, [audioUrl])
+  useEffect(() => {
+    if (!canvasRef.current || waveform.length === 0) return
+    const ctx = canvasRef.current.getContext('2d')
+    if (!ctx) return
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+    ctx.strokeStyle = '#6366f1'
+    ctx.lineWidth = 2
+    const w = canvasRef.current.width
+    const h = canvasRef.current.height
+    waveform.forEach((v, i) => {
+      const x = (i / waveform.length) * w
+      const y = h - v * h
+      ctx.beginPath()
+      ctx.moveTo(x, h)
+      ctx.lineTo(x, y)
+      ctx.stroke()
+    })
+  }, [waveform])
+  return <canvas ref={canvasRef} width={120} height={32} className="bg-gray-200 rounded" />
 }
