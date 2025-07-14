@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth-context";
+import AdminSidebar from "@/components/admin-sidebar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -87,99 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="text-xl font-bold">Campus Admin</span>
             </div>
           </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/admin/dashboard"} tooltip="Dashboard">
-                      <a href="/admin/dashboard" className="flex items-center gap-2">
-                        <LayoutDashboard className="h-4 w-4" />
-                        <span>Dashboard</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/admin/users"} tooltip="Users">
-                      <a href="/admin/users" className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        <span>Users</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/admin/products"} tooltip="Products">
-                      <a href="/admin/products" className="flex items-center gap-2">
-                        <ShoppingBag className="h-4 w-4" />
-                        <span>Products</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/admin/orders"} tooltip="Orders">
-                      <a href="/admin/orders" className="flex items-center gap-2">
-                        <Home className="h-4 w-4" />
-                        <span>Orders</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/admin/settings"} tooltip="Settings">
-                      <a href="/admin/settings" className="flex items-center gap-2">
-                        <Settings className="h-4 w-4" />
-                        <span>Settings</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarSeparator />
-
-            <SidebarGroup>
-              <SidebarGroupLabel>Marketplace</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/admin/products"} tooltip="Products">
-                      <a href="/admin/products">
-                        <ShoppingBag />
-                        <span>Products</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/admin/accommodations"} tooltip="Accommodations">
-                      <a href="/admin/accommodations">
-                        <Home />
-                        <span>Accommodations</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarSeparator />
-
-            <SidebarGroup>
-              <SidebarGroupLabel>Settings</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === "/admin/settings"} tooltip="Settings">
-                      <a href="/admin/settings">
-                        <Settings />
-                        <span>Settings</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
+          <AdminSidebar pathname={pathname} />
           <SidebarFooter className="border-t">
             <div className="p-2">
               <Button
