@@ -108,16 +108,12 @@ export default function OrdersPage() {
     if (!user) return
     try {
       setLoading(true)
-      // Fetch orders where user is buyer or seller
+      // Fetch all orders, then filter for buyer or seller
       const ordersRef = collection(db, "orders")
-      const q = query(
-        ordersRef,
-        where("$or", "in", [["buyer_id", user.id], ["seller_id", user.id]])
-      )
       const snap = await getDocs(ordersRef)
       const allOrders = snap.docs.map(docu => ({ id: docu.id, ...docu.data() }))
       // Filter orders where user is buyer or seller
-      const userOrders = allOrders.filter(order => order.buyer_id === user.id || order.seller_id === user.id)
+      const userOrders = allOrders.filter(order => (order as any).buyer_id === user.id || (order as any).seller_id === user.id)
       // Fetch product, buyer, and seller info for each order
       const ordersWithDetails = await Promise.all(userOrders.map(async (order: any) => {
         const productDoc = await getDoc(doc(db, "products", order.product_id))
