@@ -35,6 +35,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { Switch } from "@/components/ui/switch"
+import { db } from "@/lib/firebase"
+import { doc, updateDoc } from "firebase/firestore"
 
 // Mock users data
 const mockUsers = Array.from({ length: 50 }, (_, i) => ({
@@ -62,6 +65,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [verifyingUserId, setVerifyingUserId] = useState<string | number | null>(null)
 
   const itemsPerPage = 10
 
@@ -84,6 +88,19 @@ export default function UsersPage() {
 
   // Get unique universities for filter
   const universities = Array.from(new Set(mockUsers.map((user) => user.university)))
+
+  // Handler to toggle verification
+  const handleToggleVerify = async (user: any) => {
+    setVerifyingUserId(user.id)
+    try {
+      // Uncomment for real Firestore update:
+      // await updateDoc(doc(db, "users", String(user.id)), { verified: !user.verified })
+      // For mock/demo:
+      user.verified = !user.verified
+    } finally {
+      setVerifyingUserId(null)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -229,21 +246,21 @@ export default function UsersPage() {
                           <Badge variant={user.role === "admin" ? "destructive" : "secondary"}>{user.role}</Badge>
                         </TableCell>
                         <TableCell>
-                          {user.verified ? (
-                            <Badge
-                              variant="outline"
-                              className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800"
-                            >
-                              Verified
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className="bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950/20 dark:text-gray-400 dark:border-gray-800"
-                            >
-                              Unverified
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={user.verified}
+                              onCheckedChange={() => handleToggleVerify(user)}
+                              disabled={verifyingUserId === user.id}
+                            />
+                            {user.verified && (
+                              <Badge variant="outline" className="bg-blue-500 text-white border-blue-500 px-1 py-0.5 text-xs font-semibold flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 inline-block">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                Verified
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>{new Date(user.joinedAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">
