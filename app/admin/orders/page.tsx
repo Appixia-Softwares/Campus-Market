@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+"use client";
+
+=======
 "use client"
 
 import { useState, useEffect } from "react"
@@ -525,10 +529,12 @@ export default function OrdersPage() {
           </div>
         </Tabs>
       </div>
+>>>>>>> ac0569eba5376b26fe2bbff4940d36d988a71a97
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { getAllOrders } from '@/lib/api/orders';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -578,7 +584,7 @@ export default function AdminOrdersPage() {
               <div className="font-semibold text-center">Order #{order.id}</div>
               <div className="text-xs text-muted-foreground mb-2">{order.user_id || '-'}</div>
               <div className="flex gap-2 flex-wrap justify-center mb-2">
-                <Badge variant={order.status === 'completed' ? 'blue' : order.status === 'cancelled' ? 'destructive' : 'secondary'}>{order.status || 'pending'}</Badge>
+                <Badge variant={order.status === 'completed' ? 'default' : order.status === 'cancelled' ? 'destructive' : 'secondary'}>{order.status || 'pending'}</Badge>
               </div>
               <div className="text-xs text-muted-foreground mb-2">{order.created_at ? new Date(order.created_at).toLocaleDateString() : '-'}</div>
               <div className="flex gap-2 mt-auto">
@@ -601,7 +607,7 @@ export default function AdminOrdersPage() {
               <div className="font-semibold text-lg">Order #{selectedOrder.id}</div>
               <div className="text-xs text-muted-foreground mb-2">{selectedOrder.user_id || '-'}</div>
               <div className="flex gap-2 flex-wrap justify-center mb-2">
-                <Badge variant={selectedOrder.status === 'completed' ? 'blue' : selectedOrder.status === 'cancelled' ? 'destructive' : 'secondary'}>{selectedOrder.status || 'pending'}</Badge>
+                <Badge variant={selectedOrder.status === 'completed' ? 'default' : selectedOrder.status === 'cancelled' ? 'destructive' : 'secondary'}>{selectedOrder.status || 'pending'}</Badge>
               </div>
               <div className="text-xs text-muted-foreground mb-2">{selectedOrder.created_at ? new Date(selectedOrder.created_at).toLocaleDateString() : '-'}</div>
               <div className="w-full text-sm">
