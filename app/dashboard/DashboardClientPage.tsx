@@ -339,6 +339,14 @@ export default function DashboardClientPage() {
     })
   }
 
+  // Helper to safely format relative dates
+  function safeFormatDistanceToNow(dateString?: string) {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "N/A";
+    return formatDistanceToNow(date, { addSuffix: true });
+  }
+
   if (loading) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -555,7 +563,7 @@ export default function DashboardClientPage() {
                             <Heart className="h-3 w-3" />
                             {listing.likes || 0}
                           </span>
-                          <span>{formatDistanceToNow(new Date(listing.created_at), { addSuffix: true })}</span>
+                          <span>{safeFormatDistanceToNow(listing.created_at)}</span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -615,7 +623,7 @@ export default function DashboardClientPage() {
                             {message.sender?.full_name || "Unknown User"}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                            {safeFormatDistanceToNow(message.created_at)}
                           </p>
                         </div>
                         {message.conversation?.product && (
