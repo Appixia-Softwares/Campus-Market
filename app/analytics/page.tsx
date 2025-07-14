@@ -191,12 +191,34 @@ export default function AnalyticsPage() {
       where('seller.id', '==', user.id)
     )
     const accomSnap = await getDocs(accomQuery)
-    const total = accomSnap.size
-    // Mock bookings, revenue, occupancy
-    const bookings = total * 2 // mock: 2 bookings per listing
-    const revenue = bookings * 100 // mock: $100 per booking
-    const occupancy = total > 0 ? Math.round((bookings / (total * 4)) * 100) : 0 // mock: 4 months per listing
-    setAccomStats({ total, bookings, revenue, occupancy })
+    const accommodations = accomSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    const total = accommodations.length
+    if (total === 0) {
+      setAccomStats({ total: 0, bookings: 0, revenue: 0, occupancy: 0 })
+      return
+    }
+    // Fetch bookings for these accommodations
+    const accomIds = accommodations.map(a => a.id)
+    // Firestore doesn't support 'in' with too many values, but for most users this is fine
+    let bookings = []
+    let revenue = 0
+    let completedCount = 0
+    for (const accomId of accomIds) {
+      const bookingsQuery = query(
+        collection(db, 'accommodation_bookings'),
+        where('propertyId', '==', accomId)
+      )
+      const bookingsSnap = await getDocs(bookingsQuery)
+      const theseBookings = bookingsSnap.docs.map(doc => doc.data())
+      bookings = bookings.concat(theseBookings)
+      for (const b of theseBookings) {
+        if (b.amount) revenue += Number(b.amount)
+        if (b.status === 'completed') completedCount++
+      }
+    }
+    // Occupancy: percent of completed bookings over total possible (mocked as total listings * 4)
+    const occupancy = total > 0 ? Math.round((completedCount / (total * 4)) * 100) : 0
+    setAccomStats({ total, bookings: bookings.length, revenue, occupancy })
   }
 
   const exportData = async () => {
