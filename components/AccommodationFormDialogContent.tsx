@@ -874,11 +874,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
         </div>
 
         {/* Debug info (remove in production) */}
-<<<<<<< HEAD
-        <div className="mt-4 p-4 bg-red-700 rounded-lg text-sm">
-=======
         <div className="mt-4 p-4 bg-background text-green-200 rounded-lg text-xs opacity-80">
->>>>>>> 5e3814e8288ba43726423d46aa1b19c20ea16573
           <p>
             <strong>Current Tab:</strong> {currentTab}
           </p>
