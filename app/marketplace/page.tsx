@@ -501,9 +501,9 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-xl p-10 shadow-xl overflow-hidden mb-10">
+      <div className="relative bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-xl p-4 md:p-10 shadow-xl overflow-hidden mb-4 md:mb-10">
         {/* Badges */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-wrap gap-3 mb-4 md:mb-6">
           <span className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-full text-sm font-medium">
             <Flag className="h-4 w-4 text-green-900" /> Made for Zimbabwe
           </span>
@@ -512,14 +512,14 @@ export default function MarketplacePage() {
           </span>
         </div>
         {/* Main Content */}
-        <h1 className="text-5xl font-extrabold text-black drop-shadow-lg mb-4">
+        <h1 className="text-2xl md:text-5xl font-extrabold text-black drop-shadow-lg mb-2 md:mb-4">
           Campus Market
         </h1>
-        <p className="text-lg text-black/80 mb-8 max-w-xl">
+        <p className="text-base md:text-lg text-black/80 mb-4 md:mb-8 max-w-xl">
           Buy and sell with fellow students across Zimbabwe's universities, colleges, and polytechnics
         </p>
         {/* Buttons */}
-        <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4">
           <button className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-green-900 transition">
             <Plus className="h-5 w-5" /> List an Item
           </button>
@@ -528,8 +528,8 @@ export default function MarketplacePage() {
           </button>
         </div>
         {/* Decorative Icons */}
-        <GraduationCap className="absolute right-16 top-10 w-32 h-32 text-black/10" />
-        <Laptop className="absolute left-1/2 bottom-0 w-16 h-16 text-black/10" />
+        <GraduationCap className="hidden md:block absolute right-16 top-10 w-32 h-32 text-black/10" />
+        <Laptop className="hidden md:block absolute left-1/2 bottom-0 w-16 h-16 text-black/10" />
       </div>
 
       <div className="container py-12 space-y-10">
@@ -538,7 +538,7 @@ export default function MarketplacePage() {
 
         {/* Search and Filters */}
         <Card className="shadow-xl border-0 bg-card/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
-          <CardContent className="p-8">
+          <CardContent className="p-4 md:p-8">
             <SearchFilters onSearch={handleSearch} categories={categories} universities={universities} />
           </CardContent>
         </Card>
@@ -563,119 +563,115 @@ export default function MarketplacePage() {
         )}
 
         {/* Products Content */}
-        {!isLoading && products.length > 0 && (
-          <>
-            {/* Tabs Navigation */}
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <div className="flex items-center justify-between mb-6">
-                <TabsList className="grid w-full max-w-md grid-cols-4 bg-card/90 backdrop-blur-sm shadow-lg">
-                  <TabsTrigger 
-                    value="all" 
-                    className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors"
-                  >
-                    <Grid className="h-4 w-4" />
-                    All
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="trending" 
-                    className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors"
-                  >
-                    <TrendingUp className="h-4 w-4" />
-                    Trending
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="nearby" 
-                    className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors"
-                  >
-                    <MapPin className="h-4 w-4" />
-                    Nearby
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="delivery" 
-                    className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors"
-                  >
-                    <Star className="h-4 w-4" />
-                    Delivery
-                  </TabsTrigger>
-                </TabsList>
+        <>
+          {/* Tabs Navigation */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <TabsList className="grid w-full max-w-md grid-cols-4 bg-card/90 backdrop-blur-sm shadow-lg overflow-x-auto whitespace-nowrap min-w-0">
+                <TabsTrigger 
+                  value="all" 
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max"
+                >
+                  <Grid className="h-4 w-4" />
+                  All
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="trending" 
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Trending
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="nearby" 
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Nearby
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="delivery" 
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max"
+                >
+                  <Star className="h-4 w-4" />
+                  Delivery
+                </TabsTrigger>
+              </TabsList>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={viewMode === "grid" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("grid")}
-                    className="transition-all duration-200"
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "list" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("list")}
-                    className="transition-all duration-200"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
+              <div className="flex gap-2 md:gap-4 ml-2">
+                <Button
+                  variant={viewMode === "grid" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className="transition-all duration-200"
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                  className="transition-all duration-200"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
               </div>
-
-              <div className="mt-8">
-                <TabsContent value="all" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                  <ProductGrid
-                    products={products}
-                    isLoading={isLoading}
-                    viewMode={viewMode}
-                    onProductUpdate={fetchProducts}
-                  />
-                </TabsContent>
-
-                <TabsContent value="trending" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                  <TrendingProducts products={products} isLoading={isLoading} viewMode={viewMode} />
-                </TabsContent>
-
-                <TabsContent value="nearby" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                  <ProductGrid
-                    products={products}
-                    isLoading={isLoading}
-                    viewMode={viewMode}
-                    onProductUpdate={fetchProducts}
-                    showDistance={true}
-                  />
-                </TabsContent>
-
-                <TabsContent value="delivery" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                  <ProductGrid
-                    products={products}
-                    isLoading={isLoading}
-                    viewMode={viewMode}
-                    onProductUpdate={fetchProducts}
-                    showDelivery={true}
-                  />
-                </TabsContent>
-              </div>
-            </Tabs>
-
-            {/* Recently Viewed */}
-            {recentlyViewed.length > 0 && (
-              <div className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                <RecentlyViewed products={recentlyViewed} />
-              </div>
-            )}
-
-            {/* Results Summary */}
-            <div className="text-center text-muted-foreground bg-card/50 backdrop-blur-sm p-4 rounded-lg shadow-sm">
-              <p className="flex items-center justify-center gap-2">
-                <span>Showing {getFilteredProductsCount()} of {totalProducts} products</span>
-                {filters.university && (
-                  <>
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-                    <span>Filtered by university</span>
-                  </>
-                )}
-              </p>
             </div>
-          </>
-        )}
+
+            <TabsContent value="all" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+              <ProductGrid
+                products={products}
+                isLoading={isLoading}
+                viewMode={viewMode}
+                onProductUpdate={fetchProducts}
+              />
+            </TabsContent>
+
+            <TabsContent value="trending" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+              <TrendingProducts products={products} isLoading={isLoading} viewMode={viewMode} />
+            </TabsContent>
+
+            <TabsContent value="nearby" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+              <ProductGrid
+                products={products}
+                isLoading={isLoading}
+                viewMode={viewMode}
+                onProductUpdate={fetchProducts}
+                showDistance={true}
+              />
+            </TabsContent>
+
+            <TabsContent value="delivery" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+              <ProductGrid
+                products={products}
+                isLoading={isLoading}
+                viewMode={viewMode}
+                onProductUpdate={fetchProducts}
+                showDelivery={true}
+              />
+            </TabsContent>
+          </Tabs>
+
+          {/* Recently Viewed */}
+          {recentlyViewed.length > 0 && (
+            <div className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+              <RecentlyViewed products={recentlyViewed} />
+            </div>
+          )}
+
+          {/* Results Summary */}
+          <div className="text-center text-muted-foreground bg-card/50 backdrop-blur-sm p-4 rounded-lg shadow-sm">
+            <p className="flex items-center justify-center gap-2">
+              <span>Showing {getFilteredProductsCount()} of {totalProducts} products</span>
+              {filters.university && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+                  <span>Filtered by university</span>
+                </>
+              )}
+            </p>
+          </div>
+        </>
       </div>
     </div>
   )
