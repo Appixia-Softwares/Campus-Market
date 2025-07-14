@@ -199,18 +199,20 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
               <SidebarContent id="sidebar-content" className="flex-1 overflow-y-auto pb-4">
                 <SidebarMenu>
                   {/* DASHBOARD GROUP */}
-                  {user && <>
-                    <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Dashboard</div>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
-                        <Link href="/dashboard" className="transition-all hover:text-primary flex items-center gap-2">
-                          <Home className="h-4 w-4" />
-                          <span>Dashboard</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <Separator className="my-2" />
-                  </>}
+                  {user && (
+                    <>
+                      <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Dashboard</div>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
+                          <Link href="/dashboard" className="transition-all hover:text-primary flex items-center gap-2">
+                            <Home className="h-4 w-4" />
+                            <span>Dashboard</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <Separator className="my-2" />
+                    </>
+                  )}
                   {/* MARKETPLACE GROUP */}
                   <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Marketplace</div>
                   <SidebarMenuItem>
@@ -219,24 +221,26 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                       <span>Add Accommodation</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  {user && <>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/analytics"}>
-                        <Link href="/analytics" className="transition-all hover:text-primary flex items-center gap-2">
-                          <BarChart3 className="h-4 w-4" />
-                          <span>Analytics</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/orders"}>
-                        <Link href="/orders" className="transition-all hover:text-primary flex items-center gap-2">
-                          <ShoppingCart className="h-4 w-4" />
-                          <span>Orders</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </>}
+                  {user && (
+                    <>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/analytics"}>
+                          <Link href="/analytics" className="transition-all hover:text-primary flex items-center gap-2">
+                            <BarChart3 className="h-4 w-4" />
+                            <span>Analytics</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/orders"}>
+                          <Link href="/orders" className="transition-all hover:text-primary flex items-center gap-2">
+                            <ShoppingCart className="h-4 w-4" />
+                            <span>Orders</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
+                  )}
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname === "/marketplace" || pathname.startsWith("/marketplace/")}>
                       <Link href="/marketplace" className="transition-all hover:text-primary flex items-center gap-2">
@@ -245,155 +249,159 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  {user && <>
-                    <SidebarMenuItem>
-                      <Dialog open={sellDialogOpen} onOpenChange={(open) => { setSellDialogOpen(open); if (!open) setShowAccommodationForm(false); }}>
-                        <DialogTrigger asChild>
-                          <SidebarMenuButton
-                            isActive={pathname === "/marketplace/sell" || pathname.startsWith("/marketplace/sell")}
-                            tooltip="Sell Product"
-                            onClick={() => setSellDialogOpen(true)}
-                          >
-                            <div className="transition-all hover:text-primary flex items-center gap-2">
-                              <Plus className="h-4 w-4" />
-                              <span>Sell Product</span>
-                            </div>
-                          </SidebarMenuButton>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                              <Plus className="h-5 w-5 text-primary" />
-                              What do you want to sell?
-                            </DialogTitle>
-                            <p className="text-muted-foreground text-sm mt-1 flex items-center gap-1">
-                              <Info className="h-4 w-4 text-muted-foreground" />
-                              Choose a category to get started. You can list products or accommodation for students.
-                            </p>
-                          </DialogHeader>
-                          {!showAccommodationForm ? (
-                            <div className="mt-6">
-                              <div className="grid grid-cols-1 gap-4">
-                                {/* Product Option Row */}
-                                <button
-                                  className="group w-full rounded-lg border border-primary/30 bg-background hover:bg-primary/5 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
-                                  onClick={() => {
-                                    setSellDialogOpen(false);
-                                    router.push("/marketplace/sell");
-                                  }}
-                                >
-                                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mr-4">
-                                    <ShoppingBag className="h-7 w-7 text-primary" />
-                                  </div>
-                                  <div className="flex-1 text-left">
-                                    <div className="font-semibold text-base">Product</div>
-                                    <div className="text-xs text-muted-foreground">Sell books, electronics, clothing, and more</div>
-                                  </div>
-                                  <ArrowRight className="h-5 w-5 ml-4 text-muted-foreground group-hover:text-primary" />
-                                </button>
-                                {/* Accommodation Option Row */}
-                                <button
-                                  className="group w-full rounded-lg border border-accent bg-background hover:bg-accent/10 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
-                                  onClick={() => setShowAccommodationForm(true)}
-                                >
-                                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mr-4">
-                                    <Building className="h-7 w-7 text-accent" />
-                                  </div>
-                                  <div className="flex-1 text-left">
-                                    <div className="font-semibold text-base">Accommodation</div>
-                                    <div className="text-xs text-muted-foreground">List a room, flat, or student housing</div>
-                                  </div>
-                                  <ArrowRight className="h-5 w-5 ml-4 text-muted-foreground group-hover:text-accent" />
-                                </button>
+                  {user && (
+                    <>
+                      <SidebarMenuItem>
+                        <Dialog open={sellDialogOpen} onOpenChange={(open) => { setSellDialogOpen(open); if (!open) setShowAccommodationForm(false); }}>
+                          <DialogTrigger asChild>
+                            <SidebarMenuButton
+                              isActive={pathname === "/marketplace/sell" || pathname.startsWith("/marketplace/sell")}
+                              tooltip="Sell Product"
+                              onClick={() => setSellDialogOpen(true)}
+                            >
+                              <div className="transition-all hover:text-primary flex items-center gap-2">
+                                <Plus className="h-4 w-4" />
+                                <span>Sell Product</span>
                               </div>
-                            </div>
-                          ) : (
-                            <AccommodationFormDialogContent onSuccess={() => { setSellDialogOpen(false); setShowAccommodationForm(false); }} />
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/marketplace/my-listings"}>
-                        <Link href="/marketplace/my-listings" className="transition-all hover:text-primary flex items-center gap-2">
-                          <ShoppingBag className="h-4 w-4" />
-                          <span>My Listings</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/marketplace/favorites"}>
-                        <Link href="/marketplace/favorites" className="transition-all hover:text-primary flex items-center gap-2">
-                          <Heart className="h-4 w-4" />
-                          <span>Favorites</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </>}
+                            </SidebarMenuButton>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <Plus className="h-5 w-5 text-primary" />
+                                What do you want to sell?
+                              </DialogTitle>
+                              <p className="text-muted-foreground text-sm mt-1 flex items-center gap-1">
+                                <Info className="h-4 w-4 text-muted-foreground" />
+                                Choose a category to get started. You can list products or accommodation for students.
+                              </p>
+                            </DialogHeader>
+                            {!showAccommodationForm ? (
+                              <div className="mt-6">
+                                <div className="grid grid-cols-1 gap-4">
+                                  {/* Product Option Row */}
+                                  <button
+                                    className="group w-full rounded-lg border border-primary/30 bg-background hover:bg-primary/5 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
+                                    onClick={() => {
+                                      setSellDialogOpen(false);
+                                      router.push("/marketplace/sell");
+                                    }}
+                                  >
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mr-4">
+                                      <ShoppingBag className="h-7 w-7 text-primary" />
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                      <div className="font-semibold text-base">Product</div>
+                                      <div className="text-xs text-muted-foreground">Sell books, electronics, clothing, and more</div>
+                                    </div>
+                                    <ArrowRight className="h-5 w-5 ml-4 text-muted-foreground group-hover:text-primary" />
+                                  </button>
+                                  {/* Accommodation Option Row */}
+                                  <button
+                                    className="group w-full rounded-lg border border-accent bg-background hover:bg-accent/10 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
+                                    onClick={() => setShowAccommodationForm(true)}
+                                  >
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mr-4">
+                                      <Building className="h-7 w-7 text-accent" />
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                      <div className="font-semibold text-base">Accommodation</div>
+                                      <div className="text-xs text-muted-foreground">List a room, flat, or student housing</div>
+                                    </div>
+                                    <ArrowRight className="h-5 w-5 ml-4 text-muted-foreground group-hover:text-accent" />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <AccommodationFormDialogContent onSuccess={() => { setSellDialogOpen(false); setShowAccommodationForm(false); }} />
+                            )}
+                          </DialogContent>
+                        </Dialog>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/marketplace/my-listings"}>
+                          <Link href="/marketplace/my-listings" className="transition-all hover:text-primary flex items-center gap-2">
+                            <ShoppingBag className="h-4 w-4" />
+                            <span>My Listings</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/marketplace/favorites"}>
+                          <Link href="/marketplace/favorites" className="transition-all hover:text-primary flex items-center gap-2">
+                            <Heart className="h-4 w-4" />
+                            <span>Favorites</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
+                  )}
                   <Separator className="my-2" />
                   {/* COMMUNITY GROUP */}
-                  {user && <>
-                    <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Community</div>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/accommodation"}>
-                        <Link href="/accommodation" className="transition-all hover:text-primary flex items-center gap-2">
-                          <Building className="h-4 w-4" />
-                          <span>Accommodation</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/community"}>
-                        <Link href="/community" className="transition-all hover:text-primary flex items-center gap-2">
-                          <Users className="h-4 w-4" />
-                          <span>Community</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/messages"}>
-                        <Link href="/messages" className="transition-all hover:text-primary flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4" />
-                          <span>Messages</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/verification"}>
-                        <Link href="/verification" className="transition-all hover:text-primary flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span>Verification</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <Separator className="my-2" />
-                    {/* ACCOUNT GROUP */}
-                    <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Account</div>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/profile"}>
-                        <Link href="/profile" className="transition-all hover:text-primary flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span>Profile</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/settings"}>
-                        <Link href="/settings" className="transition-all hover:text-primary flex items-center gap-2">
-                          <Settings className="h-4 w-4" />
-                          <span>Settings</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild onClick={handleSignOut}>
-                        <button className="transition-all hover:text-destructive w-full flex items-center gap-2">
-                          <LogOut className="h-4 w-4" />
-                          <span>Logout</span>
-                        </button>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </>}
+                  {user && (
+                    <>
+                      <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Community</div>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/accommodation"}>
+                          <Link href="/accommodation" className="transition-all hover:text-primary flex items-center gap-2">
+                            <Building className="h-4 w-4" />
+                            <span>Accommodation</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/community"}>
+                          <Link href="/community" className="transition-all hover:text-primary flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            <span>Community</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/messages"}>
+                          <Link href="/messages" className="transition-all hover:text-primary flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4" />
+                            <span>Messages</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/verification"}>
+                          <Link href="/verification" className="transition-all hover:text-primary flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>Verification</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <Separator className="my-2" />
+                      {/* ACCOUNT GROUP */}
+                      <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Account</div>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/profile"}>
+                          <Link href="/profile" className="transition-all hover:text-primary flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <span>Profile</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === "/settings"}>
+                          <Link href="/settings" className="transition-all hover:text-primary flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            <span>Settings</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild onClick={handleSignOut}>
+                          <button className="transition-all hover:text-destructive w-full flex items-center gap-2">
+                            <LogOut className="h-4 w-4" />
+                            <span>Logout</span>
+                          </button>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
+                  )}
                 </SidebarMenu>
               </SidebarContent>
               <SidebarFooter className="border-t bg-muted/30 shadow-inner p-0">
