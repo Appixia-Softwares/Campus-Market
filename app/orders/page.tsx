@@ -27,7 +27,7 @@ import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
 
 interface Order {
   id: string
@@ -88,6 +88,19 @@ const ORDER_STATUS_CONFIG = {
     icon: XCircle,
     description: "Order was cancelled",
   },
+}
+
+// Helper for robust date parsing
+function parseDate(value: any): Date | null {
+  if (!value) return null;
+  if (typeof value === 'object' && value !== null && typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return null;
 }
 
 export default function OrdersPage() {
@@ -353,7 +366,7 @@ export default function OrdersPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow">
+                        <Card className="bg-black100/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow">
                           <CardContent className="p-6">
                             <div className="flex items-start gap-4">
                               {/* Product Image */}
@@ -411,9 +424,18 @@ export default function OrdersPage() {
                                   <div>
                                     <p className="text-sm text-muted-foreground">Order Date</p>
                                     <p className="font-medium">
-                                      {order.created_at && !isNaN(new Date(order.created_at).getTime())
-                                        ? formatDistanceToNow(new Date(order.created_at), { addSuffix: true })
-                                        : "Unknown"}
+                                      {(() => {
+                                        const value = order.created_at;
+                                        let dateObj: Date | null = null;
+                                        if (!value) return "-";
+                                        if (typeof value === "object" && value !== null && typeof (value as { toDate?: unknown }).toDate === "function") {
+                                          dateObj = (value as Timestamp).toDate();
+                                        } else if (typeof value === "string" || typeof value === "number") {
+                                          dateObj = new Date(value);
+                                        }
+                                        if (!dateObj || isNaN(dateObj.getTime())) return "-";
+                                        return formatDistanceToNow(dateObj, { addSuffix: true });
+                                      })()}
                                     </p>
                                   </div>
                                 </div>
@@ -429,8 +451,10 @@ export default function OrdersPage() {
                                   <div className="flex items-center gap-2 mb-2">
                                     <Calendar className="h-4 w-4 text-muted-foreground" />
                                     <span className="text-sm">
-                                      {new Date(order.pickup_time).toLocaleDateString()} at{" "}
-                                      {new Date(order.pickup_time).toLocaleTimeString()}
+                                      {(() => {
+                                        const d = parseDate(order.pickup_time);
+                                        return d ? `${d.toLocaleDateString()} at ${d.toLocaleTimeString()}` : '-';
+                                      })()}
                                     </span>
                                   </div>
                                 )}

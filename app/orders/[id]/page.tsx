@@ -27,7 +27,9 @@ import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, addDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, addDoc, Timestamp } from 'firebase/firestore';
+import DashboardSidebar from '@/components/dashboard-sidebar';
+import { DashboardHeader } from '@/components/dashboard-header';
 
 interface OrderDetails {
   id: string
@@ -251,6 +253,19 @@ export default function OrderDetailsPage() {
     window.open(whatsappUrl, "_blank")
   }
 
+  // Helper for robust date parsing
+  function parseDate(value: any): Date | null {
+    if (!value) return null;
+    if (typeof value === 'object' && value !== null && typeof value.toDate === 'function') {
+      return value.toDate();
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  }
+
   if (loading) {
     return (
       <div className="container py-8">
@@ -291,286 +306,301 @@ export default function OrderDetailsPage() {
   const otherUser = isBuyer ? order.seller : order.buyer
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="container py-8">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Back to Orders
-        </Button>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Order Header */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-2xl">Order #{order.id.slice(-8).toUpperCase()}</CardTitle>
-                    <p className="text-muted-foreground">
-                      Placed {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
-                    </p>
-                  </div>
-                  <Badge className={statusConfig.color}>
-                    <StatusIcon className="h-4 w-4 mr-1" />
-                    {statusConfig.label}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{statusConfig.description}</p>
-              </CardContent>
-            </Card>
-
-            {/* Product Details */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Product Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                    <img
-                      src={
-                        order.products.product_images?.find((img) => img.is_primary)?.url ||
-                        "/placeholder.svg?height=96&width=96" ||
-                        "/placeholder.svg"
-                      }
-                      alt={order.products.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-2">{order.products.title}</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* Sidebar: overlay on mobile, collapsible on desktop */}
+      <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
+        <DashboardSidebar collapsed={false} onToggle={() => {}} isMobile={false} />
+      </div>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <DashboardHeader onMobileMenu={() => {}} />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
+          {/* --- Original Order Details Content --- */}
+          <div className="container py-8">
+            <Button variant="ghost" onClick={() => router.back()} className="mb-6">
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Back to Orders
+            </Button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Main Content */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Order Header */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-muted-foreground">Unit Price:</span>
-                        <span className="ml-2 font-medium">${order.products.price.toFixed(2)}</span>
+                        <CardTitle className="text-2xl">Order #{order.id.slice(-8).toUpperCase()}</CardTitle>
+                        <p className="text-muted-foreground">
+                          Placed {(() => {
+                            const d = parseDate(order.created_at);
+                            return d ? formatDistanceToNow(d, { addSuffix: true }) : '-';
+                          })()}
+                        </p>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Quantity:</span>
-                        <span className="ml-2 font-medium">{order.quantity}</span>
+                      <Badge className={statusConfig.color}>
+                        <StatusIcon className="h-4 w-4 mr-1" />
+                        {statusConfig.label}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{statusConfig.description}</p>
+                  </CardContent>
+                </Card>
+
+                {/* Product Details */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Product Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-4">
+                      <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                        <img
+                          src={
+                            order.products.product_images?.find((img) => img.is_primary)?.url ||
+                            "/placeholder.svg?height=96&width=96" ||
+                            "/placeholder.svg"
+                          }
+                          alt={order.products.title}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Total Amount:</span>
-                        <span className="ml-2 font-bold text-primary">${order.total_amount.toFixed(2)}</span>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-2">{order.products.title}</h3>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Unit Price:</span>
+                            <span className="ml-2 font-medium">${order.products.price.toFixed(2)}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Quantity:</span>
+                            <span className="ml-2 font-medium">{order.quantity}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Total Amount:</span>
+                            <span className="ml-2 font-bold text-primary">${order.total_amount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" className="mt-3" asChild>
+                          <Link href={`/marketplace/products/${order.products.id}`}>View Product</Link>
+                        </Button>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="mt-3" asChild>
-                      <Link href={`/marketplace/products/${order.products.id}`}>View Product</Link>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
 
-            {/* Order Details */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Order Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {order.pickup_location && (
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Pickup Location</p>
-                      <p className="text-muted-foreground">{order.pickup_location}</p>
-                    </div>
-                  </div>
-                )}
+                {/* Order Details */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Order Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {order.pickup_location && (
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium">Pickup Location</p>
+                          <p className="text-muted-foreground">{order.pickup_location}</p>
+                        </div>
+                      </div>
+                    )}
 
-                {order.pickup_time && (
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Pickup Time</p>
-                      <p className="text-muted-foreground">
-                        {new Date(order.pickup_time).toLocaleDateString()} at{" "}
-                        {new Date(order.pickup_time).toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {order.notes && (
-                  <div>
-                    <p className="font-medium mb-2">Order Notes</p>
-                    <div className="bg-muted/50 p-3 rounded-md">
-                      <p className="text-sm">{order.notes}</p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Order Messages */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Order Messages</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4 max-h-64 overflow-y-auto mb-4">
-                  {messages.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">No messages yet</p>
-                  ) : (
-                    messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.sender_id === user?.id ? "justify-end" : "justify-start"}`}
-                      >
-                        <div
-                          className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
-                            message.sender_id === user?.id
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          <p className="text-sm">{message.message}</p>
-                          <p className="text-xs opacity-70 mt-1">
-                            {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                    {order.pickup_time && (
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium">Pickup Time</p>
+                          <p className="text-muted-foreground">
+                            {(() => {
+                              const d = parseDate(order.pickup_time);
+                              return d ? `${d.toLocaleDateString()} at ${d.toLocaleTimeString()}` : '-';
+                            })()}
                           </p>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
+                    )}
 
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Type a message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                  />
-                  <Button onClick={sendMessage} disabled={sendingMessage || !newMessage.trim()}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                    {order.notes && (
+                      <div>
+                        <p className="font-medium mb-2">Order Notes</p>
+                        <div className="bg-muted/50 p-3 rounded-md">
+                          <p className="text-sm">{order.notes}</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Other Party Info */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>{isBuyer ? "Seller" : "Buyer"} Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3 mb-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={otherUser.avatar_url || undefined} />
-                    <AvatarFallback>{otherUser.full_name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-semibold">{otherUser.full_name}</h3>
-                    <p className="text-sm text-muted-foreground">{isBuyer ? "Seller" : "Buyer"}</p>
-                  </div>
-                </div>
+                {/* Order Messages */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Order Messages</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4 max-h-64 overflow-y-auto mb-4">
+                      {messages.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-4">No messages yet</p>
+                      ) : (
+                        messages.map((message) => (
+                          <div
+                            key={message.id}
+                            className={`flex ${message.sender_id === user?.id ? "justify-end" : "justify-start"}`}
+                          >
+                            <div
+                              className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
+                                message.sender_id === user?.id
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              <p className="text-sm">{message.message}</p>
+                              <p className="text-xs opacity-70 mt-1">
+                                {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
 
-                <div className="space-y-2">
-                  {otherUser.whatsapp_number && (
-                    <Button
-                      variant="outline"
-                      className="w-full text-green-600 border-green-200 hover:bg-green-50"
-                      onClick={() => contactWhatsApp(otherUser.whatsapp_number!, otherUser.full_name)}
-                    >
-                      <Phone className="h-4 w-4 mr-2" />
-                      WhatsApp
-                    </Button>
-                  )}
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Type a message..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                      />
+                      <Button onClick={sendMessage} disabled={sendingMessage || !newMessage.trim()}>
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href={`/messages?user=${otherUser.id}`}>
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Send Message
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Sidebar (right) remains unchanged */}
+              <div className="space-y-6">
+                {/* Other Party Info */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle>{isBuyer ? "Seller" : "Buyer"} Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={otherUser.avatar_url || undefined} />
+                        <AvatarFallback>{otherUser.full_name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-semibold">{otherUser.full_name}</h3>
+                        <p className="text-sm text-muted-foreground">{isBuyer ? "Seller" : "Buyer"}</p>
+                      </div>
+                    </div>
 
-            {/* Order Actions */}
-            {!isBuyer && (
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle>Seller Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {order.status === "pending" && (
-                    <>
-                      <Button className="w-full" onClick={() => updateOrderStatus("confirmed")}>
+                    <div className="space-y-2">
+                      {otherUser.whatsapp_number && (
+                        <Button
+                          variant="outline"
+                          className="w-full text-green-600 border-green-200 hover:bg-green-50"
+                          onClick={() => contactWhatsApp(otherUser.whatsapp_number!, otherUser.full_name)}
+                        >
+                          <Phone className="h-4 w-4 mr-2" />
+                          WhatsApp
+                        </Button>
+                      )}
+
+                      <Button variant="outline" className="w-full" asChild>
+                        <Link href={`/messages?user=${otherUser.id}`}>
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Send Message
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Order Actions */}
+                {!isBuyer && (
+                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                    <CardHeader>
+                      <CardTitle>Seller Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {order.status === "pending" && (
+                        <>
+                          <Button className="w-full" onClick={() => updateOrderStatus("confirmed")}>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Confirm Order
+                          </Button>
+                          <Button variant="destructive" className="w-full" onClick={() => updateOrderStatus("cancelled")}>
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Cancel Order
+                          </Button>
+                        </>
+                      )}
+
+                      {order.status === "confirmed" && (
+                        <Button className="w-full" onClick={() => updateOrderStatus("ready_for_pickup")}>
+                          <Package className="h-4 w-4 mr-2" />
+                          Mark Ready for Pickup
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Complete Order */}
+                {order.status === "ready_for_pickup" && (
+                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                    <CardHeader>
+                      <CardTitle>Complete Order</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Mark this order as completed once the item has been collected.
+                      </p>
+                      <Button className="w-full" onClick={() => updateOrderStatus("completed")}>
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        Confirm Order
+                        Mark as Completed
                       </Button>
-                      <Button variant="destructive" className="w-full" onClick={() => updateOrderStatus("cancelled")}>
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Cancel Order
-                      </Button>
-                    </>
-                  )}
+                    </CardContent>
+                  </Card>
+                )}
 
-                  {order.status === "confirmed" && (
-                    <Button className="w-full" onClick={() => updateOrderStatus("ready_for_pickup")}>
-                      <Package className="h-4 w-4 mr-2" />
-                      Mark Ready for Pickup
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                {/* Order Summary */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Order Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span>${(order.products.price * order.quantity).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Delivery Fee:</span>
+                        <span>${(order.total_amount - order.products.price * order.quantity).toFixed(2)}</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between font-semibold">
+                        <span>Total:</span>
+                        <span>${order.total_amount.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {/* Complete Order */}
-            {order.status === "ready_for_pickup" && (
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle>Complete Order</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Mark this order as completed once the item has been collected.
-                  </p>
-                  <Button className="w-full" onClick={() => updateOrderStatus("completed")}>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Mark as Completed
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Order Summary */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>${(order.products.price * order.quantity).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Delivery Fee:</span>
-                    <span>${(order.total_amount - order.products.price * order.quantity).toFixed(2)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between font-semibold">
-                    <span>Total:</span>
-                    <span>${order.total_amount.toFixed(2)}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Report */}
-            <Button variant="outline" size="sm" className="w-full text-muted-foreground">
-              <Flag className="h-4 w-4 mr-2" />
-              Report Issue
-            </Button>
+                {/* Report */}
+                <Button variant="outline" size="sm" className="w-full text-muted-foreground">
+                  <Flag className="h-4 w-4 mr-2" />
+                  Report Issue
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   )
