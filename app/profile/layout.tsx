@@ -36,7 +36,8 @@ export default function ProfileLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
         <main className="flex-1 overflow-y-auto overflow-x-auto p-2 md:p-6 bg-background">
-          {children}
+        return <ProtectedRoute>{children}</ProtectedRoute>
+
         </main>
       </div>
     </div>
