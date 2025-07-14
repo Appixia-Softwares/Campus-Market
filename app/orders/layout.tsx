@@ -15,7 +15,7 @@ export default function OrdersLayout({
     <div className="flex h-screen w-screen overflow-hidden">
     {/* Sidebar */}
     <div className={`transition-all duration-300 h-full ${collapsed ? 'w-16' : 'w-64'} flex-shrink-0`}>
-      <DashboardSidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
+      <DashboardSidebar />
     </div>
     {/* Main Content Area */}
     <div className="flex-1 flex flex-col overflow-hidden">

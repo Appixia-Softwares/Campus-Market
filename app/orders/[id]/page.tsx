@@ -309,7 +309,7 @@ export default function OrderDetailsPage() {
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar: overlay on mobile, collapsible on desktop */}
       <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
-        <DashboardSidebar collapsed={false} onToggle={() => {}} isMobile={false} />
+        <DashboardSidebar />
       </div>
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
