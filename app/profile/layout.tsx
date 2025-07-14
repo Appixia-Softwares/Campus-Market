@@ -4,7 +4,9 @@ import type React from "react"
 import DashboardSidebar from "@/components/dashboard-sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { useState } from "react"
+import { ProtectedRoute } from "@/components/protected-route"
 
+<<<<<<< HEAD
 export default function ProfileLayout({
   children,
 }: {
@@ -41,4 +43,8 @@ export default function ProfileLayout({
       </div>
     </div>
   )
+=======
+export default function ProfileLayout({ children }: { children: React.ReactNode }) {
+  return <ProtectedRoute>{children}</ProtectedRoute>
+>>>>>>> ac0569eba5376b26fe2bbff4940d36d988a71a97
 }

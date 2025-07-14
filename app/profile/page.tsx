@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Shield, Camera, Loader2, Menu } from "lucide-react"
+import { Shield, Camera, Loader2, Menu, CheckCircle2 } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
@@ -290,7 +290,7 @@ export default function ProfilePage() {
                   <div className="text-center">
                     <h3 className="text-lg font-semibold flex items-center gap-2 justify-center">
                       {user?.full_name}
-                      {user?.verified && <Shield className="h-4 w-4 text-green-600" />}
+                      {user?.verified && <CheckCircle2 className="h-4 w-4 text-green-600" />}
                     </h3>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
                     <p className="text-xs text-muted-foreground mt-2">Click the camera to upload a new photo</p>

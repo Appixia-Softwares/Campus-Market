@@ -13,7 +13,7 @@ import {
   Plus,
   Heart,
   BarChart3,
-  Shield,
+  CheckCircle2,
   Info,
   ArrowRight,
   ShoppingCart,
@@ -188,18 +188,9 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                         )}
                         {verificationStatus.verified && (
                           <Badge variant="default" className="text-xs bg-green-600 animate-pulse">
-                            <Shield className="h-3 w-3 mr-1" />
+                            <CheckCircle2 className="h-4 w-4 mr-1 text-white" />
                             Verified
                           </Badge>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {verificationStatus.verified ? (
-                          <span className="text-green-600 font-medium">✓ Fully Verified</span>
-                        ) : (
-                          <span>
-                            {verificationStatus.count}/{verificationStatus.total} verified
-                          </span>
                         )}
                       </div>
                     </div>
@@ -363,7 +354,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname === "/verification"}>
                       <Link href="/verification" className="transition-all hover:text-primary flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
+                        <CheckCircle2 className="h-4 w-4" />
                         <span>Verification</span>
                       </Link>
                     </SidebarMenuButton>

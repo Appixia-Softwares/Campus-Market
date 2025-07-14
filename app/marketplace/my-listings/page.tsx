@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { collection, query, where, getDocs, deleteDoc, updateDoc, doc, orderBy, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { ProtectedRoute } from "@/components/protected-route"
 
 const formatDate = (date: any) => {
   if (!date) return 'Unknown date'
@@ -66,7 +67,7 @@ interface ProductData {
   created_at: string;
 }
 
-export default function MyListingsPage() {
+function MyListingsPage() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
@@ -334,4 +335,8 @@ export default function MyListingsPage() {
       </AlertDialog>
     </div>
   )
+}
+
+export default function ProtectedMyListingsPage() {
+  return <ProtectedRoute><MyListingsPage /></ProtectedRoute>;
 }

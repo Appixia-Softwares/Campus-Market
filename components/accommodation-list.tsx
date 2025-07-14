@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Bath, Bed, CheckCircle, Heart, MapPin, Star, Wifi, Home, Users, KeyRound, ParkingCircle, Utensils, WashingMachine, Sparkles } from "lucide-react"
+import { Bath, Bed, CheckCircle, Heart, MapPin, Star, Wifi, Home, Users, KeyRound, ParkingCircle, Utensils, WashingMachine, Sparkles, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
@@ -136,8 +136,8 @@ export default function AccommodationList({ listings, isLoading, view = 'grid' }
                 className="w-full h-48 md:h-full object-cover"
               />
               {listing.verified && (
-                <Badge variant="secondary" className="absolute top-2 right-2 bg-primary text-primary-foreground">
-                  <CheckCircle className="h-3 w-3 mr-1" />
+                <Badge variant="secondary" className="absolute top-2 right-2 bg-primary text-primary-foreground flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
                   Verified
                 </Badge>
               )}
@@ -229,8 +229,8 @@ export default function AccommodationList({ listings, isLoading, view = 'grid' }
                     className="w-full h-48 md:h-full object-cover"
                   />
                   {listing.verified && (
-                    <Badge variant="secondary" className="absolute top-2 right-2 bg-primary text-primary-foreground">
-                      <CheckCircle className="h-3 w-3 mr-1" />
+                    <Badge variant="secondary" className="absolute top-2 right-2 bg-primary text-primary-foreground flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
                       Verified
                     </Badge>
                   )}

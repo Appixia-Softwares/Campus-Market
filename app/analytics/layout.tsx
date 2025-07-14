@@ -4,6 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { DashboardHeader } from "@/components/dashboard-header"
 import DashboardSidebar from "@/components/dashboard-sidebar"
+import { ProtectedRoute } from "@/components/protected-route"
 
 export default function AnalyticsLayout({
   children,
