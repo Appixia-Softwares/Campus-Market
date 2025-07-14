@@ -63,31 +63,34 @@ const generateWaveform = (audioUrl: string, cb: (data: number[]) => void) => {
     return;
   }
   try {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     fetch(audioUrl)
-      .then(res => res.arrayBuffer())
+      .then(res => {
+        if (!res.ok) throw new Error(`Failed to fetch audio: ${res.statusText}`);
+        return res.arrayBuffer();
+      })
       .then(buffer => audioCtx.decodeAudioData(buffer))
       .then(decoded => {
-        const raw = decoded.getChannelData(0)
-        const samples = 64
-        const blockSize = Math.floor(raw.length / samples)
+        const raw = decoded.getChannelData(0);
+        const samples = 64;
+        const blockSize = Math.floor(raw.length / samples);
         const waveform = Array(samples).fill(0).map((_, i) => {
-          const blockStart = i * blockSize
-          let sum = 0
+          const blockStart = i * blockSize;
+          let sum = 0;
           for (let j = 0; j < blockSize; j++) {
-            sum += Math.abs(raw[blockStart + j])
+            sum += Math.abs(raw[blockStart + j]);
           }
-          return sum / blockSize
-        })
-        cb(waveform)
+          return sum / blockSize;
+        });
+        cb(waveform);
       })
       .catch((err) => {
-        console.error('Waveform generation failed:', err)
-        cb([])
-      })
+        console.error('Waveform generation failed:', err);
+        cb([]);
+      });
   } catch (err) {
-    console.error('Waveform generation error:', err)
-    cb([])
+    console.error('Waveform generation error:', err);
+    cb([]);
   }
 }
 
