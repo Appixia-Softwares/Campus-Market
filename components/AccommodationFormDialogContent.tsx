@@ -709,7 +709,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
         </div>
 
         {/* Debug info (remove in production) */}
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg text-sm">
+        <div className="mt-4 p-4 bg-red-700 rounded-lg text-sm">
           <p>
             <strong>Current Tab:</strong> {currentTab}
           </p>
