@@ -571,151 +571,161 @@ export default function MessagesPage() {
   // 5. Improve empty state with icon and text centering
   // 6. Add hover/focus states to buttons and conversation items
   // 7. Ensure mobile responsiveness with flex-col on small screens
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [showChat, setShowChat] = useState(false);
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-gray-900 to-purple-900 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="container py-8">
-        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-120px)]">
+      <div className="container py-4 md:py-8">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-auto md:h-[calc(100vh-120px)]">
           {/* Conversations List */}
-          <Card className="bg-white/95 border shadow-lg rounded-xl w-full lg:w-1/3 flex flex-col">
-            <CardHeader className="border-b bg-gray-50 rounded-t-xl sticky top-0 z-10">
-              <div className="flex items-center justify-between">
-                <CardTitle>Conversations</CardTitle>
-                <Badge variant="secondary">{conversations.length}</Badge>
-              </div>
-              <div className="relative mt-2">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search conversations..."
-                  className="pl-10 bg-white border rounded focus:ring-2 focus:ring-primary"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="p-0 flex-1 overflow-y-auto">
-              <div className="divide-y divide-muted-foreground/10">
-                {loading ? (
-                  <div className="space-y-4 p-4">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-3 animate-pulse">
-                        <div className="w-12 h-12 bg-muted rounded-full"></div>
-                        <div className="flex-1">
-                          <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                          <div className="h-3 bg-muted rounded w-1/2"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : filteredConversations.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground flex flex-col items-center">
-                    <MessageSquare className="h-12 w-12 mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No conversations</h3>
-                    <p>Start chatting with buyers and sellers</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {(filteredConversations as Conversation[]).map((conversation, index) => {
-                      // Find the last message for this conversation
-                      const lastMsg = messages.filter(m => m.conversation_id === conversation.id).slice(-1)[0];
-                      return (
-                        <motion.div
-                          key={conversation.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className={`p-4 cursor-pointer flex items-center gap-3 transition-colors rounded-lg border-l-4 ${selectedConversation?.id === conversation.id ? "bg-primary/10 border-primary" : "hover:bg-muted/50 border-transparent"}`}
-                          onClick={() => setSelectedConversation(conversation)}
-                        >
-                          <div className="relative">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage src={conversation.other_user.avatar_url || undefined} />
-                              <AvatarFallback>{conversation.other_user.full_name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            {conversation.unread_count > 0 && (
-                              <Badge
-                                variant="destructive"
-                                className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center"
-                              >
-                                {conversation.unread_count}
-                              </Badge>
-                            )}
+          {(!isMobile || !showChat) && (
+            <Card className="bg-white/95 border shadow-lg rounded-xl w-full md:w-1/3 flex flex-col">
+              <CardHeader className="border-b bg-gray-50 rounded-t-xl sticky top-0 z-10">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Conversations</CardTitle>
+                  <Badge variant="secondary">{conversations.length}</Badge>
+                </div>
+                <div className="relative mt-2">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search conversations..."
+                    className="pl-10 bg-white border rounded focus:ring-2 focus:ring-primary"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="p-0 flex-1 overflow-y-auto">
+                <div className="divide-y divide-muted-foreground/10">
+                  {loading ? (
+                    <div className="space-y-4 p-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="flex items-center gap-3 animate-pulse">
+                          <div className="w-12 h-12 bg-muted rounded-full"></div>
+                          <div className="flex-1">
+                            <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                            <div className="h-3 bg-muted rounded w-1/2"></div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className="font-medium truncate">{conversation.other_user.full_name}</h4>
-                              {conversation.last_message_time && (
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDistanceToNow(new Date(conversation.last_message_time), { addSuffix: true })}
-                                </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : filteredConversations.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground flex flex-col items-center">
+                      <MessageSquare className="h-12 w-12 mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No conversations</h3>
+                      <p>Start chatting with buyers and sellers</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {(filteredConversations as Conversation[]).map((conversation, index) => {
+                        // Find the last message for this conversation
+                        const lastMsg = messages.filter(m => m.conversation_id === conversation.id).slice(-1)[0];
+                        return (
+                          <motion.div
+                            key={conversation.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className={`p-4 cursor-pointer flex items-center gap-3 transition-colors rounded-lg border-l-4 ${selectedConversation?.id === conversation.id ? "bg-primary/10 border-primary" : "hover:bg-muted/50 border-transparent"}`}
+                            onClick={() => setSelectedConversation(conversation)}
+                          >
+                            <div className="relative">
+                              <Avatar className="h-12 w-12">
+                                <AvatarImage src={conversation.other_user.avatar_url || undefined} />
+                                <AvatarFallback>{conversation.other_user.full_name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              {conversation.unread_count > 0 && (
+                                <Badge
+                                  variant="destructive"
+                                  className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center"
+                                >
+                                  {conversation.unread_count}
+                                </Badge>
                               )}
                             </div>
-                            {conversation.products && (
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className="w-6 h-6 rounded overflow-hidden bg-muted">
-                                  <img
-                                    src={conversation.products.product_images?.find((img) => img.is_primary)?.url || "/placeholder.svg?height=24&width=24"}
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <span className="text-xs text-muted-foreground truncate">
-                                  {conversation.products.title}
-                                </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className="font-medium truncate">{conversation.other_user.full_name}</h4>
+                                {conversation.last_message_time && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDistanceToNow(new Date(conversation.last_message_time), { addSuffix: true })}
+                                  </span>
+                                )}
                               </div>
-                            )}
-                            <p className="text-sm text-muted-foreground truncate">
-                              {lastMsg?.content
-                                ? lastMsg.content
-                                : lastMsg?.audio
-                                  ? "Voice note"
-                                  : lastMsg?.attachment
-                                    ? "Attachment"
-                                    : "No messages yet"}
-                            </p>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {conversation.other_user.whatsapp_number && (
-                                <DropdownMenuItem onClick={() => contactWhatsApp(conversation)}>
-                                  <SiWhatsapp className="h-4 w-4 mr-2 text-green-600" />
-                                  WhatsApp
-                                </DropdownMenuItem>
+                              {conversation.products && (
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="w-6 h-6 rounded overflow-hidden bg-muted">
+                                    <img
+                                      src={conversation.products.product_images?.find((img) => img.is_primary)?.url || "/placeholder.svg?height=24&width=24"}
+                                      alt=""
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <span className="text-xs text-muted-foreground truncate">
+                                    {conversation.products.title}
+                                  </span>
+                                </div>
                               )}
-                              <DropdownMenuItem>
-                                <Star className="h-4 w-4 mr-2" />
-                                Star
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Archive className="h-4 w-4 mr-2" />
-                                Archive
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {lastMsg?.content
+                                  ? lastMsg.content
+                                  : lastMsg?.audio
+                                    ? "Voice note"
+                                    : lastMsg?.attachment
+                                      ? "Attachment"
+                                      : "No messages yet"}
+                              </p>
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {conversation.other_user.whatsapp_number && (
+                                  <DropdownMenuItem onClick={() => contactWhatsApp(conversation)}>
+                                    <SiWhatsapp className="h-4 w-4 mr-2 text-green-600" />
+                                    WhatsApp
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem>
+                                  <Star className="h-4 w-4 mr-2" />
+                                  Star
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Archive className="h-4 w-4 mr-2" />
+                                  Archive
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col">
-            {selectedConversation ? (
+          {(selectedConversation && (!isMobile || showChat)) && (
+            <div className="flex-1 flex flex-col">
               <Card className="bg-white/95 border shadow-lg rounded-xl h-full flex flex-col">
                 {/* Chat Header */}
                 <CardHeader className="border-b bg-primary/10 dark:bg-primary/20 rounded-t-xl sticky top-0 z-10 flex flex-col gap-1 shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
+                      {/* Back button for mobile */}
+                      {isMobile && (
+                        <Button variant="ghost" size="icon" onClick={() => setShowChat(false)} className="mr-2">
+                          ←
+                        </Button>
+                      )}
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={selectedConversation.other_user.avatar_url || undefined} />
                         <AvatarFallback>{selectedConversation.other_user.full_name.charAt(0)}</AvatarFallback>
@@ -855,56 +865,48 @@ export default function MessagesPage() {
                   </div>
                 </div>
               </Card>
-            ) : (
-              <Card className="bg-white/95 border shadow-lg rounded-xl h-full flex items-center justify-center">
-                <div className="text-center text-muted-foreground flex flex-col items-center">
-                  <MessageSquare className="h-16 w-16 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Select a conversation</h3>
-                  <p>Choose a conversation from the list to start chatting</p>
-                </div>
-              </Card>
-            )}
-          </div>
-        </div>
-        {/* New Message Dialog remains unchanged */}
-      </div>
-      <Dialog open={showNewMessage} onOpenChange={setShowNewMessage}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Start a New Conversation</DialogTitle>
-          </DialogHeader>
-          <Input
-            placeholder="Search users by name..."
-            value={userSearch}
-            onChange={e => {
-              setUserSearch(e.target.value)
-              searchUsers(e.target.value)
-            }}
-            className="mb-4"
-          />
-          {searching ? (
-            <div className="text-center text-muted-foreground">Searching...</div>
-          ) : userResults.length === 0 && userSearch ? (
-            <div className="text-center text-muted-foreground">No users found</div>
-          ) : (
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {userResults.map(u => (
-                <div
-                  key={u.id}
-                  className="flex items-center gap-3 p-2 rounded hover:bg-muted/50 cursor-pointer"
-                  onClick={() => startConversation(u)}
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={u.avatar_url || undefined} />
-                    <AvatarFallback>{u.full_name?.charAt(0) || "?"}</AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium">{u.full_name}</span>
-                </div>
-              ))}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+          {/* New Message Dialog remains unchanged */}
+        </div>
+        <Dialog open={showNewMessage} onOpenChange={setShowNewMessage}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Start a New Conversation</DialogTitle>
+            </DialogHeader>
+            <Input
+              placeholder="Search users by name..."
+              value={userSearch}
+              onChange={e => {
+                setUserSearch(e.target.value)
+                searchUsers(e.target.value)
+              }}
+              className="mb-4"
+            />
+            {searching ? (
+              <div className="text-center text-muted-foreground">Searching...</div>
+            ) : userResults.length === 0 && userSearch ? (
+              <div className="text-center text-muted-foreground">No users found</div>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {userResults.map(u => (
+                  <div
+                    key={u.id}
+                    className="flex items-center gap-3 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                    onClick={() => startConversation(u)}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={u.avatar_url || undefined} />
+                      <AvatarFallback>{u.full_name?.charAt(0) || "?"}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{u.full_name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   )
 }
