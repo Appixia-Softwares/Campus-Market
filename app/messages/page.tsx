@@ -94,26 +94,35 @@ export default function MessagesPage() {
   const [waveform, setWaveform] = useState<number[]>([])
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Generate waveform from audio data (for playback)
+  // Robust waveform generator with error handling
   const generateWaveform = (audioUrl: string, cb: (data: number[]) => void) => {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
-    fetch(audioUrl)
-      .then(res => res.arrayBuffer())
-      .then(buffer => audioCtx.decodeAudioData(buffer))
-      .then(decoded => {
-        const raw = decoded.getChannelData(0)
-        const samples = 64
-        const blockSize = Math.floor(raw.length / samples)
-        const waveform = Array(samples).fill(0).map((_, i) => {
-          const blockStart = i * blockSize
-          let sum = 0
-          for (let j = 0; j < blockSize; j++) {
-            sum += Math.abs(raw[blockStart + j])
-          }
-          return sum / blockSize
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+      fetch(audioUrl)
+        .then(res => res.arrayBuffer())
+        .then(buffer => audioCtx.decodeAudioData(buffer))
+        .then(decoded => {
+          const raw = decoded.getChannelData(0)
+          const samples = 64
+          const blockSize = Math.floor(raw.length / samples)
+          const waveform = Array(samples).fill(0).map((_, i) => {
+            const blockStart = i * blockSize
+            let sum = 0
+            for (let j = 0; j < blockSize; j++) {
+              sum += Math.abs(raw[blockStart + j])
+            }
+            return sum / blockSize
+          })
+          cb(waveform)
         })
-        cb(waveform)
-      })
+        .catch((err) => {
+          console.error('Waveform generation failed:', err)
+          cb([])
+        })
+    } catch (err) {
+      console.error('Waveform generation error:', err)
+      cb([])
+    }
   }
 
   // When audioUrl changes, generate waveform
@@ -968,5 +977,8 @@ function WaveformPlayer({ audioUrl }: { audioUrl: string }) {
       ctx.stroke()
     })
   }, [waveform])
+  if (waveform.length === 0) {
+    return <div className="text-xs text-muted-foreground">No waveform available</div>
+  }
   return <canvas ref={canvasRef} width={120} height={32} className="bg-gray-200 rounded" />
 }
