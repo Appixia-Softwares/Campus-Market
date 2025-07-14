@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from 'react';
 import { getAllReports } from '@/lib/api/reports';
 import { Badge } from '@/components/ui/badge';
@@ -62,7 +63,7 @@ export default function AdminReportsPage() {
                 </div>
               </div>
               <div className="mb-2">
-                <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'blue' : 'secondary'}>
+                <Badge variant={report.status === 'pending' ? 'destructive' : report.status === 'resolved' ? 'default' : 'secondary'}>
                   {report.status || 'pending'}
                 </Badge>
               </div>
