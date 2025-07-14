@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowUpDown, Download, Filter, MoreHorizontal, Plus, Search, Trash, UserCog, UserPlus } from "lucide-react"
+import { ArrowUpDown, Download, Filter, MoreHorizontal, Plus, Search, Trash, UserCog, UserPlus, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -66,6 +66,8 @@ export default function UsersPage() {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [verifyingUserId, setVerifyingUserId] = useState<string | number | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editUser, setEditUser] = useState<any>(null)
 
   const itemsPerPage = 10
 
@@ -100,6 +102,25 @@ export default function UsersPage() {
     } finally {
       setVerifyingUserId(null)
     }
+  }
+
+  // Handler to open edit modal
+  const handleEditUser = (user: any) => {
+    setEditUser(user)
+    setIsEditDialogOpen(true)
+  }
+
+  // Handler to save user changes (mock)
+  const handleSaveUser = (updatedUser: any) => {
+    // TODO: Update user in backend
+    Object.assign(editUser, updatedUser)
+    setIsEditDialogOpen(false)
+  }
+
+  // Handler to delete user (mock)
+  const handleDeleteUser = (user: any) => {
+    // TODO: Delete user in backend
+    alert(`User ${user.name} deleted (mock)`)
   }
 
   return (
@@ -272,21 +293,11 @@ export default function UsersPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => setSelectedUser(user)}>
-                                <UserCog className="mr-2 h-4 w-4" />
-                                Edit User
+                              <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                                <Pencil className="h-4 w-4 mr-2" /> Edit
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-red-600 dark:text-red-400"
-                                onClick={() => {
-                                  setSelectedUser(user)
-                                  setIsDeleteDialogOpen(true)
-                                }}
-                              >
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete User
+                              <DropdownMenuItem onClick={() => handleDeleteUser(user)} className="text-red-600">
+                                <Trash2 className="h-4 w-4 mr-2" /> Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -430,43 +441,47 @@ export default function UsersPage() {
       </Dialog>
 
       {/* Edit User Dialog */}
-      <Dialog open={!!selectedUser && !isDeleteDialogOpen} onOpenChange={(open) => !open && setSelectedUser(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>Update user information and settings.</DialogDescription>
           </DialogHeader>
-          {selectedUser && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-name">Full Name</Label>
-                <Input id="edit-name" defaultValue={selectedUser.name} />
+          {editUser && (
+            <form
+              onSubmit={e => {
+                e.preventDefault()
+                handleSaveUser(editUser)
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <Label>Name</Label>
+                <Input
+                  value={editUser.name}
+                  onChange={e => setEditUser({ ...editUser, name: e.target.value })}
+                />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-email">Email</Label>
-                <Input id="edit-email" type="email" defaultValue={selectedUser.email} />
+              <div>
+                <Label>Email</Label>
+                <Input
+                  value={editUser.email}
+                  onChange={e => setEditUser({ ...editUser, email: e.target.value })}
+                />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-university">University</Label>
-                <Select defaultValue={selectedUser.university}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select university" />
-                  </SelectTrigger>
+              <div>
+                <Label>Role</Label>
+                <Select value={editUser.role} onValueChange={role => setEditUser({ ...editUser, role })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {universities.map((uni) => (
-                      <SelectItem key={uni} value={uni}>
-                        {uni}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-status">Status</Label>
-                <Select defaultValue={selectedUser.status}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
+              <div>
+                <Label>Status</Label>
+                <Select value={editUser.status} onValueChange={status => setEditUser({ ...editUser, status })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
@@ -474,28 +489,11 @@ export default function UsersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-role">Role</Label>
-                <Select defaultValue={selectedUser.role}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+              <DialogFooter>
+                <Button type="submit">Save</Button>
+              </DialogFooter>
+            </form>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedUser(null)}>
-              Cancel
-            </Button>
-            <Button type="submit" onClick={() => setSelectedUser(null)}>
-              Save Changes
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
