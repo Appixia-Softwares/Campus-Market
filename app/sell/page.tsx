@@ -195,7 +195,26 @@ export default function SellPage() {
           <SellStepper step={selectedCategory ? 2 : 1} />
           {/* Step 1: Category selection */}
           {!selectedCategory && (
-            <CategorySelectGrid onSelect={setSelectedCategory} selected={selectedCategory} />
+            <>
+              <CategorySelectGrid onSelect={setSelectedCategory} selected={selectedCategory} />
+              <Button
+                type="button"
+                className="w-full mt-4"
+                onClick={() => {
+                  if (!form.getValues("category")) {
+                    toast({
+                      title: "Category required",
+                      description: "Please select a category before proceeding.",
+                      variant: "destructive",
+                    });
+                  } else {
+                    setSelectedCategory(form.getValues("category") as CategoryKey);
+                  }
+                }}
+              >
+                Next
+              </Button>
+            </>
           )}
           {/* Step 2: Show form only if category is selected */}
           {selectedCategory && (
