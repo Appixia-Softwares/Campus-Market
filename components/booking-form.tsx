@@ -11,12 +11,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { format } from "date-fns"
 import { CalendarIcon, Check, CreditCard, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { db } from '@/lib/firebase'
+import { collection, addDoc } from 'firebase/firestore'
 
 interface BookingFormProps {
   propertyId: string
+  landlordId?: string
+  userId?: string
 }
 
-export default function BookingForm({ propertyId }: BookingFormProps) {
+export default function BookingForm({ propertyId, landlordId, userId }: BookingFormProps) {
   const [date, setDate] = useState<Date>()
   const [duration, setDuration] = useState("")
   const [message, setMessage] = useState("")
@@ -25,16 +29,26 @@ export default function BookingForm({ propertyId }: BookingFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!date || !duration) return
-
+    if (!date || !duration || !userId || !landlordId) return
     setIsSubmitting(true)
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    setIsSubmitting(false)
-    setIsSuccess(true)
+    try {
+      await addDoc(collection(db, 'accommodation_bookings'), {
+        propertyId,
+        customerId: userId,
+        landlordId,
+        moveInDate: date.toISOString(),
+        leaseDuration: duration,
+        message,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      setIsSuccess(true)
+    } catch (error) {
+      alert('Failed to send booking request. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (isSuccess) {

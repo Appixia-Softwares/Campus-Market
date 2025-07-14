@@ -157,7 +157,7 @@ export default function SellItemCard() {
                 <div className="grid gap-2">
                   <Label htmlFor="category">Category</Label>
                   <Select
-                    value={formData.category}
+                    value={formData.category || undefined}
                     onValueChange={(value) => handleSelectChange("category", value)}
                     required
                   >
@@ -176,7 +176,7 @@ export default function SellItemCard() {
                 <div className="grid gap-2">
                   <Label htmlFor="condition">Condition</Label>
                   <Select
-                    value={formData.condition}
+                    value={formData.condition || undefined}
                     onValueChange={(value) => handleSelectChange("condition", value)}
                     required
                   >

@@ -12,7 +12,11 @@ interface RecentlyViewedProps {
 }
 
 export function RecentlyViewed({ products }: RecentlyViewedProps) {
-  if (products.length === 0) return null
+  // Filter out any null/undefined or incomplete products
+  const validProducts = (products || []).filter(
+    (p) => p && p.id && typeof p.price === "number" && p.title
+  );
+  if (validProducts.length === 0) return null;
 
   return (
     <Card className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-950/20 dark:to-slate-950/20 border-0">
@@ -21,7 +25,7 @@ export function RecentlyViewed({ products }: RecentlyViewedProps) {
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-gray-500" />
             Recently Viewed
-            <Badge variant="secondary">{products.length} items</Badge>
+            <Badge variant="secondary">{validProducts.length} items</Badge>
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/marketplace/history">
@@ -33,7 +37,7 @@ export function RecentlyViewed({ products }: RecentlyViewedProps) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {products.slice(0, 6).map((product, index) => (
+          {validProducts.slice(0, 6).map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, x: -20 }}
@@ -46,12 +50,14 @@ export function RecentlyViewed({ products }: RecentlyViewedProps) {
                     <div className="aspect-square overflow-hidden rounded-md mb-2">
                       <img
                         src={product.product_images?.[0]?.url || "/placeholder.svg?height=150&width=150"}
-                        alt={product.title}
+                        alt={product.title || 'Product'}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
-                    <h4 className="font-medium text-sm line-clamp-2 mb-1">{product.title}</h4>
-                    <p className="text-sm font-bold text-primary">${product.price.toFixed(2)}</p>
+                    <h4 className="font-medium text-sm line-clamp-2 mb-1">{product.title || 'Untitled'}</h4>
+                    <p className="text-sm font-bold text-primary">
+                      {typeof product.price === 'number' ? `$${product.price.toFixed(2)}` : 'N/A'}
+                    </p>
                   </CardContent>
                 </Card>
               </Link>
@@ -60,5 +66,5 @@ export function RecentlyViewed({ products }: RecentlyViewedProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

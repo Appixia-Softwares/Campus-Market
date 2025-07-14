@@ -4,8 +4,36 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useEffect, useState } from "react"
+import { collection, query, where, getDocs } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 
 export default function AnalyticsPage() {
+  const [accomStats, setAccomStats] = useState({
+    total: 0,
+    bookings: 0,
+    revenue: 0,
+    occupancy: 0,
+  })
+  useEffect(() => {
+    async function fetchAccomStats() {
+      // Fetch total accommodation listings
+      const accomSnap = await getDocs(collection(db, 'accommodations'))
+      const total = accomSnap.size
+      // Fetch bookings (mocked for now)
+      const bookingsSnap = await getDocs(collection(db, 'accommodation_bookings'))
+      const bookings = bookingsSnap.size
+      // Revenue and occupancy (mocked)
+      setAccomStats({
+        total,
+        bookings,
+        revenue: bookings * 100, // mock $100 per booking
+        occupancy: total > 0 ? Math.round((bookings / total) * 100) : 0,
+      })
+    }
+    fetchAccomStats()
+  }, [])
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col space-y-2">
@@ -45,20 +73,38 @@ export default function AnalyticsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Revenue
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Accommodations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$1,245.89</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-500 font-medium inline-flex items-center">
-                <ArrowUpRight className="h-3 w-3 mr-1" />
-                +18.2%
-              </span>{" "}
-              from last month
-            </p>
+            <div className="text-2xl font-bold">{accomStats.total}</div>
+            <p className="text-xs text-muted-foreground">Total Listings</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Bookings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{accomStats.bookings}</div>
+            <p className="text-xs text-muted-foreground">Total Bookings</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${accomStats.revenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Mocked Revenue</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Occupancy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{accomStats.occupancy}%</div>
+            <p className="text-xs text-muted-foreground">Occupancy Rate</p>
           </CardContent>
         </Card>
       </div>

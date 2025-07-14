@@ -8,13 +8,10 @@ import { TrendingProducts } from "./components/trending-products"
 import { RecentlyViewed } from "./components/recently-viewed"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, MapPin, TrendingUp, Grid, List, Star } from "lucide-react"
-import Link from "next/link"
+import { Plus, MapPin, TrendingUp, Grid, List, Star, GraduationCap, Laptop, Flag, Package } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
-import { getProducts } from "@/lib/firebase-service"
 import { collection, query, where, orderBy, getDocs, limit, doc, getDoc, startAfter } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { Timestamp } from "firebase/firestore"
@@ -309,13 +306,7 @@ export default function MarketplacePage() {
           snapshot.docs.map(async (docSnapshot) => {
             try {
               const productData = docSnapshot.data()
-              console.log("Debug - Processing product:", {
-                id: docSnapshot.id,
-                title: productData.title,
-                status: productData.status
-              })
-              
-              // Get all images for the product
+              // Defensive: Only fetch related docs if the ID exists
               const imagesQuery = query(
                 collection(db, 'product_images'),
                 where('product_id', '==', docSnapshot.id)
@@ -327,49 +318,41 @@ export default function MarketplacePage() {
               }))
 
               // Get seller info
-              const sellerRef = doc(db, 'users', productData.seller_id)
-              const sellerDoc = await getDoc(sellerRef)
-              const sellerDocData = sellerDoc.data();
-              const sellerData = sellerDoc.exists() && sellerDocData ? {
+              const sellerRef = productData.seller_id ? doc(db, 'users', productData.seller_id) : null;
+              const sellerDoc = sellerRef ? await getDoc(sellerRef) : null;
+              const sellerDocData = sellerDoc && sellerDoc.exists() ? sellerDoc.data() : null;
+              const sellerData = sellerDocData ? {
                 id: sellerDoc.id,
-                ...(sellerDocData as {
-                  full_name: string
-                  email: string
-                  avatar_url: string | null
-                  verified: boolean
-                  whatsapp_number: string | null
-                  university_id: string
-                  student_id: string | null
-                  year_of_study: number | null
-                  course: string | null
-                })
-              } : null
+                ...sellerDocData
+              } : null;
 
               // Get category info
-              const categoryRef = doc(db, 'product_categories', productData.category_id)
-              const categoryDoc = await getDoc(categoryRef)
-              const categoryDocData = categoryDoc.data();
-              const categoryData = categoryDoc.exists() && categoryDocData ? {
+              const categoryRef = productData.category_id ? doc(db, 'product_categories', productData.category_id) : null;
+              const categoryDoc = categoryRef ? await getDoc(categoryRef) : null;
+              const categoryDocData = categoryDoc && categoryDoc.exists() ? categoryDoc.data() : null;
+              const categoryData = categoryDocData ? {
                 id: categoryDoc.id,
-                ...(categoryDocData as {
-                  name: string
-                  description: string | null
-                  icon: string
-                })
-              } : null
+                ...categoryDocData
+              } : {
+                id: "",
+                name: "Uncategorized",
+                description: "",
+                icon: ""
+              };
 
               // Get university info
-              const universityRef = doc(db, 'universities', productData.university_id)
-              const universityDoc = await getDoc(universityRef)
-              const universityDocData = universityDoc.data();
-              const universityData = universityDoc.exists() && universityDocData ? {
+              const universityRef = productData.university_id ? doc(db, 'universities', productData.university_id) : null;
+              const universityDoc = universityRef ? await getDoc(universityRef) : null;
+              const universityDocData = universityDoc && universityDoc.exists() ? universityDoc.data() : null;
+              const universityData = universityDocData ? {
                 id: universityDoc.id,
-                ...(universityDocData as {
-                  name: string
-                  location: string
-                  type: string
-                })
-              } : null
+                ...universityDocData
+              } : {
+                id: "",
+                name: "Unknown University",
+                location: "",
+                type: ""
+              };
 
               // Create the product object with all related data
               const product = {
@@ -380,15 +363,6 @@ export default function MarketplacePage() {
                 product_categories: categoryData,
                 universities: universityData
               } as Product
-
-              console.log("Debug - Processed product:", {
-                id: product.id,
-                title: product.title,
-                imagesCount: product.product_images?.length || 0,
-                hasSeller: !!product.users,
-                hasCategory: !!product.product_categories,
-                hasUniversity: !!product.universities
-              })
 
               return product
             } catch (productError) {
@@ -524,53 +498,35 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,transparent)]" />
-        <div className="container py-16 relative">
-          <div className="flex items-center justify-between">
-            <div className="space-y-6 max-w-2xl">
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary" className="bg-background/20 text-background border-background/30 backdrop-blur-sm">
-                  🇿🇼 Made for Zimbabwe
-                </Badge>
-                <Badge variant="secondary" className="bg-background/20 text-background border-background/30 backdrop-blur-sm">
-                  {totalProducts} Products Available
-                </Badge>
-              </div>
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-                Campus Market
-              </h1>
-              <p className="text-xl text-primary-foreground/90 leading-relaxed">
-                Buy and sell with fellow students across Zimbabwe's universities, colleges, and polytechnics
-              </p>
-              <div className="flex flex-wrap gap-4 pt-2">
-                <Button size="lg" variant="secondary" className="bg-background text-primary hover:bg-background/90" asChild>
-                  <Link href="/marketplace/listings/new">
-                    <Plus className="mr-2 h-5 w-5" />
-                    List an Item
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" className="border-background/30 text-background hover:bg-background/10 backdrop-blur-sm">
-                  <MapPin className="mr-2 h-5 w-5" />
-                  Find Nearby
-                </Button>
-              </div>
-            </div>
-            <div className="hidden lg:block">
-              <div className="relative">
-                <div className="w-72 h-72 bg-background/10 rounded-full flex items-center justify-center backdrop-blur-sm animate-pulse">
-                  <div className="text-7xl">🎓</div>
-                </div>
-                <div className="absolute -top-4 -right-4 w-20 h-20 bg-accent rounded-full flex items-center justify-center text-3xl animate-bounce">
-                  📚
-                </div>
-                <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-accent-foreground rounded-full flex items-center justify-center text-2xl animate-bounce" style={{ animationDelay: '0.5s' }}>
-                  💻
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="relative bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-xl p-10 shadow-xl overflow-hidden mb-10">
+        {/* Badges */}
+        <div className="flex gap-3 mb-6">
+          <span className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-full text-sm font-medium">
+            <Flag className="h-4 w-4 text-green-900" /> Made for Zimbabwe
+          </span>
+          <span className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-full text-sm font-medium">
+            <Package className="h-4 w-4 text-green-900" /> {products.length} Products Available
+          </span>
         </div>
+        {/* Main Content */}
+        <h1 className="text-5xl font-extrabold text-black drop-shadow-lg mb-4">
+          Campus Market
+        </h1>
+        <p className="text-lg text-black/80 mb-8 max-w-xl">
+          Buy and sell with fellow students across Zimbabwe's universities, colleges, and polytechnics
+        </p>
+        {/* Buttons */}
+        <div className="flex gap-4">
+          <button className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-green-900 transition">
+            <Plus className="h-5 w-5" /> List an Item
+          </button>
+          <button className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-green-900 transition">
+            <Package className="h-5 w-5" /> Browse Products
+          </button>
+        </div>
+        {/* Decorative Icons */}
+        <GraduationCap className="absolute right-16 top-10 w-32 h-32 text-black/10" />
+        <Laptop className="absolute left-1/2 bottom-0 w-16 h-16 text-black/10" />
       </div>
 
       <div className="container py-12 space-y-10">

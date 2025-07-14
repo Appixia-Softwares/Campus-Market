@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -9,11 +9,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import { Home, MapPin, ImageIcon, X, User, Upload, Building, CheckCircle, AlertCircle } from "lucide-react"
+import { Home, MapPin, ImageIcon, X, Upload, Building, CheckCircle, AlertCircle, Check, Bed, Wifi, ParkingCircle, Utensils, WashingMachine, Sparkles, ShieldCheck } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/lib/auth-context"
+import { uploadFileToStorage } from "@/lib/firebase"
+import ZIM_UNIVERSITIES from "@/utils/schools_data"
+import confetti from "canvas-confetti"
+import { createAccommodation } from '@/services/accommodation'
 
 const amenitiesList = [
   "Wifi",
@@ -38,7 +42,19 @@ const amenitiesList = [
   "Smoking Allowed",
 ]
 
-const propertyTypes = ["studio", "apartment", "house", "room", "shared-room", "dormitory"]
+const propertyTypes = [
+  { value: "house", label: "House" },
+  { value: "cottage", label: "Cottage" },
+  { value: "flat", label: "Flat" },
+  { value: "apartment", label: "Apartment" },
+  { value: "boarding_house", label: "Boarding House" },
+  { value: "hostel", label: "Hostel/Dormitory" },
+  { value: "single_room", label: "Full Room (Single)" },
+  { value: "2_sharing", label: "Room - 2 Sharing" },
+  { value: "3_sharing", label: "Room - 3 Sharing" },
+  { value: "4_sharing", label: "Room - 4 Sharing" },
+  { value: "other", label: "Other (specify)" }
+];
 
 interface FormData {
   title: string
@@ -46,12 +62,14 @@ interface FormData {
   description: string
   longDescription: string
   address: string
+  university: string
   campusLocation: string
   price: string
   beds: string
   baths: string
   phone: string
   email: string
+  customPropertyType?: string; // Added for custom property type
 }
 
 export default function AccommodationFormDialogContent({ onSuccess }: { onSuccess?: () => void }) {
@@ -60,6 +78,9 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
   const [currentTab, setCurrentTab] = useState("basic")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
+  const { user } = useAuth()
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -68,6 +89,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     description: "",
     longDescription: "",
     address: "",
+    university: user?.university_id || "",
     campusLocation: "",
     price: "",
     beds: "",
@@ -84,13 +106,21 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     setSelectedAmenities((prev) => (prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity]))
   }
 
-  const handleImageUpload = () => {
-    const newImage = `/placeholder.svg?height=200&width=300&text=Image${images.length + 1}`
-    setImages((prev) => [...prev, newImage])
-    toast({
-      title: "Image Added",
-      description: "Photo has been added to your listing.",
-    })
+  const handleImageUpload = async (file: File) => {
+    setUploading(true)
+    setUploadProgress(0)
+    try {
+      const path = `accommodation-images/${user?.id}/${Date.now()}-${file.name}`
+      // Use uploadBytesResumable for progress (if available)
+      const url = await uploadFileToStorage(path, file)
+      setImages((prev) => [...prev, url])
+      toast({ title: "Image Uploaded", description: "Photo has been uploaded.", })
+    } catch (error) {
+      toast({ title: "Upload Failed", description: "Could not upload image.", variant: "destructive" })
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
   }
 
   const removeImage = (index: number) => {
@@ -111,6 +141,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       if (!formData.description.trim()) missingFields.push("Short Description")
       if (!formData.longDescription.trim()) missingFields.push("Detailed Description")
       if (!formData.address.trim()) missingFields.push("Full Address")
+      if (!formData.university) missingFields.push("University")
       if (!formData.campusLocation) missingFields.push("Campus/Area")
     }
 
@@ -118,17 +149,6 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       if (!formData.price.trim()) missingFields.push("Monthly Rent")
       if (formData.price && (isNaN(Number(formData.price)) || Number(formData.price) <= 0)) {
         missingFields.push("Valid Monthly Rent Amount")
-      }
-    }
-
-    if (tab === "contact") {
-      if (!formData.phone.trim()) missingFields.push("Phone Number")
-      if (!formData.email.trim()) missingFields.push("Email Address")
-
-      // Email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (formData.email && !emailRegex.test(formData.email)) {
-        missingFields.push("Valid Email Address")
       }
     }
 
@@ -154,7 +174,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       return
     }
 
-    const tabs = ["basic", "details", "images", "contact"]
+    const tabs = ["basic", "details", "images", "preview"]
     const currentIndex = tabs.indexOf(currentTab)
     console.log("Current index:", currentIndex, "Next index:", currentIndex + 1)
 
@@ -170,7 +190,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
   }
 
   const handlePrevious = () => {
-    const tabs = ["basic", "details", "images", "contact"]
+    const tabs = ["basic", "details", "images", "preview"]
     const currentIndex = tabs.indexOf(currentTab)
     if (currentIndex > 0) {
       setCurrentTab(tabs[currentIndex - 1])
@@ -183,13 +203,11 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     // Validate all required tabs before submission
     const basicValidation = validateCurrentTab("basic")
     const detailsValidation = validateCurrentTab("details")
-    const contactValidation = validateCurrentTab("contact")
 
-    if (!basicValidation.isValid || !detailsValidation.isValid || !contactValidation.isValid) {
+    if (!basicValidation.isValid || !detailsValidation.isValid) {
       const allMissingFields = [
         ...basicValidation.missingFields,
         ...detailsValidation.missingFields,
-        ...contactValidation.missingFields,
       ]
 
       toast({
@@ -201,17 +219,58 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       return
     }
 
+    if (images.length < 3) {
+      toast({
+        title: "Not Enough Images",
+        description: "You must upload at least three images to list your property.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
+      // Build accommodation object for backend
+      const accommodation = {
+        title: formData.title,
+        propertyType: formData.propertyType,
+        customPropertyType: formData.customPropertyType || null,
+        description: formData.description,
+        longDescription: formData.longDescription,
+        address: formData.address,
+        university: formData.university,
+        campusLocation: formData.campusLocation,
+        price: Number(formData.price),
+        beds: formData.beds ? Number(formData.beds) : null,
+        baths: formData.baths ? Number(formData.baths) : null,
+        phone: formData.phone,
+        email: formData.email,
+        amenities: selectedAmenities,
+        images,
+        seller: {
+          id: user?.id,
+          full_name: user?.full_name || user?.email,
+          email: user?.email,
+          phone: user?.phone || null,
+          avatar_url: user?.avatar_url || null, // Ensure avatar is saved
+        },
+        is_available: true,
+        verified: false,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }
+      // Create accommodation in Firestore
+      const created = await createAccommodation(accommodation)
       toast({
         title: "Property Listed Successfully!",
         description: "Your accommodation has been added to our platform.",
       })
-
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.7 },
+      })
       // Reset form
       setFormData({
         title: "",
@@ -219,6 +278,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
         description: "",
         longDescription: "",
         address: "",
+        university: user?.university_id || "",
         campusLocation: "",
         price: "",
         beds: "",
@@ -229,7 +289,8 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
       setSelectedAmenities([])
       setImages([])
       setCurrentTab("basic")
-
+      // Fire event for auto-refresh
+      window.dispatchEvent(new Event("accommodation:refresh"))
       if (onSuccess) onSuccess()
     } catch (error) {
       toast({
@@ -247,9 +308,119 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
     return validateCurrentTab(currentTab).isValid
   }
 
+  // Add a stepper at the top
+  const steps = [
+    { key: "basic", label: "Basic Info", icon: Home },
+    { key: "details", label: "Details", icon: Bed },
+    { key: "images", label: "Photos", icon: ImageIcon },
+    { key: "preview", label: "Preview", icon: CheckCircle },
+  ]
+
+  // Expanded mapping for Zimbabwe universities
+  const UNIVERSITY_CAMPUSES: Record<string, string[]> = {
+    uz: [
+      "Mount Pleasant (Main Campus)",
+      "College of Health Sciences",
+      "City Campus",
+      "Faculty of Engineering",
+      "Faculty of Law",
+      "Faculty of Education",
+      "Faculty of Science",
+      "Faculty of Social Studies",
+      "Faculty of Arts",
+      "Faculty of Agriculture",
+      "Faculty of Commerce",
+      "Faculty of Veterinary Science"
+    ],
+    nust: [
+      "Main Campus (Ascot, Bulawayo)",
+      "Extension Campus (City Center, Bulawayo)"
+    ],
+    msu: [
+      "Gweru Main Campus",
+      "Zvishavane Campus",
+      "Harare Campus",
+      "Mutare Campus"
+    ],
+    gzu: [
+      "Masvingo Main Campus",
+      "Mashava Campus",
+      "City Campus"
+    ],
+    chu: [
+      "Chinhoyi Main Campus"
+    ],
+    bindura: [
+      "Bindura Main Campus"
+    ],
+    lsz: [
+      "Lupane Main Campus"
+    ],
+    marondera: [
+      "Main Campus"
+    ],
+    gwanda: [
+      "Epoch Mine Campus"
+    ],
+    manicaland: [
+      "Fern Valley Campus",
+      "Mutare City Campus"
+    ],
+    hit: [
+      "Main Campus (Harare)"
+    ],
+    wua: [
+      "Harare Campus",
+      "Marondera Campus"
+    ],
+    african: [
+      "Mutare Campus"
+    ],
+    solusi: [
+      "Bulawayo Campus"
+    ],
+    zou: [
+      "Harare Regional Campus",
+      "Bulawayo Regional Campus",
+      "Mutare Regional Campus",
+      "Gweru Regional Campus",
+      "Masvingo Regional Campus",
+      "Chinhoyi Regional Campus"
+    ],
+    reformed: [
+      "Masvingo Campus"
+    ],
+    cuz: [
+      "Harare Campus"
+    ],
+    zsm: [
+      "Bulawayo Campus"
+    ],
+    // Add more as needed...
+  };
+
+  const mappedCampuses = formData.university && UNIVERSITY_CAMPUSES[formData.university];
+  const campusOptions = mappedCampuses && mappedCampuses.length > 0 ? mappedCampuses : null;
+
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <form onSubmit={handleSubmit}>
+      {/* Modern stepper */}
+      <div className="flex items-center justify-between mb-8">
+        {steps.map((step, idx) => (
+          <React.Fragment key={step.key}>
+            <div className="flex flex-col items-center">
+              <div className={`rounded-full h-10 w-10 flex items-center justify-center border-2 ${currentTab === step.key ? 'border-green-600 bg-green-100 text-green-700' : 'border-gray-300 bg-white text-gray-400'} font-bold text-lg mb-1 transition-all`}>
+                <step.icon className="h-5 w-5" />
+              </div>
+              <span className={`text-xs font-medium ${currentTab === step.key ? 'text-green-700' : 'text-gray-400'}`}>{step.label}</span>
+            </div>
+            {idx < steps.length - 1 && (
+              <div className="flex-1 h-0.5 bg-gray-200 mx-2" />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+      <form onSubmit={handleSubmit} className="relative">
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger
@@ -273,21 +444,15 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
             <TabsTrigger value="images" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
               Photos
             </TabsTrigger>
-            <TabsTrigger
-              value="contact"
-              className="data-[state=active]:bg-green-600 data-[state=active]:text-white relative"
-            >
-              Contact Info
-              {!validateCurrentTab("contact").isValid && currentTab !== "contact" && (
-                <AlertCircle className="h-4 w-4 text-red-500 absolute -top-1 -right-1" />
-              )}
+            <TabsTrigger value="preview" className="data-[state=active]:bg-green-600 data-[state=active]:text-white relative">
+              Preview
             </TabsTrigger>
           </TabsList>
 
           {/* BASIC INFO TAB */}
           <TabsContent value="basic" className="mt-6">
             <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+              <CardHeader className="bg-background">
                 <CardTitle className="flex items-center text-green-800">
                   <Home className="h-5 w-5 mr-2" />
                   Basic Information
@@ -317,23 +482,29 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                     <Label className="text-green-700 font-medium">Property Type *</Label>
                     <Select
                       value={formData.propertyType}
-                      onValueChange={(value) => handleInputChange("propertyType", value)}
+                      onValueChange={value => {
+                        handleInputChange("propertyType", value);
+                        if (value !== "other") handleInputChange("customPropertyType", "");
+                      }}
                     >
-                      <SelectTrigger
-                        className={`border-green-200 focus:border-green-500 ${
-                          !formData.propertyType ? "border-red-300 focus:border-red-500" : ""
-                        }`}
-                      >
+                      <SelectTrigger className={`border-green-200 focus:border-green-500 ${!formData.propertyType ? "border-red-300 focus:border-red-500" : ""}`}>
                         <SelectValue placeholder="Select property type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {propertyTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type.charAt(0).toUpperCase() + type.slice(1).replace("-", " ")}
-                          </SelectItem>
+                        {propertyTypes.map(type => (
+                          <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    {formData.propertyType === "other" && (
+                      <Input
+                        value={formData.customPropertyType || ""}
+                        onChange={e => handleInputChange("customPropertyType", e.target.value)}
+                        placeholder="Specify property type"
+                        className="border-green-200 focus:border-green-500 mt-2"
+                        required
+                      />
+                    )}
                     {!formData.propertyType && <p className="text-red-500 text-sm">Property type is required</p>}
                   </div>
                 </div>
@@ -407,29 +578,51 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                       {!formData.address.trim() && <p className="text-red-500 text-sm">Full address is required</p>}
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-green-700 font-medium">Campus/Area *</Label>
+                      <Label className="text-green-700 font-medium">University *</Label>
                       <Select
-                        value={formData.campusLocation}
-                        onValueChange={(value) => handleInputChange("campusLocation", value)}
+                        value={formData.university}
+                        onValueChange={value => setFormData(prev => ({ ...prev, university: value, campusLocation: "" }))}
                       >
-                        <SelectTrigger
-                          className={`border-green-200 focus:border-green-500 ${
-                            !formData.campusLocation ? "border-red-300 focus:border-red-500" : ""
-                          }`}
-                        >
-                          <SelectValue placeholder="Select campus area" />
+                        <SelectTrigger className={`border-green-200 focus:border-green-500 ${!formData.university ? "border-red-300 focus:border-red-500" : ""}`}>
+                          <SelectValue placeholder="Select university" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="main-campus">Main Campus</SelectItem>
-                          <SelectItem value="north-campus">North Campus</SelectItem>
-                          <SelectItem value="south-campus">South Campus</SelectItem>
-                          <SelectItem value="downtown">Downtown</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          {ZIM_UNIVERSITIES.filter(u => u.type === "university").map(u => (
+                            <SelectItem key={u.id} value={u.id}>
+                              {u.name} ({u.location})
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
-                      {!formData.campusLocation && (
-                        <p className="text-red-500 text-sm">Campus/Area selection is required</p>
+                      {!formData.university && <p className="text-red-500 text-sm">University selection is required</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-green-700 font-medium">Campus/Area *</Label>
+                      {campusOptions ? (
+                        <Select
+                          value={formData.campusLocation}
+                          onValueChange={value => setFormData(prev => ({ ...prev, campusLocation: value }))}
+                          disabled={!formData.university}
+                        >
+                          <SelectTrigger className={`border-green-200 focus:border-green-500 ${!formData.campusLocation ? "border-red-300 focus:border-red-500" : ""}`}>
+                            <SelectValue placeholder="Select campus/area" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {campusOptions.map(option => (
+                              <SelectItem key={option} value={option}>{option}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          value={formData.campusLocation}
+                          onChange={e => setFormData(prev => ({ ...prev, campusLocation: e.target.value }))}
+                          placeholder="Enter campus or area name"
+                          className={`border-green-200 focus:border-green-500 ${!formData.campusLocation ? "border-red-300 focus:border-red-500" : ""}`}
+                          disabled={!formData.university}
+                        />
                       )}
+                      {!formData.campusLocation && <p className="text-red-500 text-sm">Campus/Area selection is required</p>}
                     </div>
                   </div>
                 </div>
@@ -440,7 +633,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
           {/* PROPERTY DETAILS TAB */}
           <TabsContent value="details" className="mt-6">
             <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+              <CardHeader className="bg-background">
                 <CardTitle className="flex items-center text-green-800">
                   <Building className="h-5 w-5 mr-2" />
                   Property Details
@@ -506,20 +699,33 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-green-800">Amenities & Features</h3>
                   <p className="text-sm text-gray-600">Select all amenities that apply to your property</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {amenitiesList.map((amenity) => (
-                      <div key={amenity} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={amenity}
-                          checked={selectedAmenities.includes(amenity)}
-                          onCheckedChange={() => handleAmenityToggle(amenity)}
-                          className="border-green-300 data-[state=checked]:bg-green-600"
-                        />
-                        <Label htmlFor={amenity} className="text-sm cursor-pointer">
-                          {amenity}
-                        </Label>
+                  {/* Replace amenities checkboxes with Lucide icon badges in a grid */}
+                  <div className="space-y-2">
+                    <Label className="text-green-700 font-medium">Amenities</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      {amenitiesList.map((amenity) => {
+                        // Pick an icon for each amenity (fallback to Sparkles)
+                        let Icon = Sparkles
+                        if (amenity.toLowerCase().includes("wifi")) Icon = Wifi
+                        if (amenity.toLowerCase().includes("furnished")) Icon = Home
+                        if (amenity.toLowerCase().includes("laundry")) Icon = WashingMachine
+                        if (amenity.toLowerCase().includes("kitchen")) Icon = Utensils
+                        if (amenity.toLowerCase().includes("parking")) Icon = ParkingCircle
+                        if (amenity.toLowerCase().includes("security")) Icon = ShieldCheck
+                        return (
+                          <button
+                            type="button"
+                            key={amenity}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${selectedAmenities.includes(amenity) ? 'bg-green-100 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500'} hover:border-green-400 focus:outline-none`}
+                            onClick={() => handleAmenityToggle(amenity)}
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span className="text-xs font-medium">{amenity}</span>
+                            {selectedAmenities.includes(amenity) && <Check className="h-3 w-3 ml-1 text-green-600" />}
+                          </button>
+                        )
+                      })}
                       </div>
-                    ))}
                   </div>
                   {selectedAmenities.length > 0 && (
                     <div className="mt-4 p-4 bg-green-50 rounded-lg">
@@ -543,173 +749,136 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
           {/* IMAGES TAB */}
           <TabsContent value="images" className="mt-6">
             <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+              <CardHeader className="bg-background">
                 <CardTitle className="flex items-center text-green-800">
                   <ImageIcon className="h-5 w-5 mr-2" />
-                  Property Photos
+                  Photos
                 </CardTitle>
-                <CardDescription>
-                  Add high-quality photos to showcase your property. The first image will be the main photo.
-                </CardDescription>
+                <CardDescription>Upload high-quality images of your property</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex flex-col items-center">
+                  {/* Instructions */}
+                  <div className="mb-4 text-center">
+                    <p className="text-green-400 font-medium">You must upload at least <span className="font-bold">3 images</span> to list your property.</p>
+                    <p className="text-xs text-muted-foreground">First image will be the main photo. Recommended: 1200x800px, JPG/PNG/WebP.</p>
+                  </div>
+                  {/* Upload area */}
+                  <label htmlFor="accom-image-upload" className="w-full max-w-md cursor-pointer border-2 border-dashed border-green-400 rounded-lg p-6 flex flex-col items-center justify-center bg-green-50 hover:bg-green-100 focus-within:ring-2 focus-within:ring-green-400 transition-all mb-4 outline-none">
+                    <ImageIcon className="h-10 w-10 text-green-400 mb-2" />
+                    <span className="text-green-700 font-medium mb-2">Drag & drop or click to upload</span>
+                    <Button variant="default" asChild tabIndex={0}>
+                      <span><Upload className="h-4 w-4 mr-2" /> Add Image</span>
+                    </Button>
+                    <input type="file" accept="image/*" multiple onChange={e => { if (e.target.files) Array.from(e.target.files).forEach(handleImageUpload) }} className="hidden" id="accom-image-upload" />
+                  </label>
+                  {/* Image previews */}
+                  {images.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-2">
                   {images.map((img, idx) => (
                     <div key={idx} className="relative group">
-                      <img
-                        src={img || "/placeholder.svg"}
-                        alt={`Property image ${idx + 1}`}
-                        className="w-full h-32 object-cover rounded-lg border border-green-200"
-                      />
-                      <Button
+                          <img src={img} alt={`Property ${idx + 1}`} className="rounded-lg w-full h-32 object-cover border border-green-200" />
+                          <button
                         type="button"
-                        variant="destructive"
-                        size="icon"
+                            className="absolute top-1 right-1 bg-white/80 rounded-full p-1 shadow hover:bg-red-100"
                         onClick={() => removeImage(idx)}
-                        className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label="Remove image"
                       >
-                        <X className="h-3 w-3" />
-                      </Button>
+                            <X className="h-4 w-4 text-red-500" />
+                          </button>
                       {idx === 0 && (
-                        <div className="absolute bottom-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
-                          Main Photo
+                            <span className="absolute bottom-1 left-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">Main</span>
+                          )}
                         </div>
-                      )}
+                      ))}
                     </div>
-                  ))}
-                  {images.length < 8 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleImageUpload}
-                      className="border-2 border-dashed border-green-300 w-full h-32 rounded-lg flex flex-col justify-center items-center text-green-600 hover:bg-green-50 hover:border-green-400 bg-transparent"
-                    >
-                      <Upload className="h-8 w-8 mb-2" />
-                      <span className="text-sm">Add Photo</span>
-                    </Button>
                   )}
-                </div>
-                <div className="text-sm text-gray-600 bg-green-50 p-4 rounded-lg">
-                  <p>• Upload at least 3 photos for better visibility</p>
-                  <p>• Recommended size: 1200x800 pixels</p>
-                  <p>• Supported formats: JPG, PNG, WebP</p>
-                  <p>• Current photos: {images.length}/8</p>
+                  {/* Validation warning if less than 3 images */}
+                  {images.length < 3 && (
+                    <div className="mt-2 text-red-500 text-sm font-medium">You must upload at least three images to continue.</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* CONTACT INFO TAB */}
-          <TabsContent value="contact" className="mt-6">
+          {/* PREVIEW TAB */}
+          <TabsContent value="preview" className="mt-6">
             <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+              <CardHeader className="bg-background">
                 <CardTitle className="flex items-center text-green-800">
-                  <User className="h-5 w-5 mr-2" />
-                  Contact Information
-                  {!validateCurrentTab("contact").isValid && <AlertCircle className="h-5 w-5 ml-2 text-red-500" />}
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  Preview & Confirm
                 </CardTitle>
-                <CardDescription>Provide your contact details so interested students can reach you</CardDescription>
+                <CardDescription>Review your listing before submitting</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-green-700 font-medium">
-                      Phone Number *
-                    </Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      placeholder="+263 77 123 4567"
-                      className={`border-green-200 focus:border-green-500 ${
-                        !formData.phone.trim() ? "border-red-300 focus:border-red-500" : ""
-                      }`}
-                      required
-                    />
-                    {!formData.phone.trim() && <p className="text-red-500 text-sm">Phone number is required</p>}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-green-700 mb-2">Property Info</h3>
+                    <p><strong>Type:</strong> {formData.propertyType === "other" ? formData.customPropertyType : propertyTypes.find(t => t.value === formData.propertyType)?.label}</p>
+                    <p><strong>Title:</strong> {formData.title}</p>
+                    <p><strong>Description:</strong> {formData.description}</p>
+                    <p><strong>Details:</strong> {formData.longDescription}</p>
+                    <p><strong>Address:</strong> {formData.address}</p>
+                    <p><strong>University:</strong> {ZIM_UNIVERSITIES.find(u => u.id === formData.university)?.name || formData.university}</p>
+                    <p><strong>Campus/Area:</strong> {formData.campusLocation}</p>
+                    <p><strong>Price:</strong> ${formData.price}</p>
+                    <p><strong>Beds:</strong> {formData.beds}</p>
+                    <p><strong>Baths:</strong> {formData.baths}</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-green-700 font-medium">
-                      Email Address *
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      placeholder="your.email@example.com"
-                      className={`border-green-200 focus:border-green-500 ${
-                        !formData.email.trim() || (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
-                          ? "border-red-300 focus:border-red-500"
-                          : ""
-                      }`}
-                      required
-                    />
-                    {(!formData.email.trim() ||
-                      (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))) && (
-                      <p className="text-red-500 text-sm">Valid email address is required</p>
+                  <div>
+                    <h3 className="font-semibold text-green-700 mb-2">Amenities</h3>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {selectedAmenities.map((amenity) => (
+                        <span key={amenity} className="bg-green-200 text-green-800 px-2 py-1 rounded-md text-xs">
+                          {amenity}
+                        </span>
+                      ))}
+                    </div>
+                    <h3 className="font-semibold text-green-700 mb-2">Photos</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {images.map((img, idx) => (
+                        <div key={idx} className="relative">
+                          <img src={img} alt={`Preview ${idx + 1}`} className="rounded-lg w-full h-24 object-cover border border-green-200" />
+                          {idx === 0 && (
+                            <span className="absolute bottom-1 left-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">Main</span>
                     )}
                   </div>
+                      ))}
                 </div>
-
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-green-800 mb-2">Contact Information Summary:</h4>
-                  <div className="text-sm text-green-700 space-y-1">
-                    <p>
-                      <strong>Phone:</strong> {formData.phone || "Not provided"}
-                    </p>
-                    <p>
-                      <strong>Email:</strong> {formData.email || "Not provided"}
-                    </p>
+                    <h3 className="font-semibold text-green-700 mt-4 mb-2">Seller Info</h3>
+                    <p><strong>Name:</strong> {user?.full_name || user?.email}</p>
+                    <p><strong>Email:</strong> {user?.email}</p>
+                    {user?.phone && <p><strong>Phone:</strong> {user.phone}</p>}
                   </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Navigation Buttons */}
-        <div className="mt-8 flex justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentTab === "basic"}
-            className="border-green-300 text-green-700 hover:bg-green-50 bg-transparent"
-          >
-            Previous
+        {/* Sticky footer for navigation buttons */}
+        <div className="sticky bottom-0 left-0 w-full bg-background border-t border-green-900/20 py-4 flex justify-between gap-4 z-10 px-6 mt-8">
+          <Button variant="outline" type="button" onClick={handlePrevious} disabled={currentTab === "basic" || isSubmitting}>
+            Back
           </Button>
-
-          {currentTab === "contact" ? (
-            <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700 text-white">
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  List Property
-                </>
-              )}
+          {currentTab !== "preview" ? (
+            <Button type="button" onClick={handleNext} disabled={!isCurrentTabValid() || isSubmitting}>
+              Next
             </Button>
           ) : (
-            <Button
-              type="button"
-              onClick={handleNext}
-              className={`text-white transition-all duration-200 ${
-                isCurrentTabValid() ? "bg-green-600 hover:bg-green-700" : "bg-gray-400 hover:bg-gray-500"
-              }`}
-            >
-              Next
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Confirm & Submit"}
             </Button>
           )}
         </div>
 
         {/* Debug info (remove in production) */}
+<<<<<<< HEAD
         <div className="mt-4 p-4 bg-red-700 rounded-lg text-sm">
+=======
+        <div className="mt-4 p-4 bg-background text-green-200 rounded-lg text-xs opacity-80">
+>>>>>>> 5e3814e8288ba43726423d46aa1b19c20ea16573
           <p>
             <strong>Current Tab:</strong> {currentTab}
           </p>

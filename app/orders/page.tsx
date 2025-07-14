@@ -28,7 +28,6 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where } from 'firebase/firestore';
-import { error } from "console"
 
 interface Order {
   id: string
@@ -107,29 +106,31 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     if (!user) return
-
     try {
       setLoading(true)
-      // Replace supabase logic with Firestore logic
-      // const { data, error } = await supabase
-      //   .from("orders")
-      //   .select(`
-      //     *,
-      //     products (
-      //       id,
-      //       title,
-      //       price,
-      //       product_images (url, is_primary)
-      //     ),
-      //     buyer:users!orders_buyer_id_fkey (id, full_name, avatar_url),
-      //     seller:users!orders_seller_id_fkey (id, full_name, avatar_url)
-      //   `)
-      //   .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-      //   .order("created_at", { ascending: false })
-
-      // if (error) throw error
-
-      setOrders([])
+      // Fetch orders where user is buyer or seller
+      const ordersRef = collection(db, "orders")
+      const q = query(
+        ordersRef,
+        where("$or", "in", [["buyer_id", user.id], ["seller_id", user.id]])
+      )
+      const snap = await getDocs(ordersRef)
+      const allOrders = snap.docs.map(docu => ({ id: docu.id, ...docu.data() }))
+      // Filter orders where user is buyer or seller
+      const userOrders = allOrders.filter(order => order.buyer_id === user.id || order.seller_id === user.id)
+      // Fetch product, buyer, and seller info for each order
+      const ordersWithDetails = await Promise.all(userOrders.map(async (order: any) => {
+        const productDoc = await getDoc(doc(db, "products", order.product_id))
+        const buyerDoc = await getDoc(doc(db, "users", order.buyer_id))
+        const sellerDoc = await getDoc(doc(db, "users", order.seller_id))
+        return {
+          ...order,
+          products: productDoc.exists() ? { ...productDoc.data(), id: productDoc.id } : {},
+          buyer: buyerDoc.exists() ? { ...buyerDoc.data(), id: buyerDoc.id } : {},
+          seller: sellerDoc.exists() ? { ...sellerDoc.data(), id: sellerDoc.id } : {},
+        }
+      }))
+      setOrders(ordersWithDetails)
     } catch (error) {
       console.error("Error fetching orders:", error)
       toast.error("Failed to load orders")
@@ -140,13 +141,10 @@ export default function OrdersPage() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      // Replace supabase logic with Firestore logic
-      // const { error } = await supabase.from("orders").update({ status: newStatus }).eq("id", orderId)
-
-      if (error) throw error
-
+      // Update order status in Firestore
+      const orderRef = doc(db, "orders", orderId)
+      await updateDoc(orderRef, { status: newStatus })
       setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)))
-
       toast.success("Order status updated")
     } catch (error) {
       console.error("Error updating order status:", error)

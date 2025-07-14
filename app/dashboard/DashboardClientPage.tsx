@@ -8,16 +8,18 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ShoppingBag, MessageSquare, Plus, Eye, Heart, TrendingUp, DollarSign } from "lucide-react"
+import { ShoppingBag, MessageSquare, Plus, Eye, Heart, TrendingUp, DollarSign, Home } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { useToast } from "@/components/ui/use-toast"
 import { formatDistanceToNow } from "date-fns"
 import { collection, query, where, orderBy, getDocs, limit, getDoc, doc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { ProfileCompletionBanner } from "@/components/profile-completion-banner"
 import ProfileForm from "@/components/profile-form"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/ui/sheet"
+import { deleteAccommodation } from "@/services/accommodation"
+import { useToast } from "@/hooks/use-toast"
 
 interface DashboardStats {
   totalListings: number
@@ -90,6 +92,20 @@ interface QuickAction {
   color: string
 }
 
+// Add Accommodation type
+interface Accommodation {
+  id: string
+  title: string
+  price: number
+  status?: string
+  views?: number
+  created_at?: string
+  images?: string[]
+  propertyType?: string
+  campusLocation?: string
+  university?: string
+}
+
 export default function DashboardClientPage() {
   const { user } = useAuth()
   const { toast } = useToast()
@@ -107,6 +123,15 @@ export default function DashboardClientPage() {
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [showProfileModal, setShowProfileModal] = useState(false)
+  const [accommodations, setAccommodations] = useState<Accommodation[]>([])
+
+  // Accommodation Listings state
+  const [accommodationToDelete, setAccommodationToDelete] = useState<Accommodation | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [accommodationStats, setAccommodationStats] = useState({
+    total: 0,
+    bookings: 0,
+  })
 
   // Profile completion logic
   const requiredFields = useMemo(() => {
@@ -119,7 +144,8 @@ export default function DashboardClientPage() {
   }, [user]);
   const profileProgress = useMemo(() => {
     if (!user) return 0;
-    const filled = requiredFields.filter((field) => user[field]);
+    // Type assertion to allow dynamic key access
+    const filled = requiredFields.filter((field) => (user as any)[field]);
     return Math.round((filled.length / requiredFields.length) * 100);
   }, [user, requiredFields]);
   const isProfileComplete = profileProgress === 100;
@@ -253,6 +279,25 @@ export default function DashboardClientPage() {
         })
       ) as Message[]
 
+      // Fetch user's accommodations
+      const accommodationsRef = collection(db, 'accommodations')
+      const accommodationsQuery = query(
+        accommodationsRef,
+        where('seller.id', '==', user.id),
+        orderBy('created_at', 'desc')
+      )
+      const accommodationsSnapshot = await getDocs(accommodationsQuery)
+      const typedAccommodations = accommodationsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Accommodation[]
+      setAccommodations(typedAccommodations)
+      // Accommodation stats
+      setAccommodationStats({
+        total: typedAccommodations.length,
+        bookings: 0, // TODO: fetch real bookings count
+      })
+
       setStats({
         totalListings,
         activeListings,
@@ -361,7 +406,8 @@ export default function DashboardClientPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        {/* Product Stats Cards */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Listings</CardTitle>
@@ -409,6 +455,19 @@ export default function DashboardClientPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatPrice(stats.totalEarnings)}</div>
             <p className="text-xs text-muted-foreground">From {stats.soldListings} sales</p>
+          </CardContent>
+        </Card>
+        {/* Accommodation Stats Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Accommodations</CardTitle>
+            <Home className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{accommodationStats.total}</div>
+            <p className="text-xs text-muted-foreground">
+              {accommodationStats.bookings} bookings
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -580,6 +639,101 @@ export default function DashboardClientPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Accommodation Listings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Accommodation Listings</CardTitle>
+          <CardDescription>Manage and track your accommodation listings</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {accommodations.length === 0 ? (
+            <div className="text-center py-8">
+              <Home className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">No accommodation listings yet</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Get started by creating your first accommodation listing.</p>
+              <div className="mt-6">
+                <Button asChild>
+                  <Link href="/accommodation/sell">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Accommodation Listing
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-muted-foreground/10">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Title</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Type</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Campus</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Price</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accommodations.map(listing => (
+                    <tr key={listing.id} className="border-b border-muted-foreground/5">
+                      <td className="px-4 py-2 font-medium">
+                        <Link href={`/accommodation/${listing.id}`} className="hover:underline">
+                          {listing.title}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-2">{listing.propertyType}</td>
+                      <td className="px-4 py-2">{listing.campusLocation}</td>
+                      <td className="px-4 py-2">${listing.price}</td>
+                      <td className="px-4 py-2 flex gap-2">
+                        <Button asChild size="sm" variant="outline"><Link href={`/accommodation/${listing.id}`}>View</Link></Button>
+                        <Button asChild size="sm" variant="outline"><Link href={`/accommodation/edit/${listing.id}`}>Edit</Link></Button>
+                        <Sheet>
+                          <SheetTrigger asChild>
+                            <Button size="sm" variant="destructive" onClick={() => setAccommodationToDelete(listing)}>Delete</Button>
+                          </SheetTrigger>
+                          <SheetContent side="bottom">
+                            <SheetHeader>
+                              <SheetTitle>Delete Accommodation</SheetTitle>
+                              <SheetDescription>
+                                Are you sure you want to delete <span className="font-semibold">{accommodationToDelete?.title}</span>? This action cannot be undone.
+                              </SheetDescription>
+                            </SheetHeader>
+                            <SheetFooter>
+                              <SheetClose asChild>
+                                <Button variant="outline">Cancel</Button>
+                              </SheetClose>
+                              <Button
+                                variant="destructive"
+                                disabled={isDeleting}
+                                onClick={async () => {
+                                  if (!accommodationToDelete) return
+                                  setIsDeleting(true)
+                                  try {
+                                    await deleteAccommodation(accommodationToDelete.id)
+                                    setAccommodations(prev => prev.filter(a => a.id !== accommodationToDelete.id))
+                                    toast({ title: "Deleted", description: "Accommodation listing deleted successfully." })
+                                  } catch (err) {
+                                    toast({ title: "Error", description: "Failed to delete accommodation.", variant: "destructive" })
+                                  } finally {
+                                    setIsDeleting(false)
+                                    setAccommodationToDelete(null)
+                                  }
+                                }}
+                              >
+                                {isDeleting ? "Deleting..." : "Delete"}
+                              </Button>
+                            </SheetFooter>
+                          </SheetContent>
+                        </Sheet>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

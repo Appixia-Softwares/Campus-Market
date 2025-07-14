@@ -1,25 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/components/ui/use-toast"
 import { ImageUpload } from "@/components/image-upload"
 import { createProduct, createProductImages, Product } from "@/lib/firebase-service"
+import { uploadFileToStorage } from "@/lib/firebase";
 import { ProtectedRoute } from '@/components/protected-route'
 import { db } from "@/lib/firebase"
-import { collection, addDoc, serverTimestamp, getDocs, query, where, orderBy, writeBatch, doc } from "firebase/firestore"
-import { getCategories, getLocations } from "@/lib/firebase-service"
+import { collection, getDocs, writeBatch, doc } from "firebase/firestore"
 import { useAuth } from "@/lib/auth-context"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Laptop, Shirt, Home, Book, Dumbbell, Car, Baby, Apple, Watch, Camera, Gamepad2, PawPrint, Sparkles, Briefcase, Globe, Gift, Music, FlaskConical, Wrench, Gem, BedDouble, Bike, Tv, Phone, Wallet, ShoppingBag, Package, Cake } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -89,48 +86,583 @@ interface Location {
 
 // Default categories if none exist
 const defaultCategories = [
-  {
-    name: 'Textbooks',
-    description: 'Academic books and study materials',
-    icon: 'book',
-    color: '#4CAF50',
-    sort_order: 1,
-    is_active: true
-  },
-  {
-    name: 'Electronics',
-    description: 'Laptops, phones, and other electronic devices',
-    icon: 'laptop',
-    color: '#2196F3',
-    sort_order: 2,
-    is_active: true
-  },
-  {
-    name: 'Furniture',
-    description: 'Dorm furniture and study desks',
-    icon: 'chair',
-    color: '#FF9800',
-    sort_order: 3,
-    is_active: true
-  },
-  {
-    name: 'Clothing',
-    description: 'University merchandise and casual wear',
-    icon: 'tshirt',
-    color: '#9C27B0',
-    sort_order: 4,
-    is_active: true
+  { name: 'Electronics', description: 'Phones, laptops, cameras, and more', icon: Laptop },
+  { name: 'Fashion', description: 'Clothing, shoes, accessories', icon: Shirt },
+  { name: 'Home & Garden', description: 'Furniture, decor, appliances', icon: Home },
+  { name: 'Books & Media', description: 'Books, magazines, movies, music', icon: Book },
+  { name: 'Beauty & Personal Care', description: 'Cosmetics, skincare, haircare', icon: Sparkles },
+  { name: 'Sports & Outdoors', description: 'Fitness, sports gear, outdoor', icon: Dumbbell },
+  { name: 'Toys & Games', description: 'Toys, board games, puzzles', icon: Gamepad2 },
+  { name: 'Groceries', description: 'Food, beverages, pantry', icon: Apple },
+  { name: 'Automotive', description: 'Car parts, accessories, tools', icon: Car },
+  { name: 'Health & Wellness', description: 'Supplements, medical, wellness', icon: FlaskConical },
+  { name: 'Jewelry & Accessories', description: 'Jewelry, watches, bags', icon: Gem },
+  { name: 'Office & School', description: 'Supplies, stationery, tech', icon: Briefcase },
+  { name: 'Baby & Kids', description: 'Baby gear, kids clothing, toys', icon: Baby },
+  { name: 'Pet Supplies', description: 'Food, toys, accessories for pets', icon: PawPrint },
+  { name: 'Gifts & Occasions', description: 'Gifts, party supplies, cakes', icon: Gift },
+  { name: 'Music & Instruments', description: 'Instruments, audio, music', icon: Music },
+  { name: 'Watches', description: 'Smartwatches, wristwatches', icon: Watch },
+  { name: 'Cameras', description: 'Cameras, lenses, accessories', icon: Camera },
+  { name: 'Gaming', description: 'Consoles, games, accessories', icon: Gamepad2 },
+  { name: 'Health & Beauty', description: 'Personal care, wellness', icon: Sparkles },
+  { name: 'Travel & Luggage', description: 'Bags, suitcases, travel gear', icon: Globe },
+  { name: 'Furniture', description: 'Beds, sofas, tables, chairs', icon: BedDouble },
+  { name: 'Weddings & Events', description: 'Wedding, event supplies', icon: Cake },
+  { name: 'TV & Audio', description: 'Televisions, speakers, audio', icon: Tv },
+  { name: 'Phones & Tablets', description: 'Smartphones, tablets, accessories', icon: Phone },
+  { name: 'Bikes & Scooters', description: 'Bicycles, scooters, gear', icon: Bike },
+  { name: 'Tools & DIY', description: 'Tools, hardware, home improvement', icon: Wrench },
+  { name: 'Bags & Wallets', description: 'Handbags, wallets, purses', icon: Wallet },
+  { name: 'Shoes', description: 'Sneakers, boots, sandals', icon: ShoppingBag },
+];
+
+// --- Cleaned and Polished Category Field Config ---
+const categoryFieldConfig: Record<string, Array<any>> = {
+  // Electronics
+  Electronics: [
+    { name: "title", label: "Product Name", type: "text", required: true, placeholder: "e.g., iPhone 14 Pro" },
+    { name: "brand", label: "Brand", type: "text", required: true, placeholder: "e.g., Apple" },
+    { name: "model", label: "Model", type: "text", required: false, placeholder: "e.g., A2650" },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Like New", "Good", "Fair", "For Parts"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "warranty", label: "Warranty", type: "text", required: false, placeholder: "e.g., 6 months" },
+    { name: "description", label: "Description", type: "textarea", required: true, placeholder: "Describe the product, features, and condition..." },
+  ],
+  // Fashion
+  Fashion: [
+    { name: "title", label: "Product Name", type: "text", required: true, placeholder: "e.g., Nike Air Max 270" },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "size", label: "Size", type: "text", required: true, placeholder: "e.g., M, 42, 10" },
+    { name: "color", label: "Color", type: "text", required: false },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Like New", "Good", "Fair"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true, placeholder: "Describe the item, material, fit, etc." },
+  ],
+  // Home & Garden
+  'Home & Garden': [
+    { name: "title", label: "Product Name", type: "text", required: true, placeholder: "e.g., Wooden Coffee Table" },
+    { name: "material", label: "Material", type: "text", required: false, placeholder: "e.g., Oak Wood" },
+    { name: "dimensions", label: "Dimensions", type: "text", required: false, placeholder: "e.g., 120x60x45cm" },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Used", "Refurbished"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true, placeholder: "Describe the item, usage, and features..." },
+  ],
+  // Books & Media
+  'Books & Media': [
+    { name: "title", label: "Book/Media Title", type: "text", required: true, placeholder: "e.g., Atomic Habits" },
+    { name: "author", label: "Author/Creator", type: "text", required: false },
+    { name: "type", label: "Type", type: "select", required: true, options: ["Book", "Magazine", "DVD", "CD", "Other"] },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Like New", "Good", "Fair"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true, placeholder: "Describe the book/media, edition, etc." },
+  ],
+  // Beauty & Personal Care
+  'Beauty & Personal Care': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Skincare, Haircare" },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Sports & Outdoors
+  'Sports & Outdoors': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Football, Tent" },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Used"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Toys & Games
+  'Toys & Games': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "age_range", label: "Age Range", type: "text", required: false, placeholder: "e.g., 3-6 years" },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Groceries
+  Groceries: [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "weight", label: "Weight/Volume", type: "text", required: false, placeholder: "e.g., 1kg, 500ml" },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Automotive
+  Automotive: [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "model", label: "Model", type: "text", required: false },
+    { name: "year", label: "Year", type: "number", required: false },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Used"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Jewelry & Accessories
+  'Jewelry & Accessories': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Necklace, Watch" },
+    { name: "material", label: "Material", type: "text", required: false },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Office & School
+  'Office & School': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Stationery, Laptop" },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Baby & Kids
+  'Baby & Kids': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "age_range", label: "Age Range", type: "text", required: false, placeholder: "e.g., 0-2 years" },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Pet Supplies
+  'Pet Supplies': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Food, Toy" },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Gifts & Occasions
+  'Gifts & Occasions': [
+    { name: "title", label: "Gift Name", type: "text", required: true },
+    { name: "occasion", label: "Occasion", type: "text", required: false, placeholder: "e.g., Birthday, Wedding" },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Music & Instruments
+  'Music & Instruments': [
+    { name: "title", label: "Instrument/Product Name", type: "text", required: true },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Guitar, Headphones" },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Watches
+  Watches: [
+    { name: "title", label: "Watch Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Smartwatch, Analog" },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Cameras
+  Cameras: [
+    { name: "title", label: "Camera Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "model", label: "Model", type: "text", required: false },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Used"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Gaming
+  Gaming: [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Console, Game" },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Used"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Health & Beauty
+  'Health & Beauty': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Supplement, Skincare" },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Travel & Luggage
+  'Travel & Luggage': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Suitcase, Backpack" },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Furniture
+  Furniture: [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "material", label: "Material", type: "text", required: false },
+    { name: "dimensions", label: "Dimensions", type: "text", required: false },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Used", "Refurbished"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Weddings & Events
+  'Weddings & Events': [
+    { name: "title", label: "Event Name", type: "text", required: true },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Wedding Dress, Decor" },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // TV & Audio
+  'TV & Audio': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Television, Speaker" },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Used"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Phones & Tablets
+  'Phones & Tablets': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "model", label: "Model", type: "text", required: false },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Used"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Bikes & Scooters
+  'Bikes & Scooters': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Bicycle, Scooter" },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Used"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Tools & DIY
+  'Tools & DIY': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Drill, Hammer" },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Bags & Wallets
+  'Bags & Wallets': [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "type", label: "Type", type: "text", required: false, placeholder: "e.g., Handbag, Wallet" },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+  // Shoes
+  Shoes: [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "brand", label: "Brand", type: "text", required: false },
+    { name: "size", label: "Size", type: "text", required: true },
+    { name: "color", label: "Color", type: "text", required: false },
+    { name: "condition", label: "Condition", type: "select", required: true, options: ["New", "Like New", "Good", "Fair"] },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ],
+};
+
+// --- Dynamic Field Block ---
+function FieldBlock({ field, register, errors, value, setValue }: any) {
+  switch (field.type) {
+    case "text":
+    case "number":
+      return (
+        <div className="mb-4">
+          <label className="block font-medium mb-1">{field.label}{field.required && <span className="text-red-500">*</span>}</label>
+          <input
+            type={field.type}
+            {...register(field.name, { required: field.required })}
+            placeholder={field.placeholder || ""}
+            className="input input-bordered w-full"
+            value={value || ""}
+            onChange={e => setValue(field.name, e.target.value)}
+          />
+          {errors[field.name] && <span className="text-xs text-red-500">This field is required</span>}
+        </div>
+      )
+    case "textarea":
+      return (
+        <div className="mb-4">
+          <label className="block font-medium mb-1">{field.label}{field.required && <span className="text-red-500">*</span>}</label>
+          <textarea
+            {...register(field.name, { required: field.required })}
+            className="textarea textarea-bordered w-full min-h-[80px]"
+            value={value || ""}
+            onChange={e => setValue(field.name, e.target.value)}
+          />
+          {errors[field.name] && <span className="text-xs text-red-500">This field is required</span>}
+        </div>
+      )
+    case "select":
+      return (
+        <div className="mb-4">
+          <label className="block font-medium mb-1">{field.label}{field.required && <span className="text-red-500">*</span>}</label>
+          <select
+            {...register(field.name, { required: field.required })}
+            className="select select-bordered w-full"
+            value={value || ""}
+            onChange={e => setValue(field.name, e.target.value)}
+          >
+            <option value="" disabled>Select {field.label}</option>
+            {field.options.map((opt: string) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+          {errors[field.name] && <span className="text-xs text-red-500">This field is required</span>}
+        </div>
+      )
+    default:
+      return null
   }
+}
+
+// --- Consistent Button Classes ---
+const primaryBtn = "px-5 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white border border-green-600 shadow focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed";
+const outlineBtn = "px-5 py-2 rounded-lg border border-green-600 text-green-700 bg-white hover:bg-green-50 shadow focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed";
+
+// --- Polished DetailsStep ---
+function DetailsStep({ category, form, onNext, user }: any) {
+  const fields = categoryFieldConfig[category.name] || [
+    { name: "title", label: "Product Name", type: "text", required: true },
+    { name: "price", label: "Price (USD)", type: "number", required: true },
+    { name: "description", label: "Description", type: "textarea", required: true },
+  ];
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isValid },
+    watch,
+    trigger,
+    reset,
+  } = useForm({
+    mode: "all",
+    reValidateMode: "onChange",
+    defaultValues: fields.reduce((acc, f) => ({ ...acc, [f.name]: form?.[f.name] || "" }), {}),
+  });
+
+  // Always trigger validation on mount, category, or defaultValues change
+  useEffect(() => {
+    reset(fields.reduce((acc, f) => ({ ...acc, [f.name]: form?.[f.name] || "" }), {}));
+    trigger();
+  }, [category, form, reset, trigger]);
+
+  const onSubmit = (data: any) => {
+    onNext(data);
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 animate-fade-in">
+      <div className="bg-background rounded-xl shadow p-6 space-y-4 border border-green-200">
+        {fields.map((field: any) => (
+          <div key={field.name} className="flex flex-col gap-1">
+            <label className="font-medium mb-1 text-green-700">
+              {field.label}{field.required && <span className="text-green-600">*</span>}
+            </label>
+            {field.type === "text" || field.type === "number" ? (
+              <input
+                type={field.type}
+                {...register(field.name, { required: field.required })}
+                placeholder={field.placeholder || ""}
+                className="input input-bordered w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600 border-green-200 focus:border-green-600"
+                value={watch(field.name) || ""}
+                onChange={e => setValue(field.name, e.target.value)}
+              />
+            ) : field.type === "textarea" ? (
+              <textarea
+                {...register(field.name, { required: field.required })}
+                placeholder={field.placeholder || ""}
+                className="textarea textarea-bordered w-full min-h-[80px] rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600 border-green-200 focus:border-green-600"
+                value={watch(field.name) || ""}
+                onChange={e => setValue(field.name, e.target.value)}
+              />
+            ) : field.type === "select" ? (
+              <select
+                {...register(field.name, { required: field.required })}
+                className="select select-bordered w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-green-600 border-green-200 focus:border-green-600"
+                value={watch(field.name) || ""}
+                onChange={e => setValue(field.name, e.target.value)}
+              >
+                <option value="" disabled>Select {field.label}</option>
+                {field.options.map((opt: string) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            ) : null}
+            {field.helper && <span className="text-xs text-green-700">{field.helper}</span>}
+            {errors[field.name] && <span className="text-xs text-green-600">This field is required</span>}
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-between pt-2 gap-2">
+        <button type="button" className={outlineBtn} onClick={() => onNext(null)}>Change Category</button>
+        <button type="submit" className={primaryBtn} disabled={!isValid}>Next</button>
+      </div>
+    </form>
+  );
+}
+function ImagesStep({ images, setImages, onNext, onBack }: any) {
+  const [error, setError] = useState("");
+  const maxFiles = 8;
+  const canProceed = images && images.length > 0;
+  const handleNext = () => {
+    if (!canProceed) {
+      setError("At least one product image is required.");
+      return;
+    }
+    setError("");
+    onNext();
+  };
+  return (
+    <div className="space-y-4">
+      <label className="block font-medium mb-1 text-green-700">
+        Product Images <span className="text-green-600">*</span>
+      </label>
+      <ImageUpload
+        value={images}
+        onChange={setImages}
+        onRemove={(url: string) => setImages(images.filter((img: string) => img !== url))}
+        maxFiles={maxFiles}
+      />
+      <div className="text-sm text-muted-foreground">
+        • Upload <span className="font-semibold text-green-700">at least one</span> high-quality image of your product<br />
+        • First image will be the main display image<br />
+        • Include images from different angles<br />
+        • Show any defects or wear clearly<br />
+        • Recommended size: 1000x1000 pixels
+      </div>
+      {error ? <div className="text-red-600 text-sm font-medium">{error}</div> : null}
+      <div className="flex justify-between pt-2 gap-2">
+        <button type="button" className={outlineBtn} onClick={onBack}>Back</button>
+        <button type="button" className={primaryBtn} onClick={handleNext} disabled={!canProceed}>Next</button>
+      </div>
+    </div>
+  );
+}
+function PreviewStep({ data, onNext, onBack }: any) {
+  const { images = [], ...fields } = data || {};
+  const [current, setCurrent] = useState(0);
+  const canProceed = images && images.length > 0 && fields.title && fields.price && fields.description;
+  return (
+    <div className="space-y-4">
+      <Card className="overflow-hidden">
+        {images.length > 0 && (
+          <div className="relative aspect-square w-full bg-muted">
+            <img
+              src={images[current] || "/placeholder.svg"}
+              alt={fields.title || "Preview"}
+              className="object-cover w-full h-full"
+            />
+            {images.length > 1 && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                {images.map((_: string, i: number) => (
+                  <button
+                    key={i}
+                    className={`h-2 w-6 rounded-full ${i === current ? "bg-primary" : "bg-muted-foreground/30"}`}
+                    onClick={() => setCurrent(i)}
+                  >
+                    <span className="sr-only">Go to image {i + 1}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {fields.title || <span className="text-muted-foreground">No Title</span>}
+            {fields.condition && <Badge>{fields.condition}</Badge>}
+          </CardTitle>
+          <CardDescription>{fields.category?.name || ""}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="font-bold text-lg mb-2">${fields.price || "-"}</div>
+          <div className="mb-2 text-muted-foreground">{fields.description || <span>No description</span>}</div>
+          {/* Show other key fields dynamically */}
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {Object.entries(fields).map(([k, v]: [string, any]) => (
+              ["title", "price", "description", "images", "category"].includes(k) || !v ? null : (
+                <div key={k} className="flex flex-col">
+                  <span className="font-medium capitalize">{k.replace(/_/g, " ")}</span>
+                  <span>{v}</span>
+                </div>
+              )
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      <div className="flex justify-between pt-2 gap-2">
+        <button type="button" className={outlineBtn} onClick={onBack}>Back</button>
+        <button type="button" className={primaryBtn} onClick={onNext} disabled={!canProceed}>Next</button>
+      </div>
+    </div>
+  );
+}
+function ReviewStep({ data, onSubmit, onBack, isSubmitting, submitError, submitSuccess }: any) {
+  const { images = [], ...fields } = data || {};
+  return (
+    <div className="space-y-4">
+      <div className="text-lg font-semibold mb-2">Review & Confirm Your Listing</div>
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        {images.map((img: string, i: number) => (
+          <img
+            key={i}
+            src={img || "/placeholder.svg"}
+            alt={`Product image ${i + 1}`}
+            className="rounded-lg object-cover w-full aspect-square border"
+          />
+        ))}
+      </div>
+      <div className="bg-muted rounded-lg p-4 mb-2">
+        <div className="font-bold text-xl mb-1">{fields.title}</div>
+        <div className="text-primary font-bold text-lg mb-1">${fields.price}</div>
+        <div className="mb-2 text-muted-foreground">{fields.description}</div>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          {Object.entries(fields).map(([k, v]: [string, any]) => (
+            ["title", "price", "description", "images", "category"].includes(k) || !v ? null : (
+              <div key={k} className="flex flex-col">
+                <span className="font-medium capitalize">{k.replace(/_/g, " ")}</span>
+                <span>{v}</span>
+              </div>
+            )
+          ))}
+        </div>
+      </div>
+      {submitError ? <div className="text-red-500 text-sm">{submitError}</div> : null}
+      {submitSuccess ? <div className="text-green-600 text-sm font-medium">{submitSuccess}</div> : null}
+      <div className="flex justify-between pt-2 gap-2">
+        <button type="button" className={outlineBtn} onClick={onBack} disabled={isSubmitting}>Back</button>
+        <button type="button" className={primaryBtn} onClick={onSubmit} disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Submit Listing"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const steps = [
+  { label: "Category" },
+  { label: "Details" },
+  { label: "Images" },
+  { label: "Preview" },
+  { label: "Review" },
 ];
 
 export default function SellPage() {
   const router = useRouter()
   const { toast } = useToast()
   const { user } = useAuth()
-  const [step, setStep] = useState(1)
+  // Centralized state
+  const [step, setStep] = useState(0) // 0: Category, 1: Details, 2: Images, 3: Preview, 4: Review
+  const [category, setCategory] = useState<any>(null)
+  const [formData, setFormData] = useState<any>({})
+  const [images, setImages] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [locations, setLocations] = useState<Location[]>([])
+  const [isSubmittingFinal, setIsSubmittingFinal] = useState(false)
+  const [submitError, setSubmitError] = useState("")
+  const [submitSuccess, setSubmitSuccess] = useState("")
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -284,9 +816,9 @@ export default function SellPage() {
         specifications: specs,
         created_at: new Date(),
         updated_at: new Date(),
-        images: [],
-        seller: undefined,
-        category: undefined
+        images: [], // This will be updated after image upload
+        seller: null,
+        category: category // <-- set full category object
       }
 
       console.log("Debug - Creating product in Firebase:", newProduct)
@@ -320,6 +852,74 @@ export default function SellPage() {
       })
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  async function handleFinalSubmit() {
+    setIsSubmittingFinal(true);
+    setSubmitError("");
+    setSubmitSuccess("");
+    if (!images || images.length === 0) {
+      setSubmitError("At least one product image is required.");
+      setIsSubmittingFinal(false);
+      return;
+    }
+    try {
+      // 1. Upload images if not already URLs
+      let uploadedImages: string[] = [];
+      for (let i = 0; i < images.length; i++) {
+        let url = images[i];
+        if (isFile(url)) {
+          url = await uploadFileToStorage(`products/${user && user.id ? user.id : 'unknown'}/${Date.now()}-${i}`, url);
+        }
+        uploadedImages.push(url as string);
+      }
+      // 2. Build product object
+      let productData: any = {
+        title: formData.title,
+        description: formData.description,
+        price: Number(formData.price),
+        category_id: category.id || category.name,
+        condition: formData.condition || "",
+        seller_id: user && user.id ? user.id : '',
+        status: 'active',
+        brand: formData.brand || null,
+        model: formData.model || null,
+        year_purchased: formData.year || null,
+        location_id: formData.location_id || "",
+        tags: [],
+        specifications: {},
+        created_at: new Date(),
+        updated_at: new Date(),
+        images: [], // This will be updated after image upload
+        seller: null,
+        category: category // <-- set full category object
+      };
+      // Add category-specific fields
+      Object.keys(formData).forEach((key: string) => {
+        if (Object.prototype.hasOwnProperty.call(productData, key) === false && formData[key]) {
+          productData[key] = formData[key];
+        }
+      });
+      // 3. Create product
+      const productId = await createProduct(productData as Omit<Product, 'id'>);
+      // 4. Create product images
+      const imageData = uploadedImages.map((url: string, index: number) => ({
+        product_id: productId,
+        url: url,
+        alt_text: formData.title,
+        is_primary: index === 0,
+        sort_order: index,
+      }));
+      await createProductImages(imageData);
+      setSubmitSuccess("Your product has been listed successfully!");
+      setTimeout(() => {
+        router.push(`/marketplace/products/${productId}`);
+      }, 1200);
+    } catch (e: any) {
+      setSubmitError("Failed to submit. Please try again.");
+    } finally {
+      setIsSubmittingFinal(false);
     }
   }
 
@@ -489,390 +1089,109 @@ export default function SellPage() {
     console.log("Debug - Locations state updated:", locations)
   }, [locations])
 
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [step]);
+
   return (
     <ProtectedRoute>
-    <div className="container max-w-2xl py-8">
-          <Card>
-            <CardHeader>
-          <CardTitle>List an Item for Sale</CardTitle>
-          <CardDescription>Fill in the details about your item</CardDescription>
-          <Progress value={progress} className="mt-4" />
-            </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {step === 1 && (
-                <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="What are you selling?" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Be specific and descriptive
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Describe your item in detail..."
-                            className="min-h-[100px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Include details about condition, features, and any flaws
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-
+      <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-background via-muted to-primary/10">
+        <div className="container max-w-2xl py-8 flex flex-col items-center justify-center min-h-[80vh]">
+          <Tabs value={String(step)} className="mb-8 w-full">
+            <TabsList className="w-full flex justify-center bg-background/80 shadow-sm rounded-lg mb-6">
+              {steps.map((s, i) => (
+                <TabsTrigger key={s.label} value={String(i)} disabled={i > step} className="transition-all duration-200">
+                  {s.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <div ref={contentRef} className="w-full max-w-3xl mx-auto min-h-[350px] transition-all duration-500 animate-fade-in">
+            {step === 0 && (
+              <CategoryStep
+                categories={categories.length > 0 ? categories : defaultCategories}
+                onSelect={(cat) => { setCategory(cat); setStep(1); }}
+              />
+            )}
+            {step === 1 && category && (
+              <DetailsStep
+                category={category}
+                form={formData}
+                onNext={(data: any) => {
+                  if (!data) { setCategory(null); setStep(0); return; }
+                  setFormData(data); setStep(2);
+                }}
+                user={user}
+              />
+            )}
               {step === 2 && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price (USD)</FormLabel>
-                      <FormControl>
-                          <Input type="number" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                  <FormField
-                    control={form.control}
-                    name="original_price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Original Price (Optional)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="0.00" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          The original price when you bought it
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                <FormField
-                  control={form.control}
-                  name="category_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories && categories.length > 0 ? (
-                            categories.map((category) => (
-                              <SelectItem 
-                                key={category.id} 
-                                value={category.id}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {category.icon && (
-                                    <span className="text-lg">{category.icon}</span>
-                                  )}
-                                  <span>{category.name}</span>
-                                </div>
-                            </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="" disabled>
-                              No categories available
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        {categories.length} categories available
-                      </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <ImagesStep
+                images={images}
+                setImages={setImages}
+                onNext={() => setStep(3)}
+                onBack={() => setStep(1)}
               />
-
-                <FormField
-                  control={form.control}
-                  name="condition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Condition</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select condition" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {conditions.map((condition) => (
-                              <SelectItem key={condition} value={condition}>
-                                {condition}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              )}
-
+            )}
               {step === 3 && (
-                <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="brand"
-                  render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Brand (Optional)</FormLabel>
-                      <FormControl>
-                          <Input placeholder="e.g., Apple, Samsung" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="model"
-                  render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Model (Optional)</FormLabel>
-                      <FormControl>
-                          <Input placeholder="e.g., iPhone 13, Galaxy S21" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="year_purchased"
-                  render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Year Purchased (Optional)</FormLabel>
-                      <FormControl>
-                          <Input type="number" placeholder="e.g., 2023" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-              <FormField
-                control={form.control}
-                name="location_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                    <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a location" />
-                        </SelectTrigger>
-                    </FormControl>
-                      <SelectContent>
-                        {locations.map((location) => (
-                          <SelectItem key={location.id} value={location.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {location.name}
-                              </span>
-                              <span className="text-sm text-muted-foreground">
-                            {location.is_university_area ? (
-                                  <>
-                                    {location.university?.name || 'University Area'} - {location.city}
-                                    {location.province && `, ${location.province}`}
-                                  </>
-                            ) : (
-                                  <>
-                                    {location.city}
-                                    {location.province && `, ${location.province}`}
-                                  </>
-                            )}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Select where your item is available for pickup
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <PreviewStep
+                data={{ ...formData, images, category }}
+                onNext={() => setStep(4)}
+                onBack={() => setStep(2)}
               />
-                </div>
-              )}
-
+            )}
               {step === 4 && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="tags"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tags (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., electronics, gaming, books (comma-separated)" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Add tags to help buyers find your item
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                      name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                          <FormLabel>Color (Optional)</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Black, Silver, Gold (comma-separated)" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Enter one or more colors, separated by commas
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="size"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Size (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Small, Medium, Large (comma-separated)" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                            Enter one or more sizes, separated by commas
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                    <FormField
-                      control={form.control}
-                      name="material"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Material (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Metal, Glass, Plastic (comma-separated)" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Enter one or more materials, separated by commas
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+              <ReviewStep
+                data={{ ...formData, images, category }}
+                onSubmit={handleFinalSubmit}
+                onBack={() => setStep(3)}
+                isSubmitting={isSubmittingFinal}
+                submitError={submitError}
+                submitSuccess={submitSuccess}
+              />
+            )}
                   </div>
-
-                  <FormField
-                    control={form.control}
-                    name="images"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Product Images</FormLabel>
-                        <FormControl>
-                          <div className="space-y-4">
-                          <ImageUpload
-                            value={field.value}
-                            onChange={field.onChange}
-                            onRemove={(url) => {
-                              field.onChange(field.value.filter((current) => current !== url))
-                            }}
-                              maxFiles={8}
-                          />
-                            <div className="text-sm text-muted-foreground">
-                              <p>• Upload up to 8 high-quality images of your product</p>
-                              <p>• First image will be the main display image</p>
-                              <p>• Include images from different angles</p>
-                              <p>• Show any defects or wear clearly</p>
-                              <p>• Recommended size: 1000x1000 pixels</p>
                             </div>
                           </div>
-                        </FormControl>
-                        <FormDescription>
-                          Add multiple images to help buyers see your product better. The first image will be the main display image.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                          </div>
-                        )}
-
-              <div className="flex justify-between">
-                {step > 1 && (
-                  <Button type="button" variant="outline" onClick={prevStep}>
-                    Previous
-                  </Button>
-                )}
-                {step < 4 ? (
-                  <Button type="button" onClick={nextStep} className="ml-auto">
-                    Next
-                  </Button>
-                ) : (
-                  <Button type="submit" className="ml-auto" disabled={isSubmitting}>
-                    {isSubmitting ? "Creating..." : "Create Listing"}
-                  </Button>
-                )}
-              </div>
-            </form>
-          </Form>
-            </CardContent>
-          </Card>
-    </div>
     </ProtectedRoute>
   )
+}
+
+// Polish CategoryStep with green accent
+function CategoryStep({ categories, onSelect }: { categories: any[]; onSelect: (category: any) => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[40vh] animate-fade-in">
+      <div className="overflow-y-auto w-full max-h-[60vh] scrollbar-thin scrollbar-thumb-green-300 scrollbar-track-transparent smooth-scroll">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 w-full max-w-3xl mx-auto">
+          {categories.length === 0 ? (
+            <div className="col-span-full text-center text-muted-foreground">No categories available</div>
+          ) : (
+            categories.map((cat: any) => {
+              const Icon = cat.icon || Package;
+              return (
+                <button
+                  key={cat.name}
+                  type="button"
+                  className="flex flex-col items-center justify-center p-5 rounded-xl border border-green-200 bg-background hover:border-green-600 hover:bg-green-50 focus:border-green-600 focus:bg-green-50 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-green-600 shadow-sm min-h-[150px] transform hover:scale-105 active:scale-100 animate-fade-in"
+                  onClick={() => onSelect(cat)}
+                >
+                  <span className="mb-2">
+                    <Icon className="h-9 w-9 text-green-600 group-hover:scale-110 transition-transform" />
+                  </span>
+                  <span className="font-semibold text-base mb-1 text-green-800 group-hover:text-green-600 text-center">{cat.name}</span>
+                  <span className="text-xs text-green-700/70 text-center">{cat.description}</span>
+                </button>
+              );
+            })
+                )}
+              </div>
+    </div>
+    </div>
+  );
+}
+
+// Helper type guard for File
+function isFile(obj: any): obj is File {
+  return obj && typeof obj === 'object' && typeof obj.name === 'string' && typeof obj.size === 'number';
 }

@@ -35,6 +35,9 @@ import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, increment, addDoc, serverTimestamp, DocumentReference } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+// Import local university data
+import ZIM_UNIVERSITIES from "@/utils/schools_data";
+import { CATEGORY_CONFIG, CategoryKey, CategoryField } from "@/lib/category-config";
 
 interface ProductDetails {
   id: string
@@ -124,6 +127,29 @@ const formatDate = (date: any) => {
   if (!date) return 'Unknown date'
   if (date.toDate) return date.toDate()
   return new Date(date)
+}
+
+// Helper to get university by id
+function getUniversityById(id: string) {
+  return ZIM_UNIVERSITIES.find(u => u.id === id);
+}
+
+// Helper to map display name to config key
+function getCategoryKey(name: string): CategoryKey | undefined {
+  if (!name) return undefined;
+  const key = name.trim().toLowerCase();
+  const validKeys: CategoryKey[] = [
+    "electronics", "fashion", "home & garden", "books & media", "beauty & personal care",
+    "sports & outdoors", "toys & games", "groceries", "automotive", "health & wellness",
+    "jewelry & accessories", "office & school", "baby & kids", "pet supplies", "gifts & occasions",
+    "music & instruments", "watches", "cameras", "gaming", "health & beauty", "travel & luggage",
+    "furniture", "weddings & events", "tv & audio", "phones & tablets", "bikes & scooters",
+    "tools & diy", "bags & wallets", "shoes", "other"
+  ];
+  if (validKeys.includes(key as CategoryKey)) {
+    return key as CategoryKey;
+  }
+  return undefined;
 }
 
 export default function ProductDetailsPage() {
@@ -783,6 +809,33 @@ export default function ProductDetailsPage() {
               </CardContent>
             </Card>
 
+            {/* Product Details */}
+            <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  Product Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {(() => {
+                    const categoryKey = getCategoryKey(product.product_categories?.name);
+                    if (!categoryKey) return <span className="text-muted-foreground">No extra details for this category.</span>;
+                    return (CATEGORY_CONFIG as Record<CategoryKey, CategoryField[]>)[categoryKey as CategoryKey].map((field: CategoryField) => {
+                      const value = (product as Record<string, any>)[field.name];
+                      if (!value || ["title", "price", "description"].includes(field.name)) return null;
+                      return (
+                        <div key={field.name} className="flex flex-col">
+                          <span className="font-medium text-muted-foreground">{field.label}</span>
+                          <span className="text-base">{value}</span>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Seller Info */}
             <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader>
@@ -841,6 +894,34 @@ export default function ProductDetailsPage() {
                       )}
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* University Info */}
+            <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  University
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-2">
+                  <span className="font-medium">{
+                    (product.universities && product.universities.name !== "Unknown University")
+                      ? product.universities.name
+                      : (getUniversityById(product.users.university_id)?.name || "Unknown University")
+                  }</span>
+                  <span className="text-muted-foreground">{
+                    (product.universities && product.universities.name !== "Unknown University")
+                      ? product.universities.location
+                      : (getUniversityById(product.users.university_id)?.location || "Unknown")
+                  }</span>
+                  <Badge variant="secondary" className="w-fit mt-1">{
+                    (product.universities && product.universities.name !== "Unknown University")
+                      ? product.universities.type
+                      : (getUniversityById(product.users.university_id)?.type || "Unknown")
+                  }</Badge>
                 </div>
               </CardContent>
             </Card>
@@ -1021,7 +1102,7 @@ export default function ProductDetailsPage() {
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground mb-1">Category</h4>
                   <p className="flex items-center gap-2">
-                    {product.product_categories.icon} {product.product_categories.name}
+                    {(product.product_categories && product.product_categories.icon) ? product.product_categories.icon : null} {product.product_categories && product.product_categories.name ? product.product_categories.name : "Uncategorized"}
                   </p>
                 </div>
                 <div>
@@ -1049,7 +1130,11 @@ export default function ProductDetailsPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground mb-1">University</h4>
-                  <p>{product.universities.name}</p>
+                  <p>{
+                    (product.universities && product.universities.name !== "Unknown University")
+                      ? product.universities.name
+                      : (getUniversityById(product.users.university_id)?.name || "Unknown University")
+                  }</p>
                 </div>
               </div>
             </CardContent>

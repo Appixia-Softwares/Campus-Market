@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Star, Shield, Camera } from "lucide-react"
+import { Star, Shield, Camera, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/components/ui/use-toast"
 import { uploadFileToStorage } from '@/lib/firebase'
@@ -24,6 +24,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import ProfileForm from "@/components/profile-form";
 import { ProfileFormValues } from "@/types";
 import ZIM_UNIVERSITIES from "@/utils/schools_data";
+import DashboardSidebar from "@/components/dashboard-sidebar";
+import { DashboardHeader } from "@/components/dashboard-header";
 
 interface ProfileStats {
   totalListings: number
@@ -44,10 +46,14 @@ interface University {
 }
 
 export default function ProfilePage() {
+  const [collapsed, setCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth()
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -97,31 +103,36 @@ export default function ProfilePage() {
     }
   }
 
+  // Avatar upload handler with preview and loading state
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file || !user) return
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => setAvatarPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+    setAvatarUploading(true);
     try {
-      // setUploading(true) // Removed as per edit hint
-      const fileExt = file.name.split(".").pop()
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`
-      const avatarUrl = await uploadFileToStorage(fileName, file)
-      // Update user profile with new avatar URL (implement this logic as needed)
-      // await updateProfile({ avatar_url: avatarUrl })
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const avatarUrl = await uploadFileToStorage(fileName, file);
+      await updateDoc(doc(db, 'users', user.id), { avatar_url: avatarUrl });
+      setAvatarPreview(null);
       toast({
         title: "Avatar updated",
         description: "Your profile picture has been updated",
-      })
+      });
     } catch (error) {
-      console.error("Error uploading avatar:", error)
+      console.error("Error uploading avatar:", error);
       toast({
         title: "Error",
         description: "Failed to upload avatar",
         variant: "destructive",
-      })
+      });
     } finally {
-      // setUploading(false) // Removed as per edit hint
+      setAvatarUploading(false);
     }
-  }
+  };
 
   const requestVerification = async () => {
     try {
@@ -167,6 +178,28 @@ export default function ProfilePage() {
   }
 
   return (
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* Sidebar: overlay on mobile, collapsible on desktop */}
+      {/* Desktop sidebar */}
+      <div className={`hidden md:block transition-all duration-300 h-full ${collapsed ? 'w-16' : 'w-64'} flex-shrink-0 ${collapsed ? '' : 'bg-background border-r'}`}>
+        <DashboardSidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} isMobile={false} />
+      </div>
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+          {/* Sidebar */}
+          <div className="relative w-64 h-full bg-background border-r shadow-lg">
+            <DashboardSidebar collapsed={false} onToggle={() => setSidebarOpen(false)} isMobile={true} />
+          </div>
+        </div>
+      )}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <DashboardHeader onMobileMenu={() => setSidebarOpen(true)} />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
+          {/* Profile content below */}
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -175,7 +208,7 @@ export default function ProfilePage() {
         </div>
         <Button
           variant={isEditing ? "default" : "outline"}
-          onClick={() => setIsEditing(true)}
+                onClick={() => setIsEditing(true)}
           disabled={saving}
         >
           {saving ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
@@ -183,20 +216,30 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Profile Overview */}
-        <Card className="md:col-span-1">
-          <CardHeader className="text-center">
-            <div className="relative mx-auto">
-              <Avatar className="h-24 w-24">
+              {/* Modern Avatar Card with Upload */}
+              <Card className="md:col-span-1 flex flex-col items-center py-8 bg-gradient-to-b from-background to-muted/60 shadow-lg">
+                <div className="relative w-32 h-32 mb-4">
+                  <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                    {avatarUploading ? (
+                      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    ) : avatarPreview ? (
+                      <img
+                        src={avatarPreview}
+                        alt="Avatar preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Avatar className="h-32 w-32">
                 <AvatarImage src={user?.avatar_url || "/placeholder.svg"} />
-                <AvatarFallback className="text-lg">
+                        <AvatarFallback className="text-3xl">
                   {(user?.full_name || user?.email || "U")
                     .split(" ")
                     .map((n: string) => n[0])
                     .join("")}
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute -bottom-2 -right-2">
+                    )}
+                  </div>
                 <input
                   type="file"
                   accept="image/*"
@@ -204,80 +247,17 @@ export default function ProfilePage() {
                   className="hidden"
                   id="avatar-upload"
                 />
-                <label htmlFor="avatar-upload">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-8 w-8 rounded-full cursor-pointer"
-                    // disabled={uploading} // Removed as per edit hint
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:bg-primary/90 transition-colors shadow-lg border-2 border-white"
                   >
-                    {/* {uploading ? ( // Removed as per edit hint
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    ) : ( */}
-                      <Camera className="h-4 w-4" />
-                    {/* )} */}
-                  </Button>
+                    <Camera className="h-5 w-5" />
                 </label>
-              </div>
-            </div>
-            <div>
-              <CardTitle className="flex items-center justify-center gap-2">
-                {user?.full_name || user?.email?.split("@")[0] || "User"}
-                {user?.verified && (
-                  <Badge variant="secondary" className="text-xs">
-                    <Shield className="h-3 w-3 mr-1" />
-                    Verified
-                  </Badge>
-                )}
-              </CardTitle>
-              {/* University display in profile overview */}
-              <CardDescription>
-                {(() => {
-                  if (!user?.university_id || user.university_id === 'none') return 'No University Selected';
-                  const uni = ZIM_UNIVERSITIES.find(u => u.id === user.university_id);
-                  return uni ? uni.name + (uni.location ? ` (${uni.location})` : '') : 'No University Selected';
-                })()}
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* stats && ( // Removed as per edit hint
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Rating</span>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">
-                      {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "No ratings"}
-                    </span>
-                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Total Listings</span>
-                  <span className="font-medium">{stats.totalListings}</span>
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold">Profile Photo</h3>
+                  <p className="text-xs text-muted-foreground">Click the camera to upload a new photo</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Successful Sales</span>
-                  <span className="font-medium">{stats.totalSales}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Total Views</span>
-                  <span className="font-medium">{stats.totalViews}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Member Since</span>
-                  <span className="font-medium">
-                    {typeof stats.joinDate === 'string' && stats.joinDate
-                      ? new Date(stats.joinDate).toLocaleDateString("en-US", {
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : ""}
-                  </span>
-                </div>
-              </>
-            ) */}
-          </CardContent>
         </Card>
 
         {/* Profile Details */}
@@ -301,8 +281,8 @@ export default function ProfilePage() {
                       <Label htmlFor="fullName">Full Name</Label>
                       <Input
                         id="fullName"
-                        value={user?.full_name || ""}
-                        disabled className="bg-muted"
+                              value={user?.full_name || ""}
+                              disabled className="bg-muted"
                       />
                     </div>
                     <div className="space-y-2">
@@ -316,8 +296,8 @@ export default function ProfilePage() {
                       <Label htmlFor="phone">Phone Number</Label>
                       <Input
                         id="phone"
-                        value={user?.phone || ""}
-                        disabled className="bg-muted"
+                              value={user?.phone || ""}
+                              disabled className="bg-muted"
                         placeholder="+263 77 123 4567"
                       />
                     </div>
@@ -325,8 +305,8 @@ export default function ProfilePage() {
                       <Label htmlFor="location">Location</Label>
                       <Input
                         id="location"
-                        value={user?.location || ""}
-                        disabled className="bg-muted"
+                              value={user?.location || ""}
+                              disabled className="bg-muted"
                         placeholder="Harare, Zimbabwe"
                       />
                     </div>
@@ -334,21 +314,21 @@ export default function ProfilePage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="university">University</Label>
-                    <div className="bg-muted rounded px-3 py-2 min-h-[40px] flex items-center">
-                      {(() => {
-                        if (!user?.university_id || user.university_id === 'none') return 'No University Selected';
-                        const uni = ZIM_UNIVERSITIES.find(u => u.id === user.university_id);
-                        return uni ? uni.name + (uni.location ? ` (${uni.location})` : '') : 'No University Selected';
-                      })()}
-                    </div>
+                          <div className="bg-muted rounded px-3 py-2 min-h-[40px] flex items-center">
+                            {(() => {
+                              if (!user?.university_id || user.university_id === 'none') return 'No University Selected';
+                              const uni = ZIM_UNIVERSITIES.find(u => u.id === user.university_id);
+                              return uni ? uni.name + (uni.location ? ` (${uni.location})` : '') : 'No University Selected';
+                            })()}
+                          </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="bio">Bio</Label>
                     <Textarea
                       id="bio"
-                      value={user?.bio || ""}
-                      disabled className="bg-muted"
+                            value={user?.bio || ""}
+                            disabled className="bg-muted"
                       rows={3}
                       placeholder="Tell others about yourself..."
                     />
@@ -364,18 +344,18 @@ export default function ProfilePage() {
                   <CardDescription>Choose what notifications you want to receive</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Notification preferences toggles */}
+                        {/* Notification preferences toggles */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Email Notifications</Label>
                       <p className="text-sm text-muted-foreground">Receive notifications via email</p>
                     </div>
                     <Switch
-                      checked={user?.email_notifications ?? false}
-                      onCheckedChange={async (checked) => {
-                        if (!user) return;
-                        await updateDoc(doc(db, 'users', user.id), { email_notifications: checked });
-                      }}
+                            checked={user?.email_notifications ?? false}
+                            onCheckedChange={async (checked) => {
+                              if (!user) return;
+                              await updateDoc(doc(db, 'users', user.id), { email_notifications: checked });
+                            }}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -384,11 +364,11 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">Receive push notifications</p>
                     </div>
                     <Switch
-                      checked={user?.push_notifications ?? false}
-                      onCheckedChange={async (checked) => {
-                        if (!user) return;
-                        await updateDoc(doc(db, 'users', user.id), { push_notifications: checked });
-                      }}
+                            checked={user?.push_notifications ?? false}
+                            onCheckedChange={async (checked) => {
+                              if (!user) return;
+                              await updateDoc(doc(db, 'users', user.id), { push_notifications: checked });
+                            }}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -397,11 +377,11 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">Get notified of new messages</p>
                     </div>
                     <Switch
-                      checked={user?.message_notifications ?? false}
-                      onCheckedChange={async (checked) => {
-                        if (!user) return;
-                        await updateDoc(doc(db, 'users', user.id), { message_notifications: checked });
-                      }}
+                            checked={user?.message_notifications ?? false}
+                            onCheckedChange={async (checked) => {
+                              if (!user) return;
+                              await updateDoc(doc(db, 'users', user.id), { message_notifications: checked });
+                            }}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -410,11 +390,11 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">Receive promotional content</p>
                     </div>
                     <Switch
-                      checked={user?.marketing_emails ?? false}
-                      onCheckedChange={async (checked) => {
-                        if (!user) return;
-                        await updateDoc(doc(db, 'users', user.id), { marketing_emails: checked });
-                      }}
+                            checked={user?.marketing_emails ?? false}
+                            onCheckedChange={async (checked) => {
+                              if (!user) return;
+                              await updateDoc(doc(db, 'users', user.id), { marketing_emails: checked });
+                            }}
                     />
                   </div>
                 </CardContent>
@@ -426,18 +406,18 @@ export default function ProfilePage() {
                   <CardDescription>Control who can see your information</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Privacy settings toggles */}
+                        {/* Privacy settings toggles */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Profile Visibility</Label>
                       <p className="text-sm text-muted-foreground">Make your profile visible to other users</p>
                     </div>
                     <Switch
-                      checked={user?.profile_visible ?? true}
-                      onCheckedChange={async (checked) => {
-                        if (!user) return;
-                        await updateDoc(doc(db, 'users', user.id), { profile_visible: checked });
-                      }}
+                            checked={user?.profile_visible ?? true}
+                            onCheckedChange={async (checked) => {
+                              if (!user) return;
+                              await updateDoc(doc(db, 'users', user.id), { profile_visible: checked });
+                            }}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -446,11 +426,11 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">Let others see when you're online</p>
                     </div>
                     <Switch
-                      checked={user?.show_online_status ?? true}
-                      onCheckedChange={async (checked) => {
-                        if (!user) return;
-                        await updateDoc(doc(db, 'users', user.id), { show_online_status: checked });
-                      }}
+                            checked={user?.show_online_status ?? true}
+                            onCheckedChange={async (checked) => {
+                              if (!user) return;
+                              await updateDoc(doc(db, 'users', user.id), { show_online_status: checked });
+                            }}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -459,11 +439,11 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">Display your contact information</p>
                     </div>
                     <Switch
-                      checked={user?.show_contact_info ?? false}
-                      onCheckedChange={async (checked) => {
-                        if (!user) return;
-                        await updateDoc(doc(db, 'users', user.id), { show_contact_info: checked });
-                      }}
+                            checked={user?.show_contact_info ?? false}
+                            onCheckedChange={async (checked) => {
+                              if (!user) return;
+                              await updateDoc(doc(db, 'users', user.id), { show_contact_info: checked });
+                            }}
                     />
                   </div>
                 </CardContent>
@@ -518,13 +498,16 @@ export default function ProfilePage() {
             </TabsContent>
           </Tabs>
         </div>
+            </div>
+            <Dialog open={isEditing} onOpenChange={setIsEditing}>
+              <DialogContent className="max-w-2xl p-0">
+                {/* ProfileForm expects onSubmit to receive ProfileFormValues */}
+                <ProfileForm onSubmit={handleProfileSave} />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </main>
       </div>
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="max-w-2xl p-0">
-          {/* ProfileForm expects onSubmit to receive ProfileFormValues */}
-          <ProfileForm onSubmit={handleProfileSave} />
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

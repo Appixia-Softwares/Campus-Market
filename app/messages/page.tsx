@@ -14,7 +14,7 @@ import { formatDistanceToNow } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, addDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, updateDoc, getDocs, query, where, addDoc, onSnapshot, serverTimestamp, orderBy } from 'firebase/firestore';
 
 interface Conversation {
   id: string
@@ -72,16 +72,61 @@ export default function MessagesPage() {
     }
   }, [selectedConversation])
 
+  // --- Firestore Conversation & Message Logic ---
   const fetchConversations = async () => {
     if (!user) return
-
+    setLoading(true)
     try {
-      setLoading(true)
-      // Replace supabase logic with Firestore logic
-      // ... existing code ...
+      // Query conversations where user is a participant
+      const q = query(
+        collection(db, 'conversations'),
+        where('participants', 'array-contains', user.id)
+      )
+      const snapshot = await getDocs(q)
+      const convs: Conversation[] = await Promise.all(snapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data()
+        // Find the other participant
+        const otherUserId = data.participants.find((id: string) => id !== user.id)
+        const otherUserDoc = await getDoc(doc(db, 'users', otherUserId))
+        const otherUser = otherUserDoc.exists() ? otherUserDoc.data() : { full_name: 'Unknown', avatar_url: null, whatsapp_number: null }
+        // Fetch product if exists
+        let product = null
+        if (data.product_id) {
+          const productDoc = await getDoc(doc(db, 'products', data.product_id))
+          if (productDoc.exists()) {
+            const prodData = productDoc.data()
+            const imagesQuery = query(collection(db, 'product_images'), where('product_id', '==', data.product_id))
+            const imagesSnap = await getDocs(imagesQuery)
+            const images = imagesSnap.docs.map(img => img.data())
+            product = { id: productDoc.id, title: prodData.title, price: prodData.price, product_images: images }
+          }
+        }
+        // Count unread messages
+        const messagesQuery = query(collection(db, 'messages'), where('conversation_id', '==', docSnap.id), where('read', '==', false), where('sender_id', '!=', user.id))
+        const unreadSnap = await getDocs(messagesQuery)
+        return {
+          id: docSnap.id,
+          participant_1_id: data.participant_1_id,
+          participant_2_id: data.participant_2_id,
+          product_id: data.product_id || null,
+          last_message: data.last_message || null,
+          last_message_time: data.last_message_time || null,
+          unread_count: unreadSnap.size,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          other_user: {
+            id: otherUserId,
+            full_name: otherUser.full_name,
+            avatar_url: otherUser.avatar_url,
+            whatsapp_number: otherUser.whatsapp_number || null,
+          },
+          products: product,
+        }
+      }))
+      setConversations(convs.sort((a, b) => (b.last_message_time || '').localeCompare(a.last_message_time || '')))
     } catch (error) {
-      console.error("Error fetching conversations:", error)
-      toast.error("Failed to load conversations")
+      console.error('Error fetching conversations:', error)
+      toast.error('Failed to load conversations')
     } finally {
       setLoading(false)
     }
@@ -89,35 +134,53 @@ export default function MessagesPage() {
 
   const fetchMessages = async (conversationId: string) => {
     try {
-      // Replace supabase logic with Firestore logic
-      // ... existing code ...
+      // Listen for live updates
+      const q = query(collection(db, 'messages'), where('conversation_id', '==', conversationId), orderBy('created_at', 'asc'))
+      const unsub = onSnapshot(q, (snapshot) => {
+        setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Message))
+      })
+      return () => unsub()
     } catch (error) {
-      console.error("Error fetching messages:", error)
+      console.error('Error fetching messages:', error)
     }
   }
 
   const markAsRead = async (conversationId: string) => {
     if (!user) return
-
     try {
-      // Replace supabase logic with Firestore logic
-      // ... existing code ...
+      // Mark all unread messages in this conversation as read
+      const q = query(collection(db, 'messages'), where('conversation_id', '==', conversationId), where('read', '==', false), where('sender_id', '!=', user.id))
+      const snap = await getDocs(q)
+      snap.forEach(async (docSnap) => {
+        await updateDoc(doc(db, 'messages', docSnap.id), { read: true })
+      })
     } catch (error) {
-      console.error("Error marking messages as read:", error)
+      console.error('Error marking messages as read:', error)
     }
   }
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !user) return
-
     setSendingMessage(true)
-
     try {
-      // Replace supabase logic with Firestore logic
-      // ... existing code ...
+      // Add message to Firestore
+      await addDoc(collection(db, 'messages'), {
+        conversation_id: selectedConversation.id,
+        sender_id: user.id,
+        content: newMessage.trim(),
+        read: false,
+        created_at: new Date().toISOString(),
+      })
+      // Update conversation last message
+      await updateDoc(doc(db, 'conversations', selectedConversation.id), {
+        last_message: newMessage.trim(),
+        last_message_time: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      setNewMessage("")
     } catch (error) {
-      console.error("Error sending message:", error)
-      toast.error("Failed to send message")
+      console.error('Error sending message:', error)
+      toast.error('Failed to send message')
     } finally {
       setSendingMessage(false)
     }

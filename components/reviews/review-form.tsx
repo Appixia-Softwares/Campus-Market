@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Text } from "@/components/themed"
 import RatingStars from "./rating-stars"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import Colors from "@/constants/Colors"
@@ -30,15 +29,15 @@ export default function ReviewForm({ onSubmit, isSubmitting, className }: Review
 
   return (
     <div className={cn("bg-white rounded-lg p-4 shadow-sm", className)}>
-      <Text className="text-lg font-bold mb-4">Write a Review</Text>
+      <span className="text-lg font-bold mb-4 block">Write a Review</span>
 
       <div className="mb-4">
-        <Text className="text-sm font-bold mb-2">Rating</Text>
+        <span className="text-sm font-bold mb-2 block">Rating</span>
         <RatingStars rating={rating} size={30} interactive onRatingChange={setRating} />
       </div>
 
       <div className="mb-4">
-        <Text className="text-sm font-bold mb-2">Comment (Optional)</Text>
+        <span className="text-sm font-bold mb-2 block">Comment (Optional)</span>
         <Textarea
           placeholder="Share your experience..."
           value={comment}

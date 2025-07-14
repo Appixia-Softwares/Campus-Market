@@ -2,16 +2,18 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Heart, MessageSquare, TrendingUp, BookOpen, Laptop, Home, Dumbbell } from "lucide-react"
+import { Plus, Heart, MessageSquare, TrendingUp, BookOpen, Laptop, Home, Dumbbell, Rocket, Flame } from "lucide-react";
+import { CATEGORY_META } from "@/lib/category-config";
 import Link from "next/link"
 import { motion } from "framer-motion"
 
-const QUICK_CATEGORIES = [
-  { name: "Textbooks", icon: BookOpen, color: "bg-blue-500", href: "/marketplace?category=textbooks" },
-  { name: "Electronics", icon: Laptop, color: "bg-purple-500", href: "/marketplace?category=electronics" },
-  { name: "Furniture", icon: Home, color: "bg-green-500", href: "/marketplace?category=furniture" },
-  { name: "Sports", icon: Dumbbell, color: "bg-orange-500", href: "/marketplace?category=sports" },
-]
+// Use CATEGORY_META for dynamic popular categories (first 4 as example)
+const QUICK_CATEGORIES = CATEGORY_META.slice(0, 4).map(cat => ({
+  name: cat.label,
+  icon: cat.icon,
+  color: "bg-primary",
+  href: `/marketplace?category=${encodeURIComponent(cat.key)}`,
+}));
 
 const QUICK_ACTIONS = [
   {
@@ -52,7 +54,9 @@ export function QuickActions() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Quick Actions</h3>
-            <Badge variant="secondary">🚀 Get Started</Badge>
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <Rocket className="h-3 w-3" /> Get Started
+            </Badge>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {QUICK_ACTIONS.map((action, index) => (
@@ -62,8 +66,8 @@ export function QuickActions() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Link href={action.href}>
-                  <Card className="hover:shadow-md transition-all duration-300 group cursor-pointer border-0 bg-white/80 backdrop-blur-sm">
+                <Link href={action.href} aria-label={action.name}>
+                  <Card className="hover:shadow-lg hover:scale-[1.03] active:scale-95 transition-all duration-300 group cursor-pointer border-0 bg-white/80 backdrop-blur-sm">
                     <CardContent className="p-4 text-center">
                       <div
                         className={`w-12 h-12 ${action.color} rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}
@@ -86,7 +90,9 @@ export function QuickActions() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Popular Categories</h3>
-            <Badge variant="secondary">🔥 Hot</Badge>
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <Flame className="h-3 w-3 text-orange-500" /> Hot
+            </Badge>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {QUICK_CATEGORIES.map((category, index) => (
@@ -96,13 +102,13 @@ export function QuickActions() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Link href={category.href}>
-                  <Card className="hover:shadow-md transition-all duration-300 group cursor-pointer border-0 bg-white/80 backdrop-blur-sm">
+                <Link href={category.href} aria-label={category.name}>
+                  <Card className="hover:shadow-lg hover:scale-[1.03] active:scale-95 transition-all duration-300 group cursor-pointer border-0 bg-white/80 backdrop-blur-sm">
                     <CardContent className="p-4 text-center">
                       <div
                         className={`w-12 h-12 ${category.color} rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}
                       >
-                        <category.icon className="h-6 w-6 text-white" />
+                        {category.icon && <category.icon className="h-6 w-6 text-white" />}
                       </div>
                       <h4 className="font-medium">{category.name}</h4>
                     </CardContent>
