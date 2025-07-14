@@ -142,15 +142,15 @@ export default function AccommodationList({ listings, isLoading, view = 'grid' }
                 </Badge>
               )}
               {user && (
-                <Button
+              <Button
                   variant={favorites.includes(listing.id) ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => toggleFavorite(listing.id)}
+                size="icon"
+                onClick={() => toggleFavorite(listing.id)}
                   aria-label={favorites.includes(listing.id) ? "Unfavourite" : "Favourite"}
                   className="ml-2"
-                >
+              >
                   <Heart className={`h-5 w-5 ${favorites.includes(listing.id) ? 'fill-red-500 text-red-500' : ''}`} />
-                </Button>
+              </Button>
               )}
             </div>
             <div className="p-4 md:w-2/3 flex flex-col">

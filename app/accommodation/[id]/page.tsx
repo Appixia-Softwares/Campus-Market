@@ -191,11 +191,11 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                             <div className="mt-8 flex items-center gap-4 p-4 bg-muted rounded-lg shadow-sm">
                               <div className="flex-shrink-0">
                                 {property.seller.avatar_url ? (
-                                  <img
+                              <img
                                     src={property.seller.avatar_url}
                                     alt={property.seller.full_name || property.seller.email}
                                     className="h-14 w-14 rounded-full object-cover border-2 border-primary shadow"
-                                  />
+                              />
                                 ) : (
                                   <div className="h-14 w-14 rounded-full flex items-center justify-center bg-primary text-white text-2xl font-bold border-2 border-primary shadow">
                                     {(property.seller.full_name || property.seller.email || "U").charAt(0).toUpperCase()}

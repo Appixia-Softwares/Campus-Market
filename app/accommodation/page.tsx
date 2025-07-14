@@ -128,9 +128,9 @@ export default function AccommodationPage() {
             </Button>
             <Button asChild>
               <Link href="/accommodation/sell">+ New Listing</Link>
-            </Button>
-          </div>
-        </div>
+                    </Button>
+                  </div>
+                </div>
         {/* Hero/Header Section */}
         <div className="relative bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-xl p-8 md:p-12 shadow-xl overflow-hidden mb-8 mt-8">
           <div className="flex flex-col gap-4">
@@ -141,7 +141,7 @@ export default function AccommodationPage() {
               <span className="flex items-center gap-1 bg-black/10 px-3 py-1 rounded-full text-sm font-medium">
                 <GraduationCap className="h-4 w-4 text-green-900" /> For Students
               </span>
-            </div>
+              </div>
             <h1 className="text-4xl md:text-5xl font-extrabold text-black drop-shadow-lg mb-2">
               Find Accommodation
             </h1>

@@ -282,7 +282,7 @@ export default function SellPage() {
                             type={field.type}
                           />
                         ))}
-                      </div>
+            </div>
                   )}
             <div className="grid grid-cols-2 gap-4">
               <FormField
