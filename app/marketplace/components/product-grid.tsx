@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Heart, MapPin, Clock, Eye, Truck, MessageCircle, Share2, MoreVertical } from "lucide-react"
+import { Heart, MapPin, Clock, Eye, Truck, MessageCircle, Share2, MoreVertical, CheckCircle2 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
@@ -349,7 +349,10 @@ export function ProductGrid({
                       </Avatar>
                       <span className="text-sm text-primary font-medium">{product.users?.full_name}</span>
                       {product.users?.verified && (
-                        <Badge variant="outline" className="text-xs px-1 border-green-400 text-green-600 bg-green-50">✓</Badge>
+                        <Badge variant="outline" className="text-xs px-1 border-green-400 text-green-600 bg-green-50 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Verified
+                        </Badge>
                       )}
                     </div>
 

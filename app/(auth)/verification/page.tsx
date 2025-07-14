@@ -13,9 +13,8 @@ import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  Shield,
+  CheckCircle2,
   Upload,
-  CheckCircle,
   Clock,
   XCircle,
   Camera,
@@ -273,7 +272,7 @@ export default function VerificationPage() {
       case "pending":
         return { icon: Clock, color: "text-yellow-500", text: "Under Review" }
       case "approved":
-        return { icon: CheckCircle, color: "text-green-500", text: "Verified" }
+        return { icon: CheckCircle2, color: "text-green-500", text: "Verified" }
       case "rejected":
         return { icon: XCircle, color: "text-red-500", text: "Rejected" }
       default:
@@ -289,7 +288,7 @@ export default function VerificationPage() {
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2">
-            <Shield className="h-8 w-8 text-primary" />
+            <CheckCircle2 className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold">Account Verification</h1>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -320,7 +319,7 @@ export default function VerificationPage() {
             <TabsTrigger value="email" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Email
-              {user?.email_verified && <CheckCircle className="h-4 w-4 text-green-500" />}
+              {user?.email_verified && <CheckCircle2 className="h-4 w-4 text-green-500" />}
             </TabsTrigger>
           </TabsList>
 
@@ -332,8 +331,8 @@ export default function VerificationPage() {
                   <Mail className="h-5 w-5" />
                   Email Verification
                   {user?.email_verified && (
-                    <Badge variant="outline" className="ml-auto">
-                      <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                    <Badge variant="outline" className="ml-auto flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 mr-1 text-green-500" />
                       Verified
                     </Badge>
                   )}
@@ -352,7 +351,7 @@ export default function VerificationPage() {
                 )}
                 {user?.email_verified ? (
                   <Alert>
-                    <CheckCircle className="h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4" />
                     <AlertDescription>Your email address {user.email} has been verified!</AlertDescription>
                   </Alert>
                 ) : (

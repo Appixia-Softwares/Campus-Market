@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowRight, ShoppingBag } from "lucide-react"
+import { ArrowRight, ShoppingBag, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -114,7 +114,8 @@ export function ProductShowcase() {
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="font-semibold line-clamp-1 text-sm">{product.title}</h4>
                     {product.users.verified && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
                         Verified
                       </Badge>
                     )}

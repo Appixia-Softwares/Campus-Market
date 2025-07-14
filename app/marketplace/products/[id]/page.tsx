@@ -28,6 +28,7 @@ import {
   Shield,
   CheckCircle,
   Copy,
+  CheckCircle2,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
@@ -859,8 +860,8 @@ export default function ProductDetailsPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-lg">{product.users.full_name}</h3>
                       {product.users.verified && (
-                        <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/20">
-                          <CheckCircle className="h-3 w-3 mr-1" />
+                        <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/20 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
                           Verified
                         </Badge>
                       )}

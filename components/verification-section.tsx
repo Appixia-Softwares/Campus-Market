@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Shield, CheckCircle, BadgeCheck } from "lucide-react"
+import { CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
@@ -31,7 +31,7 @@ export default function VerificationSection() {
           transition={{ duration: 0.5 }}
         >
           <div className="inline-flex items-center rounded-full border border-green-200 dark:border-green-800 px-4 py-1 text-sm">
-            <Shield className="mr-1 h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="mr-1 h-3.5 w-3.5 text-green-600 dark:text-green-400" />
             <span className="text-green-600 dark:text-green-400">Secure & Trusted</span>
           </div>
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
@@ -56,7 +56,7 @@ export default function VerificationSection() {
                 transition={{ delay: 0.1 * index, duration: 0.5 }}
               >
                 <div className="mr-2 rounded-full bg-green-100 dark:bg-green-900/50 p-1">
-                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
                 <span>{item}</span>
               </motion.li>
@@ -67,7 +67,7 @@ export default function VerificationSection() {
               <Button className="gap-2 relative overflow-hidden group">
                 <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                 <span className="relative z-10">Get Verified</span>
-                <BadgeCheck className="h-4 w-4 relative z-10" />
+                <CheckCircle2 className="h-4 w-4 relative z-10" />
               </Button>
             </Link>
           </div>
@@ -104,7 +104,7 @@ export default function VerificationSection() {
                 repeatType: "reverse",
               }}
             >
-              <BadgeCheck className="h-6 w-6 text-green-500" />
+              <CheckCircle2 className="h-6 w-6 text-green-500" />
               <span className="font-medium">Verified Student</span>
             </motion.div>
 
@@ -138,7 +138,7 @@ export default function VerificationSection() {
               <div className="mt-4 h-2 bg-green-200 dark:bg-green-800 rounded-full"></div>
               <div className="mt-2 h-2 bg-green-200 dark:bg-green-800 rounded-full w-3/4"></div>
               <div className="absolute bottom-3 right-3">
-                <BadgeCheck className="h-5 w-5 text-green-500" />
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
               </div>
             </motion.div>
           </div>

@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Building,
   Calendar,
-  CheckCircle,
+  CheckCircle2,
   Clock,
   ExternalLink,
   Heart,
@@ -97,8 +97,8 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
                   {property.verified && (
-                    <Badge variant="secondary" className="bg-primary text-primary-foreground">
-                      <CheckCircle className="h-3 w-3 mr-1" /> Verified
+                    <Badge variant="secondary" className="bg-primary text-primary-foreground flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 mr-1" /> Verified
                     </Badge>
                   )}
                   <Badge variant="outline">{property.propertyType === "other" ? property.customPropertyType : property.propertyType}</Badge>

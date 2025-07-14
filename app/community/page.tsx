@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Users, MessageSquare, Calendar, MapPin, Search, Star, UserPlus, Shield } from "lucide-react"
+import { Users, MessageSquare, Calendar, MapPin, Search, Star, UserPlus, CheckCircle2 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/components/ui/use-toast"
 import { formatDistanceToNow } from "date-fns"
@@ -373,7 +373,7 @@ export default function CommunityPage() {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{member.full_name}</p>
-                            {member.verified && <Shield className="h-4 w-4 text-blue-600" />}
+                            {member.verified && <CheckCircle2 className="h-4 w-4 text-blue-600" />}
                           </div>
                           <p className="text-sm text-muted-foreground">
                             {member.university?.name || "University not specified"}
