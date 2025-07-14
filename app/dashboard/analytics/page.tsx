@@ -1,3 +1,5 @@
+"use client"
+
 import { DollarSign, ArrowUpRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
