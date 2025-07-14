@@ -758,7 +758,7 @@ export default function MessagesPage() {
                 </CardHeader>
                 {/* Messages */}
                 <CardContent className="flex-1 p-4 overflow-y-auto max-h-[calc(100vh-320px)] bg-gradient-to-br from-gray-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative">
-                  <div className="absolute inset-0 pointer-events-none bg-[url('/chat-bg.svg')] opacity-10" />
+                  <div className="absolute inset-0 pointer-events-none bg-[url('/chat-bg1.svg')] opacity-10" />
                   <div className="space-y-4 relative z-10">
                     {messages.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground flex flex-col items-center">
