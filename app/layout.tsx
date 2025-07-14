@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "sonner"
 import { SessionProvider } from '@/providers/session-provider'
 import QueryProvider from "@/providers/query-provider"
+import BottomNavigation from "@/components/BottomNavigation"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -64,6 +65,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
               {children}
+              {/* Show bottom navigation only on mobile */}
+              <BottomNavigation />
               <Toaster />
               <SonnerToaster />
             </ThemeProvider>
