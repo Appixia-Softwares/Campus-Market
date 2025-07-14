@@ -178,11 +178,11 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
+    <div className="flex min-h-screen w-full overflow-hidden">
       {/* Sidebar: overlay on mobile, collapsible on desktop */}
       {/* Desktop sidebar */}
-      <div className={`hidden md:block transition-all duration-300 h-full ${collapsed ? 'w-16' : 'w-64'} flex-shrink-0 ${collapsed ? '' : 'bg-background border-r'}`}>
-        <DashboardSidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} isMobile={false} />
+      <div className="hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r">
+        <DashboardSidebar />
       </div>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -191,35 +191,35 @@ export default function ProfilePage() {
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           {/* Sidebar */}
           <div className="relative w-64 h-full bg-background border-r shadow-lg">
-            <DashboardSidebar collapsed={false} onToggle={() => setSidebarOpen(false)} isMobile={true} />
+            <DashboardSidebar isMobile />
           </div>
         </div>
       )}
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader onMobileMenu={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
+        <main className="flex-1 overflow-y-auto overflow-x-auto p-2 md:p-6 bg-background">
           {/* Profile content below */}
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-          <p className="text-muted-foreground">Manage your account settings and preferences</p>
-        </div>
-        <Button
-          variant={isEditing ? "default" : "outline"}
+          <div className="space-y-4 md:space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-0">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Profile</h1>
+                <p className="text-muted-foreground text-sm md:text-base">Manage your account settings and preferences</p>
+              </div>
+              <Button
+                variant={isEditing ? "default" : "outline"}
                 onClick={() => setIsEditing(true)}
-          disabled={saving}
-        >
-          {saving ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
-        </Button>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
+                disabled={saving}
+                className="w-full sm:w-auto"
+              >
+                {saving ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
+              </Button>
+            </div>
+            <div className="grid gap-4 md:gap-6 md:grid-cols-3">
               {/* Modern Avatar Card with Upload */}
-              <Card className="md:col-span-1 flex flex-col items-center py-8 bg-gradient-to-b from-background to-muted/60 shadow-lg">
-                <div className="relative w-32 h-32 mb-4">
-                  <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+              <Card className="md:col-span-1 flex flex-col items-center py-6 md:py-8 bg-gradient-to-b from-background to-muted/60 shadow-lg">
+                <div className="relative w-24 h-24 md:w-32 md:h-32 mb-4">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-muted flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
                     {avatarUploading ? (
                       <Loader2 className="h-12 w-12 animate-spin text-primary" />
                     ) : avatarPreview ? (
@@ -255,7 +255,7 @@ export default function ProfilePage() {
                 </label>
                 </div>
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold">Profile Photo</h3>
+                  <h3 className="text-base md:text-lg font-semibold">Profile Photo</h3>
                   <p className="text-xs text-muted-foreground">Click the camera to upload a new photo</p>
                 </div>
         </Card>
@@ -263,7 +263,7 @@ export default function ProfilePage() {
         {/* Profile Details */}
         <div className="md:col-span-2">
           <Tabs defaultValue="personal" className="space-y-4">
-            <TabsList>
+            <TabsList className="overflow-x-auto whitespace-nowrap">
               <TabsTrigger value="personal">Personal Info</TabsTrigger>
               <TabsTrigger value="preferences">Preferences</TabsTrigger>
               <TabsTrigger value="security">Security</TabsTrigger>
@@ -505,8 +505,8 @@ export default function ProfilePage() {
                 <ProfileForm onSubmit={handleProfileSave} />
               </DialogContent>
             </Dialog>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     </div>
   )
