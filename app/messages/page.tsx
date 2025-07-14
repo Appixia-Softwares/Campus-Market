@@ -610,85 +610,95 @@ export default function MessagesPage() {
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    {(filteredConversations as Conversation[]).map((conversation, index) => (
-                      <motion.div
-                        key={conversation.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className={`p-4 cursor-pointer flex items-center gap-3 transition-colors rounded-lg border-l-4 ${selectedConversation?.id === conversation.id ? "bg-primary/10 border-primary" : "hover:bg-muted/50 border-transparent"}`}
-                        onClick={() => setSelectedConversation(conversation)}
-                      >
-                        <div className="relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={conversation.other_user.avatar_url || undefined} />
-                            <AvatarFallback>{conversation.other_user.full_name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          {conversation.unread_count > 0 && (
-                            <Badge
-                              variant="destructive"
-                              className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center"
-                            >
-                              {conversation.unread_count}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-medium truncate">{conversation.other_user.full_name}</h4>
-                            {conversation.last_message_time && (
-                              <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(conversation.last_message_time), { addSuffix: true })}
-                              </span>
+                    {(filteredConversations as Conversation[]).map((conversation, index) => {
+                      // Find the last message for this conversation
+                      const lastMsg = messages.filter(m => m.conversation_id === conversation.id).slice(-1)[0];
+                      return (
+                        <motion.div
+                          key={conversation.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className={`p-4 cursor-pointer flex items-center gap-3 transition-colors rounded-lg border-l-4 ${selectedConversation?.id === conversation.id ? "bg-primary/10 border-primary" : "hover:bg-muted/50 border-transparent"}`}
+                          onClick={() => setSelectedConversation(conversation)}
+                        >
+                          <div className="relative">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={conversation.other_user.avatar_url || undefined} />
+                              <AvatarFallback>{conversation.other_user.full_name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            {conversation.unread_count > 0 && (
+                              <Badge
+                                variant="destructive"
+                                className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center"
+                              >
+                                {conversation.unread_count}
+                              </Badge>
                             )}
                           </div>
-                          {conversation.products && (
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="w-6 h-6 rounded overflow-hidden bg-muted">
-                                <img
-                                  src={conversation.products.product_images?.find((img) => img.is_primary)?.url || "/placeholder.svg?height=24&width=24"}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <span className="text-xs text-muted-foreground truncate">
-                                {conversation.products.title}
-                              </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-medium truncate">{conversation.other_user.full_name}</h4>
+                              {conversation.last_message_time && (
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDistanceToNow(new Date(conversation.last_message_time), { addSuffix: true })}
+                                </span>
+                              )}
                             </div>
-                          )}
-                          <p className="text-sm text-muted-foreground truncate">
-                            {conversation.last_message || "No messages yet"}
-                          </p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {conversation.other_user.whatsapp_number && (
-                              <DropdownMenuItem onClick={() => contactWhatsApp(conversation)}>
-                                <Phone className="h-4 w-4 mr-2 text-green-600" />
-                                WhatsApp
-                              </DropdownMenuItem>
+                            {conversation.products && (
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="w-6 h-6 rounded overflow-hidden bg-muted">
+                                  <img
+                                    src={conversation.products.product_images?.find((img) => img.is_primary)?.url || "/placeholder.svg?height=24&width=24"}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {conversation.products.title}
+                                </span>
+                              </div>
                             )}
-                            <DropdownMenuItem>
-                              <Star className="h-4 w-4 mr-2" />
-                              Star
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Archive className="h-4 w-4 mr-2" />
-                              Archive
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </motion.div>
-                    ))}
+                            <p className="text-sm text-muted-foreground truncate">
+                              {lastMsg?.content
+                                ? lastMsg.content
+                                : lastMsg?.audio
+                                  ? "Voice note"
+                                  : lastMsg?.attachment
+                                    ? "Attachment"
+                                    : "No messages yet"}
+                            </p>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {conversation.other_user.whatsapp_number && (
+                                <DropdownMenuItem onClick={() => contactWhatsApp(conversation)}>
+                                  <Phone className="h-4 w-4 mr-2 text-green-600" />
+                                  WhatsApp
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem>
+                                <Star className="h-4 w-4 mr-2" />
+                                Star
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Archive className="h-4 w-4 mr-2" />
+                                Archive
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
