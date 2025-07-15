@@ -19,8 +19,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { listenToSettings, updateSettings } from "@/lib/api/settings"
 import { getAllUsersRealtime, updateUser, deleteUser } from "@/lib/api/users";
 import { getAllReportsRealtime } from "@/lib/api/reports";
-import { getNotifications, createNotification, deleteNotification, markNotificationAsRead } from "@/lib/api/notifications";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+
 
 export default function AdminSettingsPage() {
   // Firestore-backed settings state
@@ -60,8 +60,9 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     let ignore = false;
     async function fetchNotifs() {
-      const { data } = await getNotifications("admin"); // Use "admin" or current admin id
-      if (!ignore) setNotifications(data);
+      const res = await fetch('/api/notifications?userId=admin');
+      const { data } = await res.json();
+      if (!ignore) setNotifications(data || []);
     }
     fetchNotifs();
     const interval = setInterval(fetchNotifs, 5000);
@@ -99,15 +100,27 @@ export default function AdminSettingsPage() {
 
   // Notification actions
   const handleMarkNotifRead = async (notifId: string) => {
-    await markNotificationAsRead(notifId);
+    await fetch('/api/notifications/mark-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: notifId }),
+    });
   };
   const handleDeleteNotif = async (notifId: string) => {
-    await deleteNotification(notifId);
-    toast({ title: "Notification Deleted" });
+    await fetch('/api/notifications/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: notifId }),
+    });
+    toast({ title: 'Notification Deleted' });
   };
   const handleSendTestNotif = async () => {
-    await createNotification({ userId: "admin", title: "Test Notification", body: "This is a test.", type: "admin", read: false });
-    toast({ title: "Test Notification Sent" });
+    await fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notification: { userId: 'admin', title: 'Test Notification', body: 'This is a test.', type: 'admin', read: false } }),
+    });
+    toast({ title: 'Test Notification Sent' });
   };
 
   if (loading) {
