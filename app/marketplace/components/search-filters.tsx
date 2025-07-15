@@ -279,7 +279,7 @@ export function SearchFilters({ onSearch, categories, universities }: SearchFilt
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Universities</SelectItem>
-                        {ZIM_UNIVERSITIES.map(u => (
+                        {universities.map(u => (
                           <SelectItem key={u.id} value={u.id}>
                             <MapPin className="h-4 w-4 mr-1 inline" /> {u.name}
                           </SelectItem>

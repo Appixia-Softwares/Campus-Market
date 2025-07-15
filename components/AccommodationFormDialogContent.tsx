@@ -1,8 +1,7 @@
 "use client"
 
-import React from "react"
+import React, { useEffect, useState } from "react"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,6 +17,7 @@ import { uploadFileToStorage } from "@/lib/firebase"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
 import confetti from "canvas-confetti"
 import { createAccommodation } from '@/services/accommodation'
+import { getUniversities } from "@/lib/get-universities";
 
 const amenitiesList = [
   "Wifi",
@@ -81,6 +81,15 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
   const { user } = useAuth()
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [universities, setUniversities] = useState([]);
+
+  useEffect(() => {
+    async function loadUnis() {
+      const unis = await getUniversities();
+      setUniversities(unis.filter(u => u.type === "university" && u.is_active !== false));
+    }
+    loadUnis();
+  }, []);
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -587,7 +596,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                           <SelectValue placeholder="Select university" />
                         </SelectTrigger>
                         <SelectContent>
-                          {ZIM_UNIVERSITIES.filter(u => u.type === "university").map(u => (
+                          {universities.map(u => (
                             <SelectItem key={u.id} value={u.id}>
                               {u.name} ({u.location})
                             </SelectItem>

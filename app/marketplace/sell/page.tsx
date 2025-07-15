@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Laptop, Shirt, Home, Book, Dumbbell, Car, Baby, Apple, Watch, Camera, Gamepad2, PawPrint, Sparkles, Briefcase, Globe, Gift, Music, FlaskConical, Wrench, Gem, BedDouble, Bike, Tv, Phone, Wallet, ShoppingBag, Package, Cake } from "lucide-react";
+import confetti from "canvas-confetti";
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -822,11 +823,12 @@ export default function SellPage() {
       }
 
       console.log("Debug - Creating product in Firebase:", newProduct)
-      const productId = await createProduct(newProduct)
+      const productRef = await createProduct(newProduct)
+      const productId = typeof productRef === 'string' ? productRef : productRef.id;
 
-        // Create product images in Firebase
+      // Create product images in Firebase
       const imageData = values.images.map((url, index) => ({
-          product_id: productId,
+        product_id: productId,
         url: url,
         alt_text: values.title,
         is_primary: index === 0,
@@ -840,9 +842,15 @@ export default function SellPage() {
         title: "Success!",
         description: "Your product has been listed successfully.",
       })
+      // Confetti animation
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
 
       // Redirect to the product page
-      router.push(`/marketplace/product/${productId}`)
+      router.push(`/marketplace/products/${productId}`)
     } catch (error: any) {
       console.error("Debug - Error creating product:", error)
         toast({
@@ -902,7 +910,8 @@ export default function SellPage() {
         }
       });
       // 3. Create product
-      const productId = await createProduct(productData as Omit<Product, 'id'>);
+      const productRef = await createProduct(productData as Omit<Product, 'id'>);
+      const productId = typeof productRef === 'string' ? productRef : productRef.id;
       // 4. Create product images
       const imageData = uploadedImages.map((url: string, index: number) => ({
         product_id: productId,
@@ -913,6 +922,12 @@ export default function SellPage() {
       }));
       await createProductImages(imageData);
       setSubmitSuccess("Your product has been listed successfully!");
+      // Confetti animation
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
       setTimeout(() => {
         router.push(`/marketplace/products/${productId}`);
       }, 1200);

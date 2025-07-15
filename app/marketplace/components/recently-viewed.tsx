@@ -16,7 +16,9 @@ export function RecentlyViewed({ products }: RecentlyViewedProps) {
   const validProducts = (products || []).filter(
     (p) => p && p.id && typeof p.price === "number" && p.title
   );
-  if (validProducts.length === 0) return null;
+  // Deduplicate by id
+  const uniqueProducts = Array.from(new Map(validProducts.map(p => [p.id, p])).values());
+  if (uniqueProducts.length === 0) return null;
 
   return (
     <Card className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-950/20 dark:to-slate-950/20 border-0">
@@ -25,7 +27,7 @@ export function RecentlyViewed({ products }: RecentlyViewedProps) {
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-gray-500" />
             Recently Viewed
-            <Badge variant="secondary">{validProducts.length} items</Badge>
+            <Badge variant="secondary">{uniqueProducts.length} items</Badge>
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/marketplace/history">
@@ -37,9 +39,9 @@ export function RecentlyViewed({ products }: RecentlyViewedProps) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {validProducts.slice(0, 6).map((product, index) => (
+          {uniqueProducts.slice(0, 6).map((product, index) => (
             <motion.div
-              key={product.id}
+              key={typeof product.id === 'string' || typeof product.id === 'number' ? product.id : `recently-viewed-${index}`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
