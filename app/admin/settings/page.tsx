@@ -20,7 +20,6 @@ import { listenToSettings, updateSettings } from "@/lib/api/settings"
 import { getAllUsersRealtime, updateUser, deleteUser } from "@/lib/api/users";
 import { getAllReportsRealtime } from "@/lib/api/reports";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { deleteNotification } from "@/lib/api/notifications"
 
 
 export default function AdminSettingsPage() {
@@ -143,7 +142,11 @@ export default function AdminSettingsPage() {
   // Notification actions with confirmation
   const handleDeleteNotifConfirmed = async () => {
     if (confirmAction?.notif) {
-      await deleteNotification(confirmAction.notif.id);
+      await fetch('/api/notifications/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: confirmAction.notif.id }),
+      });
       toast({ title: "Notification Deleted" });
       setConfirmAction(null);
     }
