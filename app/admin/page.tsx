@@ -121,6 +121,11 @@ export default function AdminPage() {
   const [orderSortDir, setOrderSortDir] = useState<'asc' | 'desc'>('desc');
   const [orderDateFrom, setOrderDateFrom] = useState('');
   const [orderDateTo, setOrderDateTo] = useState('');
+  // Admin Announcement State
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementBody, setAnnouncementBody] = useState('');
+  const [announcementLoading, setAnnouncementLoading] = useState(false);
+  const announcementTitleRef = useRef<HTMLInputElement>(null);
 
   // --- User lookup map for quick access ---
   const userMap = users.reduce<Record<string, UserWithMeta>>((acc, user) => {
@@ -333,6 +338,38 @@ export default function AdminPage() {
   const now = new Date();
   const monthKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
   const newUsersThisMonth = userGrowthData.find(d => d.month === monthKey)?.count || 0;
+
+  // Admin Announcement Handler
+  const handleSendAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAnnouncementLoading(true);
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notification: {
+            userId: null, // null for broadcast
+            type: 'admin',
+            title: announcementTitle,
+            body: announcementBody,
+            read: false,
+            createdAt: new Date(),
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast.success('Announcement sent to all users!');
+      setAnnouncementTitle('');
+      setAnnouncementBody('');
+      if (announcementTitleRef.current) announcementTitleRef.current.focus();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send announcement');
+    } finally {
+      setAnnouncementLoading(false);
+    }
+  };
 
   return (
     <div className="p-8">
@@ -706,7 +743,7 @@ export default function AdminPage() {
                         <td className="px-2 py-1">{ordersCount}</td>
                         <td className="px-2 py-1">{lastActive}</td>
                         <td className="px-2 py-1">
-                          <Link href={`/admin/users/${user.id}`}><Button size="sm" variant="outline">View Profile</Button></Link>
+                          <Link href={`/admin/users/${user.id}`}><Button size="sm" variant="outline">View</Button></Link>
                         </td>
                       </tr>
                     );
@@ -910,6 +947,33 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+      {/* Admin Announcement Form */}
+      <Card className="mb-8">
+        <form onSubmit={handleSendAnnouncement} className="p-6 flex flex-col gap-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Bell className="h-5 w-5 text-primary" />
+            Send Admin Announcement
+          </h2>
+          <input
+            ref={announcementTitleRef}
+            className="border rounded px-3 py-2"
+            placeholder="Announcement Title"
+            value={announcementTitle}
+            onChange={e => setAnnouncementTitle(e.target.value)}
+            required
+          />
+          <textarea
+            className="border rounded px-3 py-2 min-h-[80px]"
+            placeholder="Announcement Body"
+            value={announcementBody}
+            onChange={e => setAnnouncementBody(e.target.value)}
+            required
+          />
+          <Button type="submit" disabled={announcementLoading || !announcementTitle || !announcementBody}>
+            {announcementLoading ? 'Sending...' : 'Send Announcement'}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 } 
