@@ -12,9 +12,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
+import { getMessagingInstance } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useAuth } from '@/lib/auth-context';
 
 export function PushNotificationPrompt() {
   const { toast } = useToast()
+  const { user } = useAuth()
   const [isSupported, setIsSupported] = useState(false)
   const [permission, setPermission] = useState<NotificationPermission | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
@@ -53,13 +58,23 @@ export function PushNotificationPrompt() {
       setPermission(result)
 
       if (result === "granted") {
+        // Register service worker and get FCM token
+        const messaging = await getMessagingInstance()
+        if (messaging && user) {
+          // Get FCM token
+          const token = await (await import('firebase/messaging')).getToken(messaging, {
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+          })
+          if (token) {
+            // Save token to Firestore user profile
+            await updateDoc(doc(db, 'users', user.id), { fcmToken: token })
+          }
+        }
         // Show success toast
         toast({
           title: "Notifications enabled",
           description: "You'll now receive updates about your orders and messages.",
         })
-
-        // In a real app, we would register the service worker and subscribe to push notifications here
       }
     } catch (error) {
       console.error("Error enabling notifications:", error)

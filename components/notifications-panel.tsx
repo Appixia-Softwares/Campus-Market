@@ -7,150 +7,95 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Bell, Check, Trash2, MessageSquare, Calendar, CreditCard, Info } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import { useRealtime } from "@/lib/realtime-context"
 import { useAuth } from "@/lib/auth-context"
-import {
-  getNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-  deleteNotification,
-} from "@/lib/api/notifications"
 import { formatDistanceToNow } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
-
-interface Notification {
-  id: string
-  user_id: string
-  title: string
-  message: string
-  link?: string
-  type: string
-  read: boolean
-  created_at: string
-}
+import { getMessagingInstance } from '@/lib/firebase';
+import { onMessage } from 'firebase/messaging';
+import type { Notification as NotificationType } from '@/lib/types';
 
 export default function NotificationsPanel() {
   const { toast } = useToast()
   const { user } = useAuth()
-  const { subscribeToNotifications } = useRealtime()
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<NotificationType[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch notifications
+  // Foreground push handling
   useEffect(() => {
-    if (!user) return
+    let unsubscribe: (() => void) | undefined;
+    (async () => {
+      const messaging = await getMessagingInstance();
+      if (messaging) {
+        unsubscribe = onMessage(messaging, (payload) => {
+          const { title, body } = payload.notification || {};
+          toast({
+            title: title || 'New Notification',
+            description: body,
+          });
+        });
+      }
+    })();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [toast]);
 
-    const fetchNotifications = async () => {
-      setLoading(true)
-      try {
-        const { data, error } = await getNotifications(user.id)
-        if (error) throw error
-
-        setNotifications(data as Notification[])
-      } catch (error) {
-        console.error("Error fetching notifications:", error)
+  // Fetch notifications from API
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    fetch(`/api/notifications?userId=${user.id}`)
+      .then(res => res.json())
+      .then(({ data, error }) => {
+        if (error) throw error;
+        setNotifications((data as any[]).map((n) => ({
+          ...n,
+          userId: n.userId ?? n.user_id ?? null,
+          body: n.body ?? n.message ?? '',
+          createdAt: n.createdAt ? new Date(n.createdAt.seconds ? n.createdAt.seconds * 1000 : n.createdAt) : new Date(),
+        })) as NotificationType[]);
+      })
+      .catch((error) => {
         toast({
           title: "Error",
           description: "Failed to load notifications. Please try again.",
           variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchNotifications()
-  }, [user, toast])
-
-  // Subscribe to new notifications
-  useEffect(() => {
-    if (!user) return
-
-    const unsubscribe = subscribeToNotifications(user.id, (payload) => {
-      const newNotification = payload.new as Notification
-      setNotifications((prev) => [newNotification, ...prev])
-    })
-
-    return unsubscribe
-  }, [user, subscribeToNotifications])
+        });
+      })
+      .finally(() => setLoading(false));
+  }, [user, toast]);
 
   // Mark notification as read
   const handleMarkAsRead = async (id: string) => {
-    try {
-      // Optimistic update
-      setNotifications((prev) => prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif)))
-
-      const { error } = await markNotificationAsRead(id)
-      if (error) throw error
-    } catch (error) {
-      console.error("Error marking notification as read:", error)
-
-      // Revert optimistic update
-      setNotifications((prev) => prev.map((notif) => (notif.id === id ? { ...notif, read: false } : notif)))
-
-      toast({
-        title: "Error",
-        description: "Failed to update notification. Please try again.",
-        variant: "destructive",
-      })
-    }
+    if (!user) return;
+    await fetch(`/api/notifications/mark-read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, userId: user.id }),
+    });
+    setNotifications((prev) => prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif)));
   }
 
   // Mark all notifications as read
   const handleMarkAllAsRead = async () => {
-    if (!user) return
-
-    try {
-      // Optimistic update
-      setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })))
-
-      const { error } = await markAllNotificationsAsRead(user.id)
-      if (error) throw error
-
-      toast({
-        title: "Success",
-        description: "All notifications marked as read",
-      })
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error)
-
-      // Fetch fresh data to revert
-      const { data } = await getNotifications(user.id)
-      if (data) {
-        setNotifications(data as Notification[])
-      }
-
-      toast({
-        title: "Error",
-        description: "Failed to update notifications. Please try again.",
-        variant: "destructive",
-      })
-    }
+    if (!user) return;
+    await fetch(`/api/notifications/mark-all-read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id }),
+    });
+    setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
   }
 
   // Delete notification
   const handleDelete = async (id: string) => {
-    try {
-      // Optimistic update
-      setNotifications((prev) => prev.filter((notif) => notif.id !== id))
-
-      const { error } = await deleteNotification(id)
-      if (error) throw error
-    } catch (error) {
-      console.error("Error deleting notification:", error)
-
-      // Fetch fresh data to revert
-      const { data } = await getNotifications(user.id)
-      if (data) {
-        setNotifications(data as Notification[])
-      }
-
-      toast({
-        title: "Error",
-        description: "Failed to delete notification. Please try again.",
-        variant: "destructive",
-      })
-    }
+    if (!user) return;
+    await fetch(`/api/notifications/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, userId: user.id }),
+    });
+    setNotifications((prev) => prev.filter((notif) => notif.id !== id));
   }
 
   const getNotificationIcon = (type: string) => {
@@ -266,10 +211,10 @@ export default function NotificationsPanel() {
                       </Button>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">{notification.message}</p>
+                  <p className="text-sm text-muted-foreground">{notification.body}</p>
                   <div className="flex justify-between items-center mt-1">
                     <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                     </span>
                     {notification.link && (
                       <Link href={notification.link}>

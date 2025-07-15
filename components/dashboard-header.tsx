@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import NotificationsPanel from '@/components/notifications-panel';
 
 interface DashboardHeaderProps {
   onMobileMenu?: () => void;
@@ -55,17 +56,22 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
         </form>
       </div>
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-            3
-          </span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              {/* Optionally, fetch unread count via API and display here */}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-96 p-0">
+            <NotificationsPanel />
+          </DropdownMenuContent>
+        </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email} />
+                <AvatarImage src={user?.avatar_url} alt={user?.email} />
                 <AvatarFallback>
                   {user?.email?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
                 </AvatarFallback>
@@ -77,7 +83,7 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{user?.email}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {user?.user_metadata?.full_name || 'User'}
+                  {user?.full_name || 'User'}
                 </p>
               </div>
             </DropdownMenuLabel>
