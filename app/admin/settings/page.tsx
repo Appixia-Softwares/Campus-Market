@@ -20,6 +20,7 @@ import { listenToSettings, updateSettings } from "@/lib/api/settings"
 import { getAllUsersRealtime, updateUser, deleteUser } from "@/lib/api/users";
 import { getAllReportsRealtime } from "@/lib/api/reports";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { deleteNotification } from "@/lib/api/notifications"
 
 
 export default function AdminSettingsPage() {
@@ -37,6 +38,20 @@ export default function AdminSettingsPage() {
     log?: any;
     action: 'delete' | 'ban' | 'demote' | 'deleteNotif' | 'exportLogs';
   } | null>(null);
+
+  // State for dialogs
+  const [showKeysDialog, setShowKeysDialog] = useState(false);
+  const [showLogsDialog, setShowLogsDialog] = useState(false);
+
+  // Mock API keys and logs for now
+  const [apiKeys, setApiKeys] = useState([
+    { id: 'key1', value: 'sk_live_123...', created: '2024-06-01' },
+    { id: 'key2', value: 'sk_live_456...', created: '2024-06-02' },
+  ]);
+  const [auditLogs, setAuditLogs] = useState([
+    { id: 'log1', action: 'deleteUser', target: 'user123', admin: 'silver', time: '2024-06-01 10:00' },
+    { id: 'log2', action: 'banUser', target: 'user456', admin: 'silver', time: '2024-06-02 12:00' },
+  ]);
 
   useEffect(() => {
     const unsub = listenToSettings((data) => {
@@ -149,6 +164,15 @@ export default function AdminSettingsPage() {
     a.click();
     URL.revokeObjectURL(url);
     setConfirmAction(null);
+  };
+
+  // API Key actions (mocked)
+  const handleCreateKey = () => {
+    const newKey = { id: `key${apiKeys.length + 1}`, value: `sk_live_${Math.random().toString(36).slice(2, 10)}...`, created: new Date().toISOString().slice(0, 10) };
+    setApiKeys([...apiKeys, newKey]);
+  };
+  const handleRevokeKey = (id: string) => {
+    setApiKeys(apiKeys.filter(k => k.id !== id));
   };
 
   if (loading) {
@@ -365,7 +389,7 @@ export default function AdminSettingsPage() {
         </TabsContent>
         {/* Security Tab */}
         <TabsContent value="security">
-          <Card className="mb-6">
+          <Card className="mb-6 w-full">
             <CardHeader>
               <CardTitle>Security</CardTitle>
               <CardDescription>Manage security settings and policies.</CardDescription>
@@ -388,8 +412,7 @@ export default function AdminSettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              {/* Session Timeout, Login Alerts, API Key Management, Audit Logs (placeholders) */}
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-between">
                 <Label>Session Timeout</Label>
                 <Select value={settings.sessionTimeout || "30"} onValueChange={v => handleChange("sessionTimeout", v)}>
                   <SelectTrigger className="w-32">
@@ -402,23 +425,90 @@ export default function AdminSettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-between">
                 <Label>Login Alerts</Label>
                 <Switch checked={!!settings.loginAlerts} onCheckedChange={v => handleChange("loginAlerts", v)} />
               </div>
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-between">
                 <Label>API Key Management</Label>
-                <Button variant="outline" size="sm">Manage Keys</Button>
+                <Button variant="outline" size="sm" onClick={() => setShowKeysDialog(true)}>Manage Keys</Button>
               </div>
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-between">
                 <Label>Audit Logs</Label>
-                <Button variant="outline" size="sm">View Logs</Button>
+                <Button variant="outline" size="sm" onClick={() => setShowLogsDialog(true)}>View Logs</Button>
               </div>
             </CardContent>
             <CardFooter>
               <Button onClick={() => toast({ title: "Settings Saved", description: "Security settings have been saved." })}>Save</Button>
             </CardFooter>
           </Card>
+          {/* API Key Management Dialog */}
+          <Dialog open={showKeysDialog} onOpenChange={setShowKeysDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>API Key Management</DialogTitle>
+              </DialogHeader>
+              <div className="py-2">
+                <Button onClick={handleCreateKey} className="mb-2">Create New Key</Button>
+                <table className="min-w-full text-xs">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-1">Key</th>
+                      <th className="px-2 py-1">Created</th>
+                      <th className="px-2 py-1">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {apiKeys.map(key => (
+                      <tr key={key.id} className="border-b">
+                        <td className="px-2 py-1 font-mono">{key.value}</td>
+                        <td className="px-2 py-1">{key.created}</td>
+                        <td className="px-2 py-1">
+                          <Button size="sm" variant="destructive" onClick={() => handleRevokeKey(key.id)}>Revoke</Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowKeysDialog(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          {/* Audit Logs Dialog */}
+          <Dialog open={showLogsDialog} onOpenChange={setShowLogsDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Audit Logs</DialogTitle>
+              </DialogHeader>
+              <div className="py-2 max-h-96 overflow-auto">
+                <table className="min-w-full text-xs">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-1">Action</th>
+                      <th className="px-2 py-1">Target</th>
+                      <th className="px-2 py-1">Admin</th>
+                      <th className="px-2 py-1">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditLogs.map(log => (
+                      <tr key={log.id} className="border-b">
+                        <td className="px-2 py-1">{log.action}</td>
+                        <td className="px-2 py-1">{log.target}</td>
+                        <td className="px-2 py-1">{log.admin}</td>
+                        <td className="px-2 py-1">{log.time}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowLogsDialog(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
         {/* Features Tab */}
         <TabsContent value="features">
