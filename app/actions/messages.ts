@@ -1,6 +1,7 @@
 import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { createAction } from '@/lib/action-handler';
+import { createNotification } from '@/lib/api/notifications';
 
 export const getMessages = createAction(async (params: {
   conversationId?: string;
@@ -39,6 +40,20 @@ export const createMessage = createAction(async (messageData: any) => {
   };
 
   const docRef = await addDoc(collection(db, 'messages'), data);
+
+  // Trigger notification for the receiver
+  if (data.receiver_id) {
+    await createNotification({
+      userId: data.receiver_id,
+      type: 'message',
+      title: 'New Message',
+      body: `You have a new message from ${data.sender_name || 'another user'}`,
+      link: `/messages/${data.conversation_id}`,
+      read: false,
+      extraData: { conversationId: data.conversation_id, senderId: data.sender_id },
+    });
+  }
+
   return { id: docRef.id, ...data };
 });
 

@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { createNotification } from '@/lib/api/notifications';
 
 export async function createOrder(formData: FormData) {
   const supabase = createServerClient()
@@ -56,12 +57,15 @@ export async function createOrder(formData: FormData) {
   }
 
   // Send notification to the seller
-  await supabase.from("notifications").insert({
-    user_id: sellerId,
-    title: "New Order",
-    content: `You have a new order for "${listing.title}"`,
+  await createNotification({
+    userId: sellerId,
+    type: 'order',
+    title: 'New Order',
+    body: `You have a new order for "${listing.title}"`,
     link: `/orders/${order.id}`,
-  })
+    read: false,
+    extraData: { orderId: order.id, listingId },
+  });
 
   revalidatePath("/orders")
   return { success: true, orderId: order.id }
@@ -124,12 +128,15 @@ export async function updateOrderStatus(orderId: string, status: string) {
   const notificationUserId = session.user.id === order.seller_id ? order.buyer_id : order.seller_id
   const statusText = status.charAt(0).toUpperCase() + status.slice(1)
 
-  await supabase.from("notifications").insert({
-    user_id: notificationUserId,
-    title: "Order Status Updated",
-    content: `Your order for "${listing?.title}" has been marked as ${statusText}`,
+  await createNotification({
+    userId: notificationUserId,
+    type: 'order',
+    title: 'Order Status Updated',
+    body: `Your order for "${listing?.title}" has been marked as ${statusText}`,
     link: `/orders/${orderId}`,
-  })
+    read: false,
+    extraData: { orderId, status },
+  });
 
   revalidatePath(`/orders/${orderId}`)
   return { success: true }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/firebase"
 import { doc, updateDoc, getDoc } from "firebase/firestore"
 import { uploadFileToStorage } from "@/lib/firebase"
+import { createNotification } from '@/lib/api/notifications';
 
 export async function updateProfileAction(userId: string, formData: FormData) {
   try {
@@ -69,6 +70,17 @@ export async function uploadVerificationDocumentAction(userId: string, formData:
       status: "pending",
       created_at: new Date().toISOString(),
     })
+
+    // Trigger notification for verification request
+    await createNotification({
+      userId,
+      type: 'verification',
+      title: 'Verification Submitted',
+      body: 'Your verification document has been submitted and is pending review.',
+      link: '/profile',
+      read: false,
+      extraData: { documentType: document_type },
+    });
 
     revalidatePath("/profile")
 
