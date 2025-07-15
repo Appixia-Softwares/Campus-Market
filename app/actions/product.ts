@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { createProduct, updateProduct, deleteProduct } from "@/lib/api/products"
 import { uploadFileToStorage } from '@/lib/firebase'
+import { createNotification } from '@/lib/api/notifications';
 
 export async function createProductAction(formData: FormData) {
   try {
@@ -52,6 +53,21 @@ export async function createProductAction(formData: FormData) {
         // Save image URL to Firestore or your product_images collection as needed
         // await createProductImage({ product_id: data.id, url: publicUrl, is_primary: i === 0 })
       }
+    }
+
+    // Notify interested users (placeholder logic)
+    // TODO: Replace with actual logic to fetch interested users by university/location/category
+    const interestedUserIds: string[] = [];
+    for (const interestedUserId of interestedUserIds) {
+      await createNotification({
+        userId: interestedUserId,
+        type: 'product',
+        title: 'New Product Listed',
+        body: `A new product has been listed in your area of interest: ${title}`,
+        link: `/marketplace/products/${data.id}`,
+        read: false,
+        extraData: { productId: data.id, categoryId: category_id, location },
+      });
     }
 
     revalidatePath("/marketplace")
