@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, onSnapshot } from 'firebase/firestore';
 
 export interface Product {
   id?: string;
@@ -16,6 +16,14 @@ export async function getProducts(filters: Record<string, any> = {}): Promise<{ 
   // Add filter logic as needed using query() and where()
   const snapshot = await getDocs(productsQuery);
   return { data: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)), error: null };
+}
+
+// Real-time products listener
+export function getProductsRealtime(callback: (products: any[]) => void) {
+  return onSnapshot(collection(db, 'products'), (snapshot) => {
+    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(products);
+  });
 }
 
 export async function getProductById(id: string): Promise<{ data: Product | null; error: string | null }> {

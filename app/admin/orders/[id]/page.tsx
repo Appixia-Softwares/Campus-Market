@@ -292,7 +292,7 @@ export default function OrderDetailsPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Order not found</h1>
           <p className="text-muted-foreground mb-6">The order you're looking for doesn't exist or has been removed.</p>
-          <Link href="/orders">
+          <Link href="/admin/orders">
             <Button>Back to Orders</Button>
           </Link>
         </div>
@@ -308,8 +308,8 @@ export default function OrderDetailsPage() {
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar: overlay on mobile, collapsible on desktop */}
-      <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
-        <DashboardSidebar collapsed={false} onToggle={() => {}} isMobile={false} />
+      <div className="hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r">
+        <DashboardSidebar isMobile={false} />
       </div>
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">

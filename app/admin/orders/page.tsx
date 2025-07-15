@@ -202,7 +202,7 @@ function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="container py-8">
+      <div className="w-full py-8 px-6">
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -229,8 +229,8 @@ function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="container py-8 space-y-8">
+    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="w-full py-8 space-y-8 px-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
