@@ -32,8 +32,10 @@ export default function AdminSettingsPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
   const [confirmAction, setConfirmAction] = useState<{
-    user: any;
-    action: 'delete' | 'ban' | 'demote';
+    user?: any;
+    notif?: any;
+    log?: any;
+    action: 'delete' | 'ban' | 'demote' | 'deleteNotif' | 'exportLogs';
   } | null>(null);
 
   useEffect(() => {
@@ -121,6 +123,32 @@ export default function AdminSettingsPage() {
       body: JSON.stringify({ notification: { userId: 'admin', title: 'Test Notification', body: 'This is a test.', type: 'admin', read: false } }),
     });
     toast({ title: 'Test Notification Sent' });
+  };
+
+  // Notification actions with confirmation
+  const handleDeleteNotifConfirmed = async () => {
+    if (confirmAction?.notif) {
+      await deleteNotification(confirmAction.notif.id);
+      toast({ title: "Notification Deleted" });
+      setConfirmAction(null);
+    }
+  };
+
+  // Logs export with confirmation
+  const handleExportLogs = () => {
+    // Export logs as CSV
+    const csv = [
+      ["Type", "Title", "Time", "ID"],
+      ...logs.map(log => [log.type || "-", log.title || log.id, log.created_at && log.created_at.seconds ? new Date(log.created_at.seconds * 1000).toLocaleString() : "-", log.id])
+    ].map(row => row.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "logs.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    setConfirmAction(null);
   };
 
   if (loading) {
@@ -216,13 +244,13 @@ export default function AdminSettingsPage() {
             </CardFooter>
           </Card>
           {/* Confirmation Dialog */}
-          <Dialog open={!!confirmAction} onOpenChange={open => !open && setConfirmAction(null)}>
+          <Dialog open={!!confirmAction && confirmAction.action === 'delete'} onOpenChange={open => !open && setConfirmAction(null)}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Confirm {confirmAction?.action === 'delete' ? 'Delete User' : confirmAction?.action === 'ban' ? 'Ban User' : 'Demote User'}</DialogTitle>
+                <DialogTitle>Confirm Delete User</DialogTitle>
               </DialogHeader>
               <div className="py-4">
-                <p>Are you sure you want to <b>{confirmAction?.action}</b> this user?</p>
+                <p>Are you sure you want to <b>delete</b> this user?</p>
                 <div className="mt-2 text-sm text-muted-foreground">
                   <div><b>Name:</b> {confirmAction?.user?.full_name || confirmAction?.user?.email || confirmAction?.user?.id}</div>
                   <div><b>Email:</b> {confirmAction?.user?.email}</div>
@@ -231,14 +259,52 @@ export default function AdminSettingsPage() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
-                <Button variant={confirmAction?.action === 'delete' ? 'destructive' : 'default'} onClick={handleAction}>Confirm</Button>
+                <Button variant="destructive" onClick={handleAction}>Confirm</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={!!confirmAction && confirmAction.action === 'ban'} onOpenChange={open => !open && setConfirmAction(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Ban User</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p>Are you sure you want to <b>ban</b> this user?</p>
+                <div className="mt-2 text-sm text-muted-foreground">
+                  <div><b>Name:</b> {confirmAction?.user?.full_name || confirmAction?.user?.email || confirmAction?.user?.id}</div>
+                  <div><b>Email:</b> {confirmAction?.user?.email}</div>
+                  <div><b>Role:</b> {confirmAction?.user?.role}</div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
+                <Button variant="default" onClick={handleAction}>Confirm</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={!!confirmAction && confirmAction.action === 'demote'} onOpenChange={open => !open && setConfirmAction(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Demote User</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p>Are you sure you want to <b>demote</b> this user?</p>
+                <div className="mt-2 text-sm text-muted-foreground">
+                  <div><b>Name:</b> {confirmAction?.user?.full_name || confirmAction?.user?.email || confirmAction?.user?.id}</div>
+                  <div><b>Email:</b> {confirmAction?.user?.email}</div>
+                  <div><b>Role:</b> {confirmAction?.user?.role}</div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
+                <Button variant="default" onClick={handleAction}>Confirm</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </TabsContent>
         {/* Notifications Tab */}
         <TabsContent value="notifications">
-          <Card className="mb-6">
+          <Card className="mb-6 w-full">
             <CardHeader>
               <CardTitle>Email & Notifications</CardTitle>
               <CardDescription>Configure email and notification preferences.</CardDescription>
@@ -264,7 +330,7 @@ export default function AdminSettingsPage() {
                         <td className="px-2 py-1">{notif.read ? <Badge variant="default">Read</Badge> : <Badge variant="secondary">Unread</Badge>}</td>
                         <td className="px-2 py-1 flex gap-1">
                           <Button size="sm" variant="outline" onClick={() => handleMarkNotifRead(notif.id)} disabled={notif.read}>Mark Read</Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDeleteNotif(notif.id)}>Delete</Button>
+                          <Button size="sm" variant="destructive" onClick={() => setConfirmAction({ notif, action: 'deleteNotif' })}>Delete</Button>
                         </td>
                       </tr>
                     ))}
@@ -277,6 +343,25 @@ export default function AdminSettingsPage() {
               <span className="text-xs text-muted-foreground">Total notifications: {notifications.length}</span>
             </CardFooter>
           </Card>
+          {/* Confirmation Dialog for Notification Delete */}
+          <Dialog open={!!confirmAction && confirmAction.action === 'deleteNotif'} onOpenChange={open => !open && setConfirmAction(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Delete Notification</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p>Are you sure you want to <b>delete</b> this notification?</p>
+                <div className="mt-2 text-sm text-muted-foreground">
+                  <div><b>Title:</b> {confirmAction?.notif?.title}</div>
+                  <div><b>Body:</b> {confirmAction?.notif?.body}</div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
+                <Button variant="destructive" onClick={handleDeleteNotifConfirmed}>Confirm</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
         {/* Security Tab */}
         <TabsContent value="security">
@@ -407,7 +492,7 @@ export default function AdminSettingsPage() {
         </TabsContent>
         {/* Logs Tab */}
         <TabsContent value="logs">
-          <Card className="mb-6">
+          <Card className="mb-6 w-full">
             <CardHeader>
               <CardTitle>Audit & Activity Logs</CardTitle>
               <CardDescription>Track all admin and user actions for security and compliance.</CardDescription>
@@ -435,22 +520,24 @@ export default function AdminSettingsPage() {
                   </tbody>
                 </table>
               </div>
-              <Button variant="outline" size="sm" onClick={() => {
-                // Export logs as CSV
-                const csv = [
-                  ["Type", "Title", "Time", "ID"],
-                  ...logs.map(log => [log.type || "-", log.title || log.id, log.created_at && log.created_at.seconds ? new Date(log.created_at.seconds * 1000).toLocaleString() : "-", log.id])
-                ].map(row => row.join(",")).join("\n");
-                const blob = new Blob([csv], { type: "text/csv" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "logs.csv";
-                a.click();
-                URL.revokeObjectURL(url);
-              }}>Export Logs</Button>
+              <Button variant="outline" size="sm" onClick={() => setConfirmAction({ action: 'exportLogs' })}>Export Logs</Button>
             </CardContent>
           </Card>
+          {/* Confirmation Dialog for Logs Export */}
+          <Dialog open={!!confirmAction && confirmAction.action === 'exportLogs'} onOpenChange={open => !open && setConfirmAction(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Export Logs</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p>Are you sure you want to <b>export</b> all logs? This may contain sensitive data.</p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
+                <Button variant="default" onClick={handleExportLogs}>Confirm</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
         {/* System Tab (Enhanced) */}
         <TabsContent value="system">
