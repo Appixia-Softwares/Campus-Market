@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createNotification, getNotifications } from '@/lib/api/notifications';
+import {
+  getNotifications,
+  createNotification,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  getUnreadNotificationCount
+} from '@/lib/api/notifications.server';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

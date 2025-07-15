@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { deleteNotification } from '@/lib/api/notifications';
+import { deleteNotification } from '@/lib/api/notifications.server';
 
 export async function POST(req: NextRequest) {
   try {
