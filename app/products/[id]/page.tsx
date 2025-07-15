@@ -1,8 +1,13 @@
-import ZIM_UNIVERSITIES from "@/utils/schools_data";
+import { useEffect, useState } from "react";
+import { getUniversities } from "@/lib/get-universities";
 import { CATEGORY_META } from "@/lib/category-config";
 // Helper to get university by id
-function getUniversityById(id: string) {
-  return ZIM_UNIVERSITIES.find(u => u.id === id);
+function useUniversityById(id: string) {
+  const [universities, setUniversities] = useState<any[]>([]);
+  useEffect(() => {
+    getUniversities().then(setUniversities);
+  }, []);
+  return universities.find(u => u.id === id);
 }
 // Helper to get category meta by id or name
 function getCategoryMeta(keyOrName: string) {

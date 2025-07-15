@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { db } from "@/lib/firebase"
 import { collection, getDocs, query, where, orderBy, limit, getCountFromServer } from "firebase/firestore"
 import { useAuth } from "@/lib/auth-context"
+import { getUniversities } from "@/lib/get-universities"
 
 interface Stats {
   totalProducts: number
@@ -165,20 +166,9 @@ export default function LandingPage() {
         
         setFeaturedProducts(products)
 
-        // Fetch universities
-        const universitiesQuery = query(
-          collection(db, 'universities'),
-          where('is_active', '==', true),
-          orderBy('student_count', 'desc'),
-          limit(8)
-        )
-        const universitiesData = await getDocs(universitiesQuery)
-        const universitiesList = universitiesData.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as University[]
-        
-        setUniversities(universitiesList)
+        // Fetch universities using the shared utility (with fallback)
+        const universitiesList = await getUniversities()
+        setUniversities(universitiesList.slice(0, 8))
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
@@ -366,16 +356,22 @@ export default function LandingPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {universities.map((university) => (
-                  <Card key={university.id} className="text-center p-6 hover:shadow-md transition-shadow">
-                    <h3 className="font-semibold text-lg mb-2">{university.short_name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{university.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {university.student_count?.toLocaleString()} students
-                    </p>
-                    <p className="text-xs text-muted-foreground">{university.location}</p>
-                  </Card>
-                ))}
+                {universities.map((university) => {
+                  // Defensive: fallback for missing fields
+                  const shortName = university.short_name || university.name?.split(" ").map(w => w[0]).join("") || university.name || "Unknown";
+                  const studentCount = university.student_count || 0;
+                  const location = university.location || "Unknown";
+                  return (
+                    <Card key={university.id} className="text-center p-6 hover:shadow-md transition-shadow">
+                      <h3 className="font-semibold text-lg mb-2">{shortName}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">{university.name || "Unknown University"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {studentCount ? studentCount.toLocaleString() : "N/A"} students
+                      </p>
+                      <p className="text-xs text-muted-foreground">{location}</p>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           </section>

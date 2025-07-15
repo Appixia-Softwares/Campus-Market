@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Shield, Camera, Loader2, Menu, CheckCircle2 } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import ZIM_UNIVERSITIES from "@/utils/schools_data"
+import { getUniversities } from "@/lib/get-universities"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { useAuth } from "@/lib/auth-context"
 import DashboardSidebar from "@/components/dashboard-sidebar"
@@ -88,6 +88,11 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [universities, setUniversities] = useState<any[]>([]);
+
+  useEffect(() => {
+    getUniversities().then(setUniversities);
+  }, []);
 
   const handleProfileSave = async (values: ProfileFormValues) => {
     if (!user) return
@@ -355,7 +360,7 @@ export default function ProfilePage() {
                               if (!user?.university_id || user.university_id === "none") {
                                 return "No University Selected";
                               }
-                              const uni = ZIM_UNIVERSITIES.find((u) => u.id === user.university_id);
+                              const uni = universities.find((u) => u.id === user.university_id);
                               return uni ? `${uni.name} (${uni.location})` : "No University Selected";
                             })()}
                           </div>

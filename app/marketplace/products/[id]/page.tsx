@@ -37,7 +37,7 @@ import Link from "next/link"
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, increment, addDoc, serverTimestamp, DocumentReference } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 // Import local university data
-import ZIM_UNIVERSITIES from "@/utils/schools_data";
+import { getUniversities } from "@/lib/get-universities";
 import { CATEGORY_CONFIG, CategoryKey, CategoryField } from "@/lib/category-config";
 
 interface ProductDetails {
@@ -131,8 +131,12 @@ const formatDate = (date: any) => {
 }
 
 // Helper to get university by id
-function getUniversityById(id: string) {
-  return ZIM_UNIVERSITIES.find(u => u.id === id);
+function useUniversityById(id: string) {
+  const [universities, setUniversities] = useState<any[]>([]);
+  useEffect(() => {
+    getUniversities().then(setUniversities);
+  }, []);
+  return universities.find(u => u.id === id);
 }
 
 // Helper to map display name to config key
@@ -922,17 +926,17 @@ export default function ProductDetailsPage() {
                   <span className="font-medium">{
                     (product.universities && product.universities.name !== "Unknown University")
                       ? product.universities.name
-                      : (getUniversityById(product.users.university_id)?.name || "Unknown University")
+                      : (useUniversityById(product.users.university_id)?.name || "Unknown University")
                   }</span>
                   <span className="text-muted-foreground">{
                     (product.universities && product.universities.name !== "Unknown University")
                       ? product.universities.location
-                      : (getUniversityById(product.users.university_id)?.location || "Unknown")
+                      : (useUniversityById(product.users.university_id)?.location || "Unknown")
                   }</span>
                   <Badge variant="secondary" className="w-fit mt-1">{
                     (product.universities && product.universities.name !== "Unknown University")
                       ? product.universities.type
-                      : (getUniversityById(product.users.university_id)?.type || "Unknown")
+                      : (useUniversityById(product.users.university_id)?.type || "Unknown")
                   }</Badge>
                 </div>
               </CardContent>
@@ -1159,7 +1163,7 @@ export default function ProductDetailsPage() {
                   <p>{
                     (product.universities && product.universities.name !== "Unknown University")
                       ? product.universities.name
-                      : (getUniversityById(product.users.university_id)?.name || "Unknown University")
+                      : (useUniversityById(product.users.university_id)?.name || "Unknown University")
                   }</p>
                 </div>
               </div>

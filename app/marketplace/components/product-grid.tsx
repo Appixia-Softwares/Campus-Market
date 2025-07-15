@@ -2,7 +2,7 @@
 
 import React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,7 +21,7 @@ import { doc, setDoc, getDoc, collection, addDoc, query, where, getDocs } from '
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Laptop, Shirt, Home, Book, Dumbbell, Car, Baby, Apple, Watch, Camera, Gamepad2, PawPrint, Sparkles, Briefcase, Globe, Gift, Music, FlaskConical, Wrench, Gem, BedDouble, Bike, Tv, Phone, Wallet, ShoppingBag, Package, Cake } from "lucide-react";
 // Import local university data
-import ZIM_UNIVERSITIES from "@/utils/schools_data";
+import { getUniversities } from "@/lib/get-universities";
 import { CATEGORY_META } from "@/lib/category-config";
 
 interface ProductGridProps {
@@ -77,8 +77,12 @@ const categoryIconMap: Record<string, React.ElementType> = {
 };
 
 // Helper to get university by id
-function getUniversityById(id: string) {
-  return ZIM_UNIVERSITIES.find(u => u.id === id);
+function useUniversityById(id: string) {
+  const [universities, setUniversities] = useState<any[]>([]);
+  useEffect(() => {
+    getUniversities().then(setUniversities);
+  }, []);
+  return universities.find(u => u.id === id);
 }
 // Helper to get category meta by id or name
 function getCategoryMeta(keyOrName: string) {
@@ -314,8 +318,8 @@ export function ProductGrid({
                   {/* University Badge */}
                   {(() => {
                     const sellerUniversityId = product.users?.university_id;
-                    console.log('Seller university_id:', sellerUniversityId, 'Lookup result:', getUniversityById(sellerUniversityId));
-                    const university = getUniversityById(sellerUniversityId);
+                    console.log('Seller university_id:', sellerUniversityId, 'Lookup result:', useUniversityById(sellerUniversityId));
+                    const university = useUniversityById(sellerUniversityId);
                     return (
                       <div className="absolute top-2 right-2 z-10">
                         <Badge variant="secondary" className="bg-green-100 text-green-700 flex items-center gap-1 px-3 py-1 rounded-full shadow-md">

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Star, Sparkles, ThumbsUp, Wrench, Flame, MapPin, Calendar, DollarSign, Gem, Filter, X, Search, Truck } from "lucide-react";
 import { CATEGORY_META } from "@/lib/category-config";
-import ZIM_UNIVERSITIES from "@/utils/schools_data";
+import { getUniversities } from "@/lib/get-universities";
 import { motion, AnimatePresence } from "framer-motion"
 
 interface SearchFiltersProps {
@@ -21,7 +21,13 @@ interface SearchFiltersProps {
   universities: { id: string; name: string; location: string; type: string }[]
 }
 
-export function SearchFilters({ onSearch, categories, universities }: SearchFiltersProps) {
+export function SearchFilters({ onSearch, categories, universities: universitiesProp }: SearchFiltersProps) {
+  const [universities, setUniversities] = useState(universitiesProp || []);
+  useEffect(() => {
+    if (!universitiesProp) {
+      getUniversities().then(setUniversities);
+    }
+  }, [universitiesProp]);
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({
     query: "",
@@ -279,7 +285,7 @@ export function SearchFilters({ onSearch, categories, universities }: SearchFilt
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Universities</SelectItem>
-                        {ZIM_UNIVERSITIES.map(u => (
+                        {universities.map(u => (
                           <SelectItem key={u.id} value={u.id}>
                             <MapPin className="h-4 w-4 mr-1 inline" /> {u.name}
                           </SelectItem>
