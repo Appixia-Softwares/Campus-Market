@@ -167,8 +167,22 @@ export default function LandingPage() {
         setFeaturedProducts(products)
 
         // Fetch universities using the shared utility (with fallback)
-        const universitiesList = await getUniversities()
-        setUniversities(universitiesList.slice(0, 8))
+        const universitiesList = await getUniversities();
+        console.log("Fetched universitiesList:", universitiesList);
+        if (universitiesList.length && !universitiesList[0].id) {
+          console.log("Using fallback ZIM_UNIVERSITIES data");
+        } else {
+          console.log("Using Firestore universities data");
+        }
+        const mappedUniversities = universitiesList.slice(0, 8).map((u: any, idx: number) => ({
+          id: u.id || `uni-${idx}`,
+          name: u.name || "Unknown University",
+          short_name: u.short_name || (u.name ? u.name.split(" ").map((w: string) => w[0]).join("") : "UNK"),
+          student_count: u.student_count || 0,
+          location: u.location || "Unknown",
+        }));
+        setUniversities(mappedUniversities);
+        console.log("Set universities state:", mappedUniversities);
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
