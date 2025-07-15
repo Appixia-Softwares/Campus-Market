@@ -117,10 +117,10 @@ export default function SignupPage() {
     async function loadUniversities() {
       setIsLoadingUniversities(true)
       try {
-        const universitiesRaw = await getUniversities();
+        const allUnis = await getUniversities();
         // Group and sort universities by type and name
         const grouped: { [type: string]: University[] } = {};
-        universitiesRaw.forEach(u => {
+        allUnis.forEach((u: any) => {
           if (!grouped[u.type || 'other']) grouped[u.type || 'other'] = [];
           grouped[u.type || 'other'].push(u);
         });

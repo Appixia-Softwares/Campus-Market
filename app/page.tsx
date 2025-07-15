@@ -16,7 +16,6 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { db } from "@/lib/firebase"
 import { collection, getDocs, query, where, orderBy, limit, getCountFromServer } from "firebase/firestore"
 import { useAuth } from "@/lib/auth-context"
-import { getUniversities } from "@/lib/get-universities"
 
 interface Stats {
   totalProducts: number
@@ -166,23 +165,20 @@ export default function LandingPage() {
         
         setFeaturedProducts(products)
 
-        // Fetch universities using the shared utility (with fallback)
-        const universitiesList = await getUniversities();
-        console.log("Fetched universitiesList:", universitiesList);
-        if (universitiesList.length && !universitiesList[0].id) {
-          console.log("Using fallback ZIM_UNIVERSITIES data");
-        } else {
-          console.log("Using Firestore universities data");
-        }
-        const mappedUniversities = universitiesList.slice(0, 8).map((u: any, idx: number) => ({
-          id: u.id || `uni-${idx}`,
-          name: u.name || "Unknown University",
-          short_name: u.short_name || (u.name ? u.name.split(" ").map((w: string) => w[0]).join("") : "UNK"),
-          student_count: u.student_count || 0,
-          location: u.location || "Unknown",
-        }));
-        setUniversities(mappedUniversities);
-        console.log("Set universities state:", mappedUniversities);
+        // Fetch universities
+        const universitiesQuery = query(
+          collection(db, 'universities'),
+          where('is_active', '==', true),
+          orderBy('student_count', 'desc'),
+          limit(8)
+        )
+        const universitiesData = await getDocs(universitiesQuery)
+        const universitiesList = universitiesData.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as University[]
+        
+        setUniversities(universitiesList)
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
@@ -370,22 +366,16 @@ export default function LandingPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {universities.map((university) => {
-                  // Defensive: fallback for missing fields
-                  const shortName = university.short_name || university.name?.split(" ").map(w => w[0]).join("") || university.name || "Unknown";
-                  const studentCount = university.student_count || 0;
-                  const location = university.location || "Unknown";
-                  return (
-                    <Card key={university.id} className="text-center p-6 hover:shadow-md transition-shadow">
-                      <h3 className="font-semibold text-lg mb-2">{shortName}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">{university.name || "Unknown University"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {studentCount ? studentCount.toLocaleString() : "N/A"} students
-                      </p>
-                      <p className="text-xs text-muted-foreground">{location}</p>
-                    </Card>
-                  );
-                })}
+                {universities.map((university) => (
+                  <Card key={university.id} className="text-center p-6 hover:shadow-md transition-shadow">
+                    <h3 className="font-semibold text-lg mb-2">{university.short_name}</h3>
+                    <p className="text-sm text-muted-foreground mb-2">{university.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {university.student_count?.toLocaleString()} students
+                    </p>
+                    <p className="text-xs text-muted-foreground">{university.location}</p>
+                  </Card>
+                ))}
               </div>
             </div>
           </section>

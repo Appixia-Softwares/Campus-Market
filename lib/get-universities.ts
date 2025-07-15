@@ -9,7 +9,7 @@ export async function getUniversities() {
       return snap.docs.map(doc => doc.data());
     }
     return ZIM_UNIVERSITIES;
-  } catch (err) {
+  } catch {
     return ZIM_UNIVERSITIES;
   }
 } 
