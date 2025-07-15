@@ -3,6 +3,7 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { createNotification } from '@/lib/api/notifications';
 
 export async function getAccommodationListings() {
   const supabase = createServerClient()
@@ -258,6 +259,22 @@ export async function applyForAccommodation(listingId: string, formData: FormDat
     return { error: error.message }
   }
 
+  // Notify the listing owner of new application
+  if (listingId && session?.user?.id) {
+    // Fetch the listing to get the owner
+    // (Assume you have a way to get the listing owner's user_id)
+    // Placeholder: const ownerId = ...
+    // await createNotification({
+    //   userId: ownerId,
+    //   type: 'accommodation',
+    //   title: 'New Accommodation Application',
+    //   body: 'You have a new application for your accommodation listing.',
+    //   link: `/accommodation/${listingId}`,
+    //   read: false,
+    //   extraData: { listingId },
+    // });
+  }
+
   return { success: true, message: "Application submitted successfully" }
 }
 
@@ -308,6 +325,19 @@ export async function updateApplicationStatus(applicationId: string, status: str
   if (error) {
     return { error: error.message }
   }
+
+  // Notify the applicant of status change
+  // (Assume you have a way to get the applicant's user_id)
+  // Placeholder: const applicantId = ...
+  // await createNotification({
+  //   userId: applicantId,
+  //   type: 'accommodation',
+  //   title: 'Accommodation Application Update',
+  //   body: `Your application status has been updated to ${status}.`,
+  //   link: `/accommodation/applications/${applicationId}`,
+  //   read: false,
+  //   extraData: { applicationId, status },
+  // });
 
   revalidatePath("/dashboard/accommodation")
   return { success: true }
