@@ -19,6 +19,8 @@ import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { collection, onSnapshot } from "firebase/firestore";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 // Dynamically import the full chart wrapper component
 const UserGrowthChart = dynamic(() => import('@/components/charts/UserGrowthChart'), {
@@ -34,6 +36,57 @@ export interface UserWithMeta {
   created_at?: string | number | { seconds: number };
   updated_at?: string | number | { seconds: number };
   status?: 'active' | 'banned';
+}
+
+function TopCategoriesCard() {
+  const [categoryData, setCategoryData] = useState<{ category: string; count: number }[]>([]);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "products"), (snap) => {
+      const counts: Record<string, number> = {};
+      snap.docs.forEach(doc => {
+        const cat = doc.data().category || "Uncategorized";
+        counts[cat] = (counts[cat] || 0) + 1;
+      });
+      const arr = Object.entries(counts)
+        .map(([category, count]) => ({ category, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5); // Top 5
+      setCategoryData(arr);
+    });
+    return () => unsub();
+  }, []);
+
+  return (
+    <Card className="mb-8">
+      <div className="flex items-center justify-between p-6 pb-2 border-b">
+        <div className="flex items-center gap-3">
+          <Info className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Top Categories</h2>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="ml-1 cursor-pointer text-muted-foreground">?</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <span>Shows the most popular product categories by number of listings.</span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+      <div className="p-6 pt-4">
+        <ResponsiveContainer width="100%" height={180}>
+          <BarChart data={categoryData}>
+            <XAxis dataKey="category" />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Bar dataKey="count" fill="#6366f1" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </Card>
+  );
 }
 
 export default function AdminPage() {
@@ -404,47 +457,7 @@ export default function AdminPage() {
       </Card>
 
       {/* Top Categories Chart */}
-      <Card className="mb-8">
-        <div className="flex items-center justify-between p-6 pb-2 border-b">
-          <div className="flex items-center gap-3">
-            <Info className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Top Categories</h2>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="ml-1 cursor-pointer text-muted-foreground">?</span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span>Shows the most popular product categories by number of listings.</span>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </div>
-        <div className="p-6 pt-4">
-          {/* Placeholder bar chart using SVG */}
-          <div className="w-full max-w-xl mx-auto">
-            <svg width="100%" height="120" viewBox="0 0 400 120">
-              {/* Example bars */}
-              <rect x="20" y="40" width="60" height="60" fill="#6366f1" rx="6" />
-              <rect x="100" y="20" width="60" height="80" fill="#10b981" rx="6" />
-              <rect x="180" y="60" width="60" height="40" fill="#f59e42" rx="6" />
-              <rect x="260" y="30" width="60" height="70" fill="#ef4444" rx="6" />
-              {/* Labels */}
-              <text x="50" y="115" textAnchor="middle" fontSize="12">Electronics</text>
-              <text x="130" y="115" textAnchor="middle" fontSize="12">Books</text>
-              <text x="210" y="115" textAnchor="middle" fontSize="12">Fashion</text>
-              <text x="290" y="115" textAnchor="middle" fontSize="12">Home</text>
-            </svg>
-            <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-              <span>Electronics</span>
-              <span>Books</span>
-              <span>Fashion</span>
-              <span>Home</span>
-            </div>
-          </div>
-        </div>
-      </Card>
+      <TopCategoriesCard />
 
       {/* Recent Orders Table */}
       <Card className="mb-8">
