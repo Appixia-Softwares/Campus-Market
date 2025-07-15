@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 import { getAuth } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDacVR49IYKM5NUgP6PlchNAH02Je9AhRk",
@@ -26,6 +27,15 @@ export async function uploadFileToStorage(path: string, file: File | Blob): Prom
   const storageRef = ref(storage, path);
   await uploadBytes(storageRef, file);
   return await getDownloadURL(storageRef);
+}
+
+export async function getMessagingInstance() {
+  if (typeof window === 'undefined') return null;
+  if (!(await isSupported())) return null;
+  const messaging = getMessaging(app);
+  // Register the service worker for FCM
+  await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  return messaging;
 }
 
 export { app, analytics, db, auth, storage }; 
