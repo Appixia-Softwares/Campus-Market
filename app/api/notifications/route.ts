@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createNotification } from '@/lib/api/notifications';
+import { createNotification, getNotifications } from '@/lib/api/notifications';
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const userId = searchParams.get('userId');
+  if (!userId) return NextResponse.json({ data: [], error: 'Missing userId' }, { status: 400 });
+  const { data, error } = await getNotifications(userId);
+  return NextResponse.json({ data, error });
+}
 
 export async function POST(req: NextRequest) {
   try {

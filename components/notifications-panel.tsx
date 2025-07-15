@@ -40,27 +40,62 @@ export default function NotificationsPanel() {
     };
   }, [toast]);
 
-  // Fetch notifications (client-safe placeholder)
+  // Fetch notifications from API
   useEffect(() => {
     if (!user) return;
-    // TODO: Fetch notifications from a client-safe API route
-    setLoading(false);
-    // setNotifications([]); // Set to empty or fetched data
-  }, [user]);
+    setLoading(true);
+    fetch(`/api/notifications?userId=${user.id}`)
+      .then(res => res.json())
+      .then(({ data, error }) => {
+        if (error) throw error;
+        setNotifications((data as any[]).map((n) => ({
+          ...n,
+          userId: n.userId ?? n.user_id ?? null,
+          body: n.body ?? n.message ?? '',
+          createdAt: n.createdAt ? new Date(n.createdAt.seconds ? n.createdAt.seconds * 1000 : n.createdAt) : new Date(),
+        })) as NotificationType[]);
+      })
+      .catch((error) => {
+        toast({
+          title: "Error",
+          description: "Failed to load notifications. Please try again.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => setLoading(false));
+  }, [user, toast]);
 
-  // Mark notification as read (placeholder)
+  // Mark notification as read
   const handleMarkAsRead = async (id: string) => {
-    // TODO: Call API route to mark as read
+    if (!user) return;
+    await fetch(`/api/notifications/mark-read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, userId: user.id }),
+    });
+    setNotifications((prev) => prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif)));
   }
 
-  // Mark all notifications as read (placeholder)
+  // Mark all notifications as read
   const handleMarkAllAsRead = async () => {
-    // TODO: Call API route to mark all as read
+    if (!user) return;
+    await fetch(`/api/notifications/mark-all-read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id }),
+    });
+    setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
   }
 
-  // Delete notification (placeholder)
+  // Delete notification
   const handleDelete = async (id: string) => {
-    // TODO: Call API route to delete notification
+    if (!user) return;
+    await fetch(`/api/notifications/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, userId: user.id }),
+    });
+    setNotifications((prev) => prev.filter((notif) => notif.id !== id));
   }
 
   const getNotificationIcon = (type: string) => {
