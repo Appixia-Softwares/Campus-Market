@@ -164,8 +164,17 @@ export default function MarketplacePage() {
   const loadUniversities = async () => {
     try {
       const unis = await getUniversities();
-      setUniversities(unis.filter((u: { is_active?: boolean }) => u.is_active !== false));
-      return unis;
+      const filteredUnis: University[] = (Array.isArray(unis) ? unis : [])
+        .map((u: any) => ({
+          id: u.id ?? "",
+          name: u.name ?? "",
+          location: u.location ?? "",
+          type: u.type ?? "",
+          is_active: u.is_active ?? true,
+        }))
+        .filter((u: University) => u.is_active !== false);
+      setUniversities(filteredUnis);
+      return filteredUnis;
     } catch (error) {
       console.error("Error loading universities:", error);
       toast.error("Failed to load universities");
