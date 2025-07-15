@@ -7,150 +7,60 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Bell, Check, Trash2, MessageSquare, Calendar, CreditCard, Info } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import { useRealtime } from "@/lib/realtime-context"
 import { useAuth } from "@/lib/auth-context"
-import {
-  getNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-  deleteNotification,
-} from "@/lib/api/notifications"
 import { formatDistanceToNow } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
-
-interface Notification {
-  id: string
-  user_id: string
-  title: string
-  message: string
-  link?: string
-  type: string
-  read: boolean
-  created_at: string
-}
+import { getMessagingInstance } from '@/lib/firebase';
+import { onMessage } from 'firebase/messaging';
+import type { Notification as NotificationType } from '@/lib/types';
 
 export default function NotificationsPanel() {
   const { toast } = useToast()
   const { user } = useAuth()
-  const { subscribeToNotifications } = useRealtime()
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<NotificationType[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch notifications
+  // Foreground push handling
   useEffect(() => {
-    if (!user) return
-
-    const fetchNotifications = async () => {
-      setLoading(true)
-      try {
-        const { data, error } = await getNotifications(user.id)
-        if (error) throw error
-
-        setNotifications(data as Notification[])
-      } catch (error) {
-        console.error("Error fetching notifications:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load notifications. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
+    let unsubscribe: (() => void) | undefined;
+    (async () => {
+      const messaging = await getMessagingInstance();
+      if (messaging) {
+        unsubscribe = onMessage(messaging, (payload) => {
+          const { title, body } = payload.notification || {};
+          toast({
+            title: title || 'New Notification',
+            description: body,
+          });
+        });
       }
-    }
+    })();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [toast]);
 
-    fetchNotifications()
-  }, [user, toast])
-
-  // Subscribe to new notifications
+  // Fetch notifications (client-safe placeholder)
   useEffect(() => {
-    if (!user) return
+    if (!user) return;
+    // TODO: Fetch notifications from a client-safe API route
+    setLoading(false);
+    // setNotifications([]); // Set to empty or fetched data
+  }, [user]);
 
-    const unsubscribe = subscribeToNotifications(user.id, (payload) => {
-      const newNotification = payload.new as Notification
-      setNotifications((prev) => [newNotification, ...prev])
-    })
-
-    return unsubscribe
-  }, [user, subscribeToNotifications])
-
-  // Mark notification as read
+  // Mark notification as read (placeholder)
   const handleMarkAsRead = async (id: string) => {
-    try {
-      // Optimistic update
-      setNotifications((prev) => prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif)))
-
-      const { error } = await markNotificationAsRead(id)
-      if (error) throw error
-    } catch (error) {
-      console.error("Error marking notification as read:", error)
-
-      // Revert optimistic update
-      setNotifications((prev) => prev.map((notif) => (notif.id === id ? { ...notif, read: false } : notif)))
-
-      toast({
-        title: "Error",
-        description: "Failed to update notification. Please try again.",
-        variant: "destructive",
-      })
-    }
+    // TODO: Call API route to mark as read
   }
 
-  // Mark all notifications as read
+  // Mark all notifications as read (placeholder)
   const handleMarkAllAsRead = async () => {
-    if (!user) return
-
-    try {
-      // Optimistic update
-      setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })))
-
-      const { error } = await markAllNotificationsAsRead(user.id)
-      if (error) throw error
-
-      toast({
-        title: "Success",
-        description: "All notifications marked as read",
-      })
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error)
-
-      // Fetch fresh data to revert
-      const { data } = await getNotifications(user.id)
-      if (data) {
-        setNotifications(data as Notification[])
-      }
-
-      toast({
-        title: "Error",
-        description: "Failed to update notifications. Please try again.",
-        variant: "destructive",
-      })
-    }
+    // TODO: Call API route to mark all as read
   }
 
-  // Delete notification
+  // Delete notification (placeholder)
   const handleDelete = async (id: string) => {
-    try {
-      // Optimistic update
-      setNotifications((prev) => prev.filter((notif) => notif.id !== id))
-
-      const { error } = await deleteNotification(id)
-      if (error) throw error
-    } catch (error) {
-      console.error("Error deleting notification:", error)
-
-      // Fetch fresh data to revert
-      const { data } = await getNotifications(user.id)
-      if (data) {
-        setNotifications(data as Notification[])
-      }
-
-      toast({
-        title: "Error",
-        description: "Failed to delete notification. Please try again.",
-        variant: "destructive",
-      })
-    }
+    // TODO: Call API route to delete notification
   }
 
   const getNotificationIcon = (type: string) => {
@@ -266,10 +176,10 @@ export default function NotificationsPanel() {
                       </Button>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">{notification.message}</p>
+                  <p className="text-sm text-muted-foreground">{notification.body}</p>
                   <div className="flex justify-between items-center mt-1">
                     <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                     </span>
                     {notification.link && (
                       <Link href={notification.link}>

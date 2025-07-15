@@ -15,6 +15,7 @@ import {
   getCountFromServer
 } from 'firebase/firestore';
 import type { Notification } from '../types';
+import { sendPushNotification } from '../actions/push';
 
 const NOTIFICATIONS_COLLECTION = 'notifications';
 
@@ -70,7 +71,15 @@ export async function createNotification(notification: Omit<Notification, 'id' |
       read: false,
     };
     const docRef = await addDoc(collection(db, NOTIFICATIONS_COLLECTION), notifData);
-    const docSnap = await docRef.get();
+    // Send push notification if userId is present
+    if (notification.userId) {
+      await sendPushNotification(
+        notification.userId,
+        notification.title,
+        notification.body,
+        { link: notification.link || '', ...notification.extraData }
+      );
+    }
     return { data: { id: docRef.id, ...notifData } as Notification, error: null };
   } catch (error) {
     return { data: null, error };
