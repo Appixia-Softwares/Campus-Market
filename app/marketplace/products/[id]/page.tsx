@@ -66,6 +66,10 @@ import { db } from "@/lib/firebase"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
 import { CATEGORY_CONFIG, type CategoryKey, type CategoryField } from "@/lib/category-config"
 import { CATEGORY_META } from "@/lib/category-config";
+import { LucideIcon } from "lucide-react";
+
+// At the top, import the config (or copy the config if import is not possible):
+// import categoryFieldConfig from "@/marketplace/sell/page";
 
 interface ProductDetails {
   id: string
@@ -112,6 +116,8 @@ interface ProductDetails {
     url: string
     is_primary: boolean
   }[]
+  specifications?: Record<string, any>
+  tags?: string[]
 }
 
 interface Review {
@@ -234,6 +240,14 @@ function getCategoryMeta(category_id: string) {
   return CATEGORY_META.find(cat => cat.key === key || cat.label.toLowerCase() === key) || CATEGORY_META.find(cat => cat.key === 'other');
 }
 
+// Helper to get icon for a field (optional, fallback to generic icon)
+function getFieldIcon(fieldName: string, categoryKey: string): LucideIcon | undefined {
+  // Optionally, you can define a mapping for field icons per field name
+  // For now, fallback to the category icon for all fields
+  const meta = CATEGORY_META.find(cat => cat.key === categoryKey);
+  return meta?.icon;
+}
+
 // Star Rating Component
 const StarRating = ({
   rating,
@@ -321,6 +335,12 @@ export default function ProductDetailsPage() {
     title: "",
     comment: "",
   })
+  // Add state for editing and deleting reviews
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ rating: 0, title: '', comment: '' });
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -904,6 +924,48 @@ export default function ProductDetailsPage() {
     }
   })
 
+  // Add edit and delete handlers
+  const handleEditReview = (review: Review) => {
+    setEditingReviewId(review.id);
+    setEditForm({ rating: review.rating, title: review.title, comment: review.comment });
+  };
+  const handleEditFormChange = (field: string, value: any) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+  const handleEditReviewSubmit = async (reviewId: string) => {
+    setReviewLoading(true);
+    setReviewError(null);
+    try {
+      const reviewRef = doc(db, 'product_reviews', reviewId);
+      await updateDoc(reviewRef, {
+        rating: editForm.rating,
+        title: editForm.title,
+        comment: editForm.comment,
+      });
+      setEditingReviewId(null);
+      if (product) fetchReviews(product.id);
+      toast.success('Review updated!');
+    } catch (err) {
+      setReviewError('Failed to update review.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+  const handleDeleteReview = async (reviewId: string) => {
+    setReviewLoading(true);
+    setReviewError(null);
+    try {
+      await updateDoc(doc(db, 'product_reviews', reviewId), { deleted_at: serverTimestamp() });
+      setDeletingReviewId(null);
+      if (product) fetchReviews(product.id);
+      toast.success('Review deleted!');
+    } catch (err) {
+      setReviewError('Failed to delete review.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90">
@@ -1179,65 +1241,61 @@ export default function ProductDetailsPage() {
             </Card>
 
             {/* Enhanced Seller Info */}
-            <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-500">
-              <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-3">
-                  <Shield className="h-6 w-6 text-primary" />
-                  Seller Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-start gap-6">
-                  <Avatar className="h-20 w-20 ring-4 ring-primary/20 shadow-lg">
-                    <AvatarImage src={product.users.avatar_url || undefined} />
-                    <AvatarFallback className="text-xl bg-primary/10 text-primary font-bold">
-                      {product.users.full_name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-bold text-xl">{product.users.full_name}</h3>
-                      {product.users.verified && (
-                        <Badge
-                          variant="outline"
-                          className="bg-green-500/10 text-green-600 border-green-500/30 flex items-center gap-1"
-                        >
-                          <CheckCircle2 className="h-3 w-3" />
-                          Verified
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      {/* Only show university if user is a student (university_id present) */}
-                      {product.users.university_id && product.users.university_id !== "" && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          <span>{product.universities && product.universities.name !== "Unknown University"
-                            ? product.universities.name
-                            : getUniversityById(product.users.university_id)?.name || "Unknown University"}</span>
-                          {/* Only show type badge if type is known and not 'Unknown' */}
-                          {product.universities && product.universities.type && product.universities.type !== "Unknown" && (
-                            <Badge variant="outline" className="text-xs bg-background/50 backdrop-blur-sm">
-                              {product.universities.type}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                      {product.users.course && (
-                        <div className="flex items-center gap-2">
-                          <span>📚 {product.users.course}</span>
-                          {product.users.year_of_study && <span>• Year {product.users.year_of_study}</span>}
-                        </div>
-                      )}
-                      {/* Hide student ID from UI */}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <Card className="bg-card/80 border-0 shadow-2xl rounded-xl mb-8">
+  <CardHeader className="pb-2 border-b border-muted/30 flex flex-row items-center gap-3">
+    <Shield className="h-6 w-6 text-primary" />
+    <CardTitle className="text-xl font-bold tracking-tight">Seller Information</CardTitle>
+  </CardHeader>
+  <CardContent className="flex items-center gap-6 py-6">
+    <Avatar className="h-20 w-20 ring-4 ring-primary/20 shadow-lg">
+      <AvatarImage src={product.users.avatar_url || undefined} />
+      <AvatarFallback className="text-xl bg-primary/10 text-primary font-bold">
+        {product.users.full_name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")}
+      </AvatarFallback>
+    </Avatar>
+    <div className="flex-1 space-y-2">
+      <div className="flex items-center gap-3 mb-1">
+        <h3 className="font-bold text-xl text-foreground">{product.users.full_name}</h3>
+        {product.users.verified && (
+          <Badge
+            variant="outline"
+            className="bg-green-500/10 text-green-600 border-green-500/30 flex items-center gap-1"
+          >
+            <CheckCircle2 className="h-3 w-3" />
+            Verified
+          </Badge>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        {product.users.university_id && product.users.university_id !== "" && (
+          <>
+            <MapPin className="h-4 w-4" />
+            <span className="font-medium text-foreground">
+              {product.universities && product.universities.name !== "Unknown University"
+                ? product.universities.name
+                : getUniversityById(product.users.university_id)?.name || "Unknown University"}
+            </span>
+            {product.universities && product.universities.type && product.universities.type !== "Unknown" && (
+              <Badge variant="outline" className="text-xs bg-background/50 backdrop-blur-sm">
+                {product.universities.type}
+              </Badge>
+            )}
+          </>
+        )}
+        {product.users.course && (
+          <>
+            <span>•</span>
+            <span>📚 {product.users.course}</span>
+            {product.users.year_of_study && <span>• Year {product.users.year_of_study}</span>}
+          </>
+        )}
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
             {/* Enhanced Action Buttons */}
             {!isOwner && (
@@ -1457,6 +1515,7 @@ export default function ProductDetailsPage() {
           </Card>
             </TabsContent>
 
+            {/* Use CATEGORY_CONFIG for dynamic details rendering */}
             <TabsContent value="details" className="mt-6">
               <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-xl">
             <CardHeader>
@@ -1464,69 +1523,37 @@ export default function ProductDetailsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Category</h4>
-                      <p className="flex items-center gap-2 text-lg">
-                        {category?.icon && <category.icon className="h-4 w-4 mr-1" />} {category ? category.label : "Uncategorized"}
-                      </p>
-                </div>
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Condition</h4>
-                      <p className="text-lg">{product.condition}</p>
-                </div>
-                {product.brand && (
-                      <div className="p-4 bg-muted/30 rounded-lg">
-                        <h4 className="font-semibold text-sm text-muted-foreground mb-2">Brand</h4>
-                        <p className="text-lg">{product.brand}</p>
-                  </div>
-                )}
-                {product.model && (
-                      <div className="p-4 bg-muted/30 rounded-lg">
-                        <h4 className="font-semibold text-sm text-muted-foreground mb-2">Model</h4>
-                        <p className="text-lg">{product.model}</p>
-                  </div>
-                )}
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Pickup Location</h4>
-                      <p className="flex items-center gap-2 text-lg">
-                    <MapPin className="h-4 w-4" />
-                    {product.pickup_location}
-                  </p>
-                </div>
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">University</h4>
-                      <p className="text-lg">
-                        {product.universities && product.universities.name !== "Unknown University"
-                      ? product.universities.name
-                          : getUniversityById(product.users.university_id)?.name || "Unknown University"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Category-specific details */}
-                  <div className="mt-8">
-                    <h4 className="font-semibold text-lg mb-4">Additional Details</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {(() => {
-                        const categoryKey = getCategoryKey(product.product_categories?.name)
-                        if (!categoryKey)
-                          return <span className="text-muted-foreground">No additional details for this category.</span>
-                        return (CATEGORY_CONFIG as Record<CategoryKey, CategoryField[]>)[
-                          categoryKey as CategoryKey
-                        ].map((field: CategoryField) => {
-                          const value = (product as Record<string, any>)[field.name]
-                          if (!value || ["title", "price", "description"].includes(field.name)) return null
-                          return (
-                            <div key={field.name} className="p-4 bg-muted/30 rounded-lg">
-                              <span className="font-semibold text-sm text-muted-foreground block mb-1">
-                                {field.label}
-                              </span>
-                              <span className="text-lg">{value}</span>
-                            </div>
-                          )
-                        })
-                      })()}
-                </div>
+                {(() => {
+                  const categoryKey = (product.category_id || "").toLowerCase() as keyof typeof CATEGORY_CONFIG;
+                  const fields = CATEGORY_CONFIG[categoryKey] || CATEGORY_CONFIG["other"];
+                  return fields.map((field: any) => {
+                    // Always skip title, price, description (shown elsewhere)
+                    if (["title", "price", "description"].includes(field.name)) return null;
+                    // Try to get value from top-level, then from specifications, then from tags
+                    let value = (product as any)[field.name];
+                    if (value == null && product.specifications?.[field.name]) {
+                      value = product.specifications?.[field.name];
+                    }
+                    if (value == null && field.name === "tags" && Array.isArray(product.tags)) {
+                      value = product.tags?.join(", ");
+                    }
+                    if (!value || (Array.isArray(value) && value.length === 0)) return null;
+                    const Icon = getFieldIcon(field.name, categoryKey);
+                    return (
+                      <div key={field.name} className="p-4 bg-muted/30 rounded-lg flex items-center gap-4">
+                        {Icon && <Icon className="h-6 w-6 text-primary/70" />}
+                        <div>
+                          <h4 className="font-semibold text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                            {field.label}
+                          </h4>
+                          <p className="text-lg text-foreground">
+                            {Array.isArray(value) ? value.join(", ") : value}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </CardContent>
           </Card>
@@ -1571,9 +1598,8 @@ export default function ProductDetailsPage() {
                     </CardContent>
                   </Card>
                 )}
-
                 {/* Write Review Button */}
-                {user && !isOwner && (
+                {user && !isOwner && !reviews.some(r => r.user_id === user.id) && (
                   <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
                     <DialogTrigger asChild>
                       <Button className="w-full bg-primary hover:bg-primary/90 transition-all duration-300 py-6 text-lg font-semibold shadow-lg">
@@ -1633,58 +1659,103 @@ export default function ProductDetailsPage() {
                     </DialogContent>
                   </Dialog>
                 )}
-
-                {/* Review Filters and Sorting */}
-                {reviews.length > 0 && (
-                  <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-xl">
-                    <CardContent className="p-4">
-                      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            <Filter className="h-4 w-4" />
-                            <Label className="text-sm font-medium">Filter by rating:</Label>
-                          </div>
-                          <Select value={reviewFilter} onValueChange={setReviewFilter}>
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All ratings</SelectItem>
-                              <SelectItem value="5">5 stars</SelectItem>
-                              <SelectItem value="4">4 stars</SelectItem>
-                              <SelectItem value="3">3 stars</SelectItem>
-                              <SelectItem value="2">2 stars</SelectItem>
-                              <SelectItem value="1">1 star</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <Label className="text-sm font-medium">Sort by:</Label>
-                          <Select value={reviewSort} onValueChange={setReviewSort}>
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="newest">Newest</SelectItem>
-                              <SelectItem value="oldest">Oldest</SelectItem>
-                              <SelectItem value="highest">Highest rated</SelectItem>
-                              <SelectItem value="lowest">Lowest rated</SelectItem>
-                              <SelectItem value="helpful">Most helpful</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Reviews List */}
+                {/* Review List with edit/delete and highlight for user's own review */}
                 <div className="space-y-4">
-                  {sortedReviews.length > 0 ? (
-                    sortedReviews.map((review) => (
+                  {reviewLoading && <div className="text-center text-muted-foreground">Loading reviews...</div>}
+                  {reviewError && <div className="text-center text-destructive">{reviewError}</div>}
+                  {!reviewLoading && sortedReviews.length === 0 && (
+                    <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-xl">
+                      <CardContent className="p-8 text-center">
+                        <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
+                        <p className="text-muted-foreground">
+                          Be the first to review this product and help other buyers make informed decisions.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                  {sortedReviews.map((review) => {
+                    const isUserReview = user && review.user_id === user.id;
+                    if (editingReviewId === review.id) {
+                      // Edit form for user's review
+                      return (
+                        <Card key={review.id} className="bg-card/50 border-primary/50 border-2 shadow-xl">
+                          <CardContent className="p-6">
+                            <div className="mb-3">
+                              <Label className="text-sm font-medium">Rating</Label>
+                              <StarRating
+                                rating={editForm.rating}
+                                size="lg"
+                                interactive
+                                onRatingChange={(rating) => handleEditFormChange('rating', rating)}
+                              />
+                            </div>
+                            <div className="mb-3">
+                              <Label className="text-sm font-medium">Title</Label>
+                              <Input
+                                value={editForm.title}
+                                onChange={(e) => handleEditFormChange('title', e.target.value)}
+                              />
+                            </div>
+                            <div className="mb-3">
+                              <Label className="text-sm font-medium">Comment</Label>
+                              <Textarea
+                                value={editForm.comment}
+                                onChange={(e) => handleEditFormChange('comment', e.target.value)}
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleEditReviewSubmit(review.id)}
+                                disabled={reviewLoading}
+                                className="bg-primary"
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => setEditingReviewId(null)}
+                                disabled={reviewLoading}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                            {reviewError && <div className="text-destructive mt-2">{reviewError}</div>}
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                    if (deletingReviewId === review.id) {
+                      // Confirm delete UI
+                      return (
+                        <Card key={review.id} className="bg-card/50 border-destructive/50 border-2 shadow-xl">
+                          <CardContent className="p-6 text-center">
+                            <p>Are you sure you want to delete your review?</p>
+                            <div className="flex gap-2 justify-center mt-4">
+                              <Button
+                                onClick={() => handleDeleteReview(review.id)}
+                                disabled={reviewLoading}
+                                className="bg-destructive"
+                              >
+                                Delete
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => setDeletingReviewId(null)}
+                                disabled={reviewLoading}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                            {reviewError && <div className="text-destructive mt-2">{reviewError}</div>}
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                    return (
                       <Card
                         key={review.id}
-                        className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+                        className={`bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 ${isUserReview ? 'ring-2 ring-primary' : ''}`}
                       >
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4">
@@ -1692,9 +1763,9 @@ export default function ProductDetailsPage() {
                               <AvatarImage src={review.user.avatar_url || undefined} />
                               <AvatarFallback className="bg-primary/10 text-primary">
                                 {review.user.full_name
-                                  .split(" ")
+                                  .split(' ')
                                   .map((n) => n[0])
-                                  .join("")}
+                                  .join('')}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
@@ -1712,38 +1783,39 @@ export default function ProductDetailsPage() {
                                 <span className="text-sm text-muted-foreground">
                                   {formatDistanceToNow(formatDate(review.created_at), { addSuffix: true })}
                                 </span>
+                                {isUserReview && <Badge className="ml-2 bg-primary/10 text-primary">Your Review</Badge>}
                               </div>
                               <div className="mb-3">
                                 <StarRating rating={review.rating} size="sm" />
                               </div>
                               <h5 className="font-semibold mb-2">{review.title}</h5>
                               <p className="text-muted-foreground leading-relaxed mb-4">{review.comment}</p>
-                              <div className="flex items-center gap-4">
-                                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                                  <ThumbsUp className="h-4 w-4 mr-1" />
-                                  Helpful ({review.helpful_count})
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                                  <ThumbsDown className="h-4 w-4 mr-1" />
-                                  Not helpful
-                                </Button>
-                              </div>
+                              {isUserReview && (
+                                <div className="flex gap-2 mt-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEditReview(review)}
+                                    className="text-primary border-primary/30"
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setDeletingReviewId(review.id)}
+                                    className="text-destructive border-destructive/30"
+                                  >
+                                    Delete
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))
-                  ) : (
-                    <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-xl">
-                      <CardContent className="p-8 text-center">
-                        <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
-                        <p className="text-muted-foreground">
-                          Be the first to review this product and help other buyers make informed decisions.
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
+                    );
+                  })}
                 </div>
               </div>
             </TabsContent>
