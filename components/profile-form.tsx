@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { getUniversities } from "@/lib/get-universities";
 import ZIM_UNIVERSITIES from "@/utils/schools_data";
 import { ProfileFormValues } from "@/types";
 
@@ -66,6 +67,15 @@ export default function ProfileForm({ onSubmit: onSubmitProp }: ProfileFormProps
     defaultValues,
     mode: "onChange",
   });
+
+  const [universities, setUniversities] = useState([]);
+  useEffect(() => {
+    async function loadUnis() {
+      const unis = await getUniversities();
+      setUniversities(unis.filter(u => u.type === "university" && u.is_active !== false));
+    }
+    loadUnis();
+  }, []);
 
   // Calculate profile completion progress
   const requiredFields: (keyof ProfileFormValues)[] = ["fullName", "email"];
@@ -194,7 +204,7 @@ export default function ProfileForm({ onSubmit: onSubmitProp }: ProfileFormProps
                       <FormControl>
                         <select {...field} className="input">
                           <option value="">Select your university</option>
-                          {ZIM_UNIVERSITIES.filter(u => u.type === "university").map(u => (
+                          {universities.map(u => (
                             <option key={u.id} value={u.id}>
                               {u.name} ({u.location})
                             </option>

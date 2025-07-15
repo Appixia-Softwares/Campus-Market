@@ -40,6 +40,7 @@ import { collection, query, where, orderBy, getDocs, addDoc } from "firebase/fir
 import { db } from "@/lib/firebase"
 import { uploadFileToStorage } from '@/lib/firebase'
 import { CATEGORY_META } from "@/lib/category-config";
+import { getUniversities } from "@/lib/get-universities";
 
 interface Category {
   id: string
@@ -106,16 +107,25 @@ export default function NewListingPage() {
       try {
         await Promise.all([
           fetchCategories(),
-          fetchUniversities()
+          loadUniversities()
         ])
       } catch (error) {
         console.error("Error fetching initial data:", error)
         toast.error("Failed to load initial data")
       }
     }
-
     fetchInitialData()
-  }, []) // Empty dependency array means this runs once on mount
+  }, [])
+
+  const loadUniversities = async () => {
+    try {
+      const unis = await getUniversities();
+      setUniversities(unis.filter((u: University) => u.is_active !== false));
+    } catch (error) {
+      console.error("Error loading universities:", error);
+      toast.error("Failed to load universities");
+    }
+  }
 
   const fetchCategories = async () => {
     try {
@@ -142,32 +152,6 @@ export default function NewListingPage() {
     } catch (error) {
       console.error("Error fetching categories:", error)
       toast.error("Failed to load categories")
-    }
-  }
-
-  const fetchUniversities = async () => {
-    try {
-      console.log("Debug - Fetching universities from Firebase...")
-      const universitiesRef = collection(db, 'universities')
-      const universitiesQuery = query(
-        universitiesRef,
-        where('is_active', '==', true)
-      )
-      
-      const snapshot = await getDocs(universitiesQuery)
-      console.log("Debug - Universities count:", snapshot.size)
-      
-      const universitiesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as University[]
-      
-      // Sort universities by name in memory
-      universitiesData.sort((a, b) => a.name.localeCompare(b.name))
-      setUniversities(universitiesData)
-    } catch (error) {
-      console.error("Error fetching universities:", error)
-      toast.error("Failed to load universities")
     }
   }
 

@@ -1,4 +1,3 @@
-import { db, auth } from './firebase';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import {
   createUserWithEmailAndPassword,
@@ -8,6 +7,7 @@ import {
   User as FirebaseUser,
   sendPasswordResetEmail as firebaseSendPasswordResetEmail, // Add this import
 } from 'firebase/auth';
+import { auth, db } from './firebase';
 
 export interface User {
   id: string;

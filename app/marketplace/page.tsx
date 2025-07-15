@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { collection, query, where, orderBy, getDocs, limit, doc, getDoc, startAfter } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { Timestamp } from "firebase/firestore"
+import { getUniversities } from "@/lib/get-universities";
 
 interface Category {
   id: string
@@ -129,7 +130,7 @@ export default function MarketplacePage() {
         // Fetch categories and universities in parallel
         const [categoriesData, universitiesData] = await Promise.all([
           fetchCategories(),
-          fetchUniversities()
+          loadUniversities()
         ])
         
         // Set initial filters with default values
@@ -160,6 +161,18 @@ export default function MarketplacePage() {
     }
   }, [user])
 
+  const loadUniversities = async () => {
+    try {
+      const unis = await getUniversities();
+      setUniversities(unis.filter((u: { is_active?: boolean }) => u.is_active !== false));
+      return unis;
+    } catch (error) {
+      console.error("Error loading universities:", error);
+      toast.error("Failed to load universities");
+      return [];
+    }
+  };
+
   const fetchCategories = async () => {
     try {
       console.log("Debug - Fetching categories from Firebase...")
@@ -183,34 +196,6 @@ export default function MarketplacePage() {
     } catch (error) {
       console.error("Error fetching categories:", error)
       toast.error("Failed to load categories")
-      return []
-    }
-  }
-
-  const fetchUniversities = async () => {
-    try {
-      console.log("Debug - Fetching universities from Firebase...")
-      const universitiesRef = collection(db, 'universities')
-      const universitiesQuery = query(
-        universitiesRef,
-        where('is_active', '==', true)
-      )
-      
-      const snapshot = await getDocs(universitiesQuery)
-      console.log("Debug - Universities count:", snapshot.size)
-      
-      const universitiesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as University[]
-      
-      // Sort universities by name in memory
-      universitiesData.sort((a, b) => a.name.localeCompare(b.name))
-      setUniversities(universitiesData)
-      return universitiesData
-    } catch (error) {
-      console.error("Error fetching universities:", error)
-      toast.error("Failed to load universities")
       return []
     }
   }

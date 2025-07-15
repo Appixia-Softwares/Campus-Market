@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { signUp } from '@/lib/auth-service';
 import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
-import ZIM_UNIVERSITIES from "@/utils/schools_data"
+import { getUniversities } from "@/lib/get-universities"
 import { Textarea } from "@/components/ui/textarea"
 import confetti from "canvas-confetti"
 import { toast as sonnerToast } from "sonner"
@@ -117,9 +117,10 @@ export default function SignupPage() {
     async function loadUniversities() {
       setIsLoadingUniversities(true)
       try {
+        const allUnis = await getUniversities();
         // Group and sort universities by type and name
         const grouped: { [type: string]: University[] } = {};
-        ZIM_UNIVERSITIES.forEach(u => {
+        allUnis.forEach((u: any) => {
           if (!grouped[u.type || 'other']) grouped[u.type || 'other'] = [];
           grouped[u.type || 'other'].push(u);
         });

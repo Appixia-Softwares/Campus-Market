@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { db } from "@/lib/firebase"
 import { collection, getDocs, query, where, orderBy, limit, getCountFromServer } from "firebase/firestore"
 import { useAuth } from "@/lib/auth-context"
+import { getUniversities } from "@/lib/get-universities";
 
 interface Stats {
   totalProducts: number
@@ -45,6 +46,7 @@ interface University {
   short_name: string
   student_count: number
   location: string
+  type?: string;
 }
 
 interface ProductData {
@@ -81,6 +83,7 @@ export default function LandingPage() {
   })
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
   const [universities, setUniversities] = useState<University[]>([])
+  const [allUniversitiesCount, setAllUniversitiesCount] = useState(0);
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -166,19 +169,23 @@ export default function LandingPage() {
         setFeaturedProducts(products)
 
         // Fetch universities
-        const universitiesQuery = query(
-          collection(db, 'universities'),
-          where('is_active', '==', true),
-          orderBy('student_count', 'desc'),
-          limit(8)
-        )
-        const universitiesData = await getDocs(universitiesQuery)
-        const universitiesList = universitiesData.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as University[]
-        
-        setUniversities(universitiesList)
+        const BEST_UNI_IDS = [
+          "uz", // University of Zimbabwe
+          "nust", // National University of Science and Technology
+          "msu", // Midlands State University
+          "cuz", // Catholic University of Zimbabwe
+          "hit", // Harare Institute of Technology
+          "zou", // Zimbabwe Open University
+          "lsu", // Lupane State University
+          "gzu" , // Great Zimbabwe University
+          "chu"
+        ];
+        const universitiesList = await getUniversities();
+        setAllUniversitiesCount(universitiesList.filter((u: University) => u.type === "university").length);
+        const filteredUnis = universitiesList
+          .filter((u: University) => u.type === "university" && BEST_UNI_IDS.includes(u.id))
+          .sort((a: University, b: University) => (b.student_count || 0) - (a.student_count || 0));
+        setUniversities(filteredUnis);
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
@@ -368,10 +375,10 @@ export default function LandingPage() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {universities.map((university) => (
                   <Card key={university.id} className="text-center p-6 hover:shadow-md transition-shadow">
-                    <h3 className="font-semibold text-lg mb-2">{university.short_name}</h3>
+                    <h3 className="font-semibold text-lg mb-2">{university.short_name || university.name}</h3>
                     <p className="text-sm text-muted-foreground mb-2">{university.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {university.student_count?.toLocaleString()} students
+                      {university.student_count ? `${university.student_count.toLocaleString()} students` : ""}
                     </p>
                     <p className="text-xs text-muted-foreground">{university.location}</p>
                   </Card>
@@ -411,7 +418,7 @@ export default function LandingPage() {
             <FeatureCard
               icon={<BookOpen className="h-10 w-10" />}
               title="University Network"
-              description={`Connect with students from ${stats.totalUniversities} universities across Zimbabwe.`}
+              description={`Connect with students from ${allUniversitiesCount} universities across Zimbabwe.`}
             />
             <FeatureCard
               icon={<Users className="h-10 w-10" />}
@@ -460,7 +467,7 @@ export default function LandingPage() {
               <span className="text-gradient">Ready to join Campus Marketplace?</span>
             </h2>
             <p className="max-w-[85%] text-lg text-muted-foreground">
-              Join {stats.totalUsers.toLocaleString()}+ students from {stats.totalUniversities} universities and start
+              Join {stats.totalUsers.toLocaleString()}+ students from {allUniversitiesCount} universities and start
               exploring the marketplace.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
@@ -497,8 +504,16 @@ export default function LandingPage() {
                 {stats.totalUsers.toLocaleString()} Students
               </Badge>
               <Badge variant="secondary" className="text-xs">
-                {stats.totalUniversities} Universities
+                {allUniversitiesCount} Universities
               </Badge>
+            </div>
+            {/* Best Universities List */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {universities.map((u) => (
+                <Badge key={u.id} variant="outline" className="text-xs">
+                  {u.short_name || u.name}
+                </Badge>
+              ))}
             </div>
           </div>
           <div className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-3">
