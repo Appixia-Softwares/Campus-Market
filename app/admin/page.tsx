@@ -36,6 +36,7 @@ export interface UserWithMeta {
   created_at?: string | number | { seconds: number };
   updated_at?: string | number | { seconds: number };
   status?: 'active' | 'banned';
+  role?: string;
 }
 
 function TopCategoriesCard() {
