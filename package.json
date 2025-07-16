@@ -11,6 +11,7 @@
     "seed:firebase": "tsx scripts/seed-firebase.ts"
   },
   "dependencies": {
+    "@browsermcp/mcp": "^0.1.3",
     "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "latest",
     "@radix-ui/react-accordion": "latest",

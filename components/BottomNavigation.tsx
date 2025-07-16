@@ -2,6 +2,11 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Search, Plus, MessageSquare, User } from "lucide-react"
+import NotificationsPanel from './NotificationsPanel';
+import PushNotificationPrompt from './PushNotificationPrompt';
+import { useState, useEffect } from 'react';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const navItems = [
   { href: "/dashboard", label: "Home", icon: Home },
@@ -11,10 +16,26 @@ const navItems = [
   { href: "/profile", label: "Profile", icon: User },
 ]
 
-export default function BottomNavigation() {
+export default function BottomNavigation({ userId }) {
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showPanel, setShowPanel] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      where('read', '==', false)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setUnreadCount(snap.size);
+    });
+    return () => unsub();
+  }, [userId]);
+
   const pathname = usePathname() || ""
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 border-t border-border flex justify-around items-center h-16 md:hidden shadow-lg">
+    <nav className="fixed bottom-0 w-full bg-white shadow z-50 flex justify-between items-center px-4 py-2">
       {navItems.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || (href !== "/" && pathname.startsWith(href))
         return (
@@ -29,6 +50,20 @@ export default function BottomNavigation() {
           </Link>
         )
       })}
+      <div className="relative">
+        <button onClick={() => setShowPanel((v) => !v)} className="relative">
+          <span className="icon-bell" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">{unreadCount}</span>
+          )}
+        </button>
+        {showPanel && (
+          <div className="absolute right-0 bottom-10 z-50">
+            <NotificationsPanel userId={userId} />
+          </div>
+        )}
+      </div>
+      <PushNotificationPrompt userId={userId} />
     </nav>
   )
 } 
