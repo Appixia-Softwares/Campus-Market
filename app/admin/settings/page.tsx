@@ -1,12 +1,5 @@
 "use client"
 
-<<<<<<< HEAD
-import { useState, useEffect, useCallback } from "react"
-import { Bell, Globe, Shield, User, Zap, Settings, Database } from "lucide-react"
-=======
-import { useState, useEffect, useCallback, useRef } from "react"
-import { Bell, Copy, Globe, Lock, Save, Shield, User, Zap, Settings, Database, Activity, ToggleLeft, ToggleRight } from "lucide-react"
->>>>>>> c18d029e7da92ff25a563f492af0be27015214da
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -25,6 +18,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import AdminAnnouncementForm from '@/components/AdminAnnouncementForm';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Settings, Globe, User, Bell, Shield, Zap, Database } from "lucide-react"
+import { useState, useRef, useEffect, useCallback } from "react"
 
 
 export default function AdminSettingsPage() {
