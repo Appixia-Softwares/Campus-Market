@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react";
 import { collection, query, where, orderBy, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -48,6 +46,6 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
           </li>
         ))}
       </ul>
-                    </div>
+    </div>
   );
-}
+} 

@@ -14,12 +14,11 @@ import { Settings, Plus, AlertTriangle, Activity, Database, Mail, Info, Bell, Us
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { collection, onSnapshot } from "firebase/firestore";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 // Dynamically import the full chart wrapper component
@@ -345,22 +344,20 @@ export default function AdminPage() {
     e.preventDefault();
     setAnnouncementLoading(true);
     try {
-      const res = await fetch('/api/notifications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          notification: {
-            userId: null, // null for broadcast
-            type: 'admin',
-            title: announcementTitle,
-            body: announcementBody,
-            read: false,
-            createdAt: new Date(),
-          },
-        }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      // Get all users
+      const usersSnap = await getDocs(collection(db, "users"));
+      const users = usersSnap.docs.map(doc => ({ id: doc.id }));
+      // Create a notification for each user
+      await Promise.all(users.map(user =>
+        addDoc(collection(db, "notifications"), {
+          userId: user.id,
+          title: announcementTitle,
+          body: announcementBody,
+          type: "admin",
+          read: false,
+          createdAt: serverTimestamp(),
+        })
+      ));
       toast.success('Announcement sent to all users!');
       setAnnouncementTitle('');
       setAnnouncementBody('');

@@ -7,6 +7,8 @@ import { Search, Bell, User, Menu } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
+import { db } from "@/lib/firebase";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +27,18 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
   const router = useRouter()
   const { user, signOut } = useAuth()
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const q = query(
+      collection(db, "notifications"),
+      where("userId", "==", user.id),
+      where("read", "==", false)
+    );
+    const unsub = onSnapshot(q, (snap) => setUnreadCount(snap.size));
+    return () => unsub();
+  }, [user?.id]);
 
   const handleSignOut = async () => {
     try {
@@ -60,11 +74,13 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
-              {/* Optionally, fetch unread count via API and display here */}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">{unreadCount}</span>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-96 p-0">
-            <NotificationsPanel />
+            <NotificationsPanel userId={user?.id} />
           </DropdownMenuContent>
         </DropdownMenu>
         <DropdownMenu>

@@ -1,17 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
-import { Bell, Copy, Globe, Lock, Save, Shield, User, Zap, Settings, Database, Activity, ToggleLeft, ToggleRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "@/components/ui/use-toast"
@@ -20,6 +15,11 @@ import { listenToSettings, updateSettings, getFeatureFlags, setFeatureFlag, getE
 import { getAllUsersRealtime, updateUser, deleteUser } from "@/lib/api/users";
 import { getAllReportsRealtime } from "@/lib/api/reports";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import AdminAnnouncementForm from '@/components/AdminAnnouncementForm';
+import { collection, addDoc, updateDoc, doc, serverTimestamp, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Settings, Globe, User, Bell, Shield, Zap, Database } from "lucide-react"
+import { useState, useRef, useEffect, useCallback } from "react"
 
 
 export default function AdminSettingsPage() {
@@ -86,16 +86,17 @@ export default function AdminSettingsPage() {
 
   // Real-time notifications (polling for now, can be optimized with onSnapshot if available)
   useEffect(() => {
-    let ignore = false;
-    async function fetchNotifs() {
-      const res = await fetch('/api/notifications?userId=admin');
-      const { data } = await res.json();
-      if (!ignore) setNotifications(data || []);
-    }
-    fetchNotifs();
-    const interval = setInterval(fetchNotifs, 5000);
-    return () => { ignore = true; clearInterval(interval); };
-  }, []);
+    if (!user?.id) return;
+    const q = query(
+      collection(db, "notifications"),
+      where("userId", "==", user.id),
+      orderBy("createdAt", "desc")
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setNotifications(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsub();
+  }, [user?.id]);
 
   // Real-time feature flags
   useEffect(() => {
@@ -154,25 +155,20 @@ export default function AdminSettingsPage() {
 
   // Notification actions
   const handleMarkNotifRead = async (notifId: string) => {
-    await fetch('/api/notifications/mark-read', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: notifId }),
-    });
+    await updateDoc(doc(db, "notifications", notifId), { read: true });
   };
   const handleDeleteNotif = async (notifId: string) => {
-    await fetch('/api/notifications/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: notifId }),
-    });
+    await updateDoc(doc(db, "notifications", notifId), { deleted: true }); // Or use deleteDoc to remove
     toast({ title: 'Notification Deleted' });
   };
   const handleSendTestNotif = async () => {
-    await fetch('/api/notifications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notification: { userId: 'admin', title: 'Test Notification', body: 'This is a test.', type: 'admin', read: false } }),
+    await addDoc(collection(db, "notifications"), {
+      userId: user?.id,
+      title: 'Test Notification',
+      body: 'This is a test.',
+      type: 'admin',
+      read: false,
+      createdAt: serverTimestamp(),
     });
     toast({ title: 'Test Notification Sent' });
   };
@@ -180,11 +176,7 @@ export default function AdminSettingsPage() {
   // Notification actions with confirmation
   const handleDeleteNotifConfirmed = async () => {
     if (confirmAction?.notif) {
-      await fetch('/api/notifications/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: confirmAction.notif.id }),
-      });
+      await updateDoc(doc(db, "notifications", confirmAction.notif.id), { deleted: true });
       toast({ title: "Notification Deleted" });
       setConfirmAction(null);
     }
@@ -221,7 +213,12 @@ export default function AdminSettingsPage() {
   }
 
   return (
+<<<<<<< HEAD
     <div className="flex-1 w-full h-full p-6">
+=======
+    <div className="p-8 w-full max-w-none">
+      <AdminAnnouncementForm />
+>>>>>>> eafe4e930e7ac97beda533612ccf999a758cea6e
       <h1 className="text-2xl font-bold mb-2 flex items-center gap-2"><Settings className="h-6 w-6" /> Settings</h1>
       <p className="text-muted-foreground mb-6">Configure admin and platform settings here.</p>
       <Tabs defaultValue="general" className="w-full">
