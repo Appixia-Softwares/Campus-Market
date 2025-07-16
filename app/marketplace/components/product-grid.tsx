@@ -246,10 +246,11 @@ export function ProductGrid({
 
   return (
     <AnimatePresence>
+      {/* Responsive grid: gap and padding tuned for mobile */}
       <div
-        className={`grid gap-6 ${
+        className={`grid gap-3 sm:gap-4 md:gap-6 ${
           viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
-        }`}
+        } p-1 sm:p-0`}
       >
         {products.map((product, index) => (
           <motion.div
@@ -259,10 +260,11 @@ export function ProductGrid({
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
           >
+            {/* Card: ensure all buttons and overlays are touch-friendly */}
             <Link href={`/marketplace/products/${product.id}`} className="block h-full">
               <Card
                 className={`overflow-hidden h-full group transition-all duration-300 ${
-                  viewMode === "list" ? "flex" : ""
+                  viewMode === "list" ? "flex flex-col sm:flex-row" : ""
                 } group-hover:shadow-2xl group-hover:scale-[1.03] ${product.featured ? "border-2 border-yellow-400" : ""}`}
               >
                 <div

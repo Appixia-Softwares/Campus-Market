@@ -9,6 +9,7 @@ import AccommodationList from "@/components/accommodation-list"
 import { getAccommodations } from "@/services/accommodation"
 import { useToast } from "@/hooks/use-toast"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { AccommodationFilterForm } from "@/components/accommodation-filters"
 import Link from "next/link"
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
@@ -130,7 +131,7 @@ export default function AccommodationPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 w-full h-full p-6">
+      <main className="flex-1 w-full h-full p-2 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Accommodation</h1>
           <div className="flex gap-2">
@@ -171,37 +172,64 @@ export default function AccommodationPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search for accommodation..."
-                className="pl-10 h-12 text-lg"
+                className="pl-10 h-12 text-lg w-full"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && e.preventDefault()}
               />
             </div>
-            {/* Filters button opens Dialog */}
-            <Dialog open={showFilters} onOpenChange={setShowFilters}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2 h-12">
-                  <SlidersHorizontal className="h-4 w-4" /> Filters
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Filter Accommodation</DialogTitle>
-                </DialogHeader>
-                <AccommodationFilterForm
-                  value={filters}
-                  onChange={setFilters}
-                  onReset={handleReset}
-                  showActions={false}
-                />
-                <DialogFooter>
-                  <Button onClick={() => setShowFilters(false)} type="button">Apply</Button>
-                  <DialogClose asChild>
-                    <Button variant="outline" type="button">Cancel</Button>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            {/* Filters: Sheet on mobile, Dialog on desktop */}
+            {isMobile ? (
+              <Sheet open={showFilters} onOpenChange={setShowFilters}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2 h-12 w-full sm:w-auto">
+                    <SlidersHorizontal className="h-4 w-4" /> Filters
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto p-0">
+                  <SheetHeader>
+                    <SheetTitle>Filter Accommodation</SheetTitle>
+                  </SheetHeader>
+                  <div className="p-4">
+                    <AccommodationFilterForm
+                      value={filters}
+                      onChange={setFilters}
+                      onReset={handleReset}
+                      showActions={false}
+                    />
+                    <div className="flex gap-2 mt-4">
+                      <Button onClick={() => setShowFilters(false)} type="button" className="w-full">Apply</Button>
+                      <Button variant="outline" onClick={() => setShowFilters(false)} type="button" className="w-full">Cancel</Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            ) : (
+              <Dialog open={showFilters} onOpenChange={setShowFilters}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2 h-12 w-full sm:w-auto">
+                    <SlidersHorizontal className="h-4 w-4" /> Filters
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Filter Accommodation</DialogTitle>
+                  </DialogHeader>
+                  <AccommodationFilterForm
+                    value={filters}
+                    onChange={setFilters}
+                    onReset={handleReset}
+                    showActions={false}
+                  />
+                  <DialogFooter>
+                    <Button onClick={() => setShowFilters(false)} type="button">Apply</Button>
+                    <DialogClose asChild>
+                      <Button variant="outline" type="button">Cancel</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
           {/* Active filter badges */}
           {activeBadges.length > 0 && (

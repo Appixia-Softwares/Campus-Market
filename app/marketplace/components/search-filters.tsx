@@ -14,6 +14,7 @@ import { Star, Sparkles, ThumbsUp, Wrench, Flame, MapPin, Calendar, DollarSign, 
 import { CATEGORY_META } from "@/lib/category-config";
 import ZIM_UNIVERSITIES from "@/utils/schools_data";
 import { motion, AnimatePresence } from "framer-motion"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 interface SearchFiltersProps {
   onSearch: (filters: any) => void
@@ -133,36 +134,218 @@ export function SearchFilters({ onSearch, categories, universities }: SearchFilt
     return university ? [university.location] : []
   }
 
+  // Responsive: Use Sheet for filters on mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   return (
     <div className="space-y-4">
-      {/* Main Search Bar */}
-      <div className="flex gap-2">
+      {/* Main Search Bar - Responsive: stacks on mobile */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search for textbooks, electronics, furniture..."
-            className="pl-10 h-12 text-lg"
+            className="pl-10 h-12 text-lg w-full"
             value={filters.query}
             onChange={(e) => setFilters({ ...filters, query: e.target.value })}
             onKeyPress={(e) => e.key === "Enter" && handleSearch()}
           />
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
-          className="h-12 px-6 flex items-center gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          Filters
-          {activeFilters.length > 0 && (
-            <Badge variant="secondary" className="ml-1">
-              {activeFilters.length}
-            </Badge>
-          )}
-        </Button>
-        <Button onClick={handleSearch} className="h-12 px-8">
-          Search
-        </Button>
+        {/* Responsive: Show Sheet on mobile, button on desktop */}
+        <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex-1 sm:flex-none">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="h-12 w-full sm:w-auto flex items-center gap-2"
+                  onClick={() => setShowFilters(true)}
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                  {activeFilters.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {activeFilters.length}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto p-0">
+                <SheetHeader>
+                  <SheetTitle>Advanced Filters</SheetTitle>
+                </SheetHeader>
+                {/* Advanced Filters Panel - moved here for mobile */}
+                <div className="p-4">
+                  {/* Quick Filters, Category, University, etc. */}
+                  {/* ... Move advanced filter content here ... */}
+                  {/* Copy from the CardContent in the advanced filters section */}
+                  {/* Quick Filters */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Star className="h-4 w-4" />
+                      Quick Filters
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="delivery"
+                          checked={filters.deliveryAvailable}
+                          onCheckedChange={(checked) => setFilters({ ...filters, deliveryAvailable: checked })}
+                        />
+                        <Label htmlFor="delivery" className="flex items-center gap-1">
+                          <Truck className="h-3 w-3" />
+                          Delivery Available
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="negotiable"
+                          checked={filters.priceNegotiable}
+                          onCheckedChange={(checked) => setFilters({ ...filters, priceNegotiable: checked })}
+                        />
+                        <Label htmlFor="negotiable" className="flex items-center gap-1">
+                          💬 Price Negotiable
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Category and University */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Category</Label>
+                      <Select
+                        value={filters.category}
+                        onValueChange={(value) => setFilters({ ...filters, category: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Categories" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Categories</SelectItem>
+                          {CATEGORY_META.map(cat => (
+                            <SelectItem key={cat.key} value={cat.key}>
+                              {cat.icon && <cat.icon className="h-4 w-4 mr-1 inline" />} {cat.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        University/Institution
+                      </Label>
+                      <Select
+                        value={filters.university}
+                        onValueChange={(value) => setFilters({ ...filters, university: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Universities" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Universities</SelectItem>
+                          {universities.map(u => (
+                            <SelectItem key={u.id} value={u.id}>
+                              <MapPin className="h-4 w-4 mr-1 inline" /> {u.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Condition and Sort */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Condition</Label>
+                      <Select
+                        value={filters.condition}
+                        onValueChange={(value) => setFilters({ ...filters, condition: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Any Condition" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Any Condition</SelectItem>
+                          {CONDITIONS.map((condition) => (
+                            <SelectItem key={condition.value} value={condition.value}>
+                              <div className="flex items-center gap-2">
+                                <span>{condition.icon}</span>
+                                <div>
+                                  <div className="font-medium">{condition.label}</div>
+                                  <div className="text-xs text-muted-foreground">{condition.description}</div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Sort By
+                      </Label>
+                      <Select value={filters.sortBy} onValueChange={(value) => setFilters({ ...filters, sortBy: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SORT_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className="flex items-center gap-2">
+                                <span>{option.icon}</span>
+                                {option.label}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Price Range */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Price Range (USD)</Label>
+                    <div className="px-3">
+                      <Slider
+                        value={[filters.minPrice, filters.maxPrice]}
+                        max={1000}
+                        step={5}
+                        onValueChange={([min, max]) => setFilters({ ...filters, minPrice: min, maxPrice: max })}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                        <span>${filters.minPrice}</span>
+                        <span>${filters.maxPrice}+</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button variant="outline" onClick={resetFilters} className="flex items-center gap-2">
+                      <X className="h-4 w-4" />
+                      Reset
+                    </Button>
+                    <Button onClick={handleSearch} className="flex items-center gap-2">
+                      <Search className="h-4 w-4" />
+                      Apply Filters
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+          <Button onClick={handleSearch} className="h-12 w-full sm:w-auto">
+            Search
+          </Button>
+        </div>
       </div>
 
       {/* Active Filters */}
@@ -199,181 +382,179 @@ export function SearchFilters({ onSearch, categories, universities }: SearchFilt
         )}
       </AnimatePresence>
 
-      {/* Advanced Filters */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <Card className="border-2 border-dashed border-muted">
-              <CardContent className="p-6 space-y-6">
-                {/* Quick Filters */}
+      {/* Advanced Filters - Only show as Card on desktop */}
+      {!isMobile && showFilters && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          className="overflow-hidden"
+        >
+          <Card className="border-2 border-dashed border-muted">
+            <CardContent className="p-6 space-y-6">
+              {/* Quick Filters */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Star className="h-4 w-4" />
+                  Quick Filters
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="delivery"
+                      checked={filters.deliveryAvailable}
+                      onCheckedChange={(checked) => setFilters({ ...filters, deliveryAvailable: checked })}
+                    />
+                    <Label htmlFor="delivery" className="flex items-center gap-1">
+                      <Truck className="h-3 w-3" />
+                      Delivery Available
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="negotiable"
+                      checked={filters.priceNegotiable}
+                      onCheckedChange={(checked) => setFilters({ ...filters, priceNegotiable: checked })}
+                    />
+                    <Label htmlFor="negotiable" className="flex items-center gap-1">
+                      💬 Price Negotiable
+                    </Label>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Category and University */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Category</Label>
+                  <Select
+                    value={filters.category}
+                    onValueChange={(value) => setFilters({ ...filters, category: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {CATEGORY_META.map(cat => (
+                        <SelectItem key={cat.key} value={cat.key}>
+                          {cat.icon && <cat.icon className="h-4 w-4 mr-1 inline" />} {cat.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-3">
                   <Label className="text-sm font-medium flex items-center gap-2">
-                    <Star className="h-4 w-4" />
-                    Quick Filters
+                    <MapPin className="h-4 w-4" />
+                    University/Institution
                   </Label>
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="delivery"
-                        checked={filters.deliveryAvailable}
-                        onCheckedChange={(checked) => setFilters({ ...filters, deliveryAvailable: checked })}
-                      />
-                      <Label htmlFor="delivery" className="flex items-center gap-1">
-                        <Truck className="h-3 w-3" />
-                        Delivery Available
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="negotiable"
-                        checked={filters.priceNegotiable}
-                        onCheckedChange={(checked) => setFilters({ ...filters, priceNegotiable: checked })}
-                      />
-                      <Label htmlFor="negotiable" className="flex items-center gap-1">
-                        💬 Price Negotiable
-                      </Label>
-                    </div>
-                  </div>
+                  <Select
+                    value={filters.university}
+                    onValueChange={(value) => setFilters({ ...filters, university: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Universities" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Universities</SelectItem>
+                      {universities.map(u => (
+                        <SelectItem key={u.id} value={u.id}>
+                          <MapPin className="h-4 w-4 mr-1 inline" /> {u.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
 
-                <Separator />
-
-                {/* Category and University */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">Category</Label>
-                    <Select
-                      value={filters.category}
-                      onValueChange={(value) => setFilters({ ...filters, category: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="All Categories" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {CATEGORY_META.map(cat => (
-                          <SelectItem key={cat.key} value={cat.key}>
-                            {cat.icon && <cat.icon className="h-4 w-4 mr-1 inline" />} {cat.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      University/Institution
-                    </Label>
-                    <Select
-                      value={filters.university}
-                      onValueChange={(value) => setFilters({ ...filters, university: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="All Universities" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Universities</SelectItem>
-                        {universities.map(u => (
-                          <SelectItem key={u.id} value={u.id}>
-                            <MapPin className="h-4 w-4 mr-1 inline" /> {u.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Condition and Sort */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">Condition</Label>
-                    <Select
-                      value={filters.condition}
-                      onValueChange={(value) => setFilters({ ...filters, condition: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Any Condition" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Any Condition</SelectItem>
-                        {CONDITIONS.map((condition) => (
-                          <SelectItem key={condition.value} value={condition.value}>
-                            <div className="flex items-center gap-2">
-                              <span>{condition.icon}</span>
-                              <div>
-                                <div className="font-medium">{condition.label}</div>
-                                <div className="text-xs text-muted-foreground">{condition.description}</div>
-                              </div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Sort By
-                    </Label>
-                    <Select value={filters.sortBy} onValueChange={(value) => setFilters({ ...filters, sortBy: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SORT_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className="flex items-center gap-2">
-                              <span>{option.icon}</span>
-                              {option.label}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Price Range */}
+              {/* Condition and Sort */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium">Price Range (USD)</Label>
-                  <div className="px-3">
-                    <Slider
-                      value={[filters.minPrice, filters.maxPrice]}
-                      max={1000}
-                      step={5}
-                      onValueChange={([min, max]) => setFilters({ ...filters, minPrice: min, maxPrice: max })}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-sm text-muted-foreground mt-2">
-                      <span>${filters.minPrice}</span>
-                      <span>${filters.maxPrice}+</span>
-                    </div>
-                  </div>
+                  <Label className="text-sm font-medium">Condition</Label>
+                  <Select
+                    value={filters.condition}
+                    onValueChange={(value) => setFilters({ ...filters, condition: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Any Condition" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Any Condition</SelectItem>
+                      {CONDITIONS.map((condition) => (
+                        <SelectItem key={condition.value} value={condition.value}>
+                          <div className="flex items-center gap-2">
+                            <span>{condition.icon}</span>
+                            <div>
+                              <div className="font-medium">{condition.label}</div>
+                              <div className="text-xs text-muted-foreground">{condition.description}</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button variant="outline" onClick={resetFilters} className="flex items-center gap-2">
-                    <X className="h-4 w-4" />
-                    Reset
-                  </Button>
-                  <Button onClick={handleSearch} className="flex items-center gap-2">
-                    <Search className="h-4 w-4" />
-                    Apply Filters
-                  </Button>
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Sort By
+                  </Label>
+                  <Select value={filters.sortBy} onValueChange={(value) => setFilters({ ...filters, sortBy: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SORT_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <div className="flex items-center gap-2">
+                            <span>{option.icon}</span>
+                            {option.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </div>
+
+              {/* Price Range */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Price Range (USD)</Label>
+                <div className="px-3">
+                  <Slider
+                    value={[filters.minPrice, filters.maxPrice]}
+                    max={1000}
+                    step={5}
+                    onValueChange={([min, max]) => setFilters({ ...filters, minPrice: min, maxPrice: max })}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                    <span>${filters.minPrice}</span>
+                    <span>${filters.maxPrice}+</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4">
+                <Button variant="outline" onClick={resetFilters} className="flex items-center gap-2">
+                  <X className="h-4 w-4" />
+                  Reset
+                </Button>
+                <Button onClick={handleSearch} className="flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  Apply Filters
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
     </div>
   )
 }

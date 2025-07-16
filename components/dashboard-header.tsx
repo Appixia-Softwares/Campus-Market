@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import NotificationsPanel from '@/components/notifications-panel';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface DashboardHeaderProps {
   onMobileMenu?: () => void;
@@ -43,6 +44,46 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
   const { user, signOut } = useAuth()
   const [unreadCount, setUnreadCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  // Mock search logic (replace with real API later)
+  const mockData = [
+    { title: "User Management", type: "Page", href: "/admin/settings" },
+    { title: "Marketplace", type: "Feature", href: "/marketplace" },
+    { title: "Accommodation", type: "Feature", href: "/accommodation" },
+    { title: "Orders", type: "Page", href: "/orders" },
+    { title: "Profile Settings", type: "Page", href: "/profile" },
+    { title: "Analytics Dashboard", type: "Page", href: "/analytics" },
+    { title: "Community", type: "Feature", href: "/community" },
+    { title: "Messages", type: "Page", href: "/messages" },
+  ];
+
+  // Filter mock data as user types
+  useEffect(() => {
+    if (!searchQuery) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchResults(
+      mockData.filter(item =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+  }, [searchQuery]);
+
+  // Keyboard shortcut: Ctrl+K or Cmd+K to open search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -90,13 +131,16 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
         </Button>
 
         <div className="flex flex-1 items-center gap-4 md:gap-6">
-          <form className="flex-1">
+          {/* Search input triggers modal */}
+          <form className="flex-1" onSubmit={e => { e.preventDefault(); setSearchOpen(true); }}>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search..."
-                className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+                placeholder="Search... (Ctrl+K)"
+                className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3 cursor-pointer"
+                onFocus={() => setSearchOpen(true)}
+                readOnly
               />
             </div>
           </form>
@@ -154,6 +198,50 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
           </DropdownMenu>
         </div>
       </header>
+
+      {/* Search Modal (bottom sheet on mobile) */}
+      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <DialogContent className="max-w-lg w-full p-0 rounded-t-2xl md:rounded-2xl md:bottom-auto md:top-1/4 md:translate-y-0 bottom-0 fixed md:relative animate-in fade-in slide-in-from-bottom-10 duration-200">
+          <div className="p-4 border-b flex items-center gap-2">
+            <Search className="h-5 w-5 text-muted-foreground" />
+            <input
+              autoFocus
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Type to search..."
+              className="flex-1 bg-transparent outline-none text-base px-2"
+            />
+            <Button variant="ghost" size="icon" onClick={() => setSearchOpen(false)}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="max-h-72 overflow-y-auto">
+            {searchQuery === "" && (
+              <div className="p-4 text-muted-foreground text-sm">Start typing to search pages, features, or users.</div>
+            )}
+            {searchQuery !== "" && searchResults.length === 0 && (
+              <div className="p-4 text-muted-foreground text-sm">No results found.</div>
+            )}
+            {searchResults.map((item, idx) => (
+              <Button
+                key={item.href + idx}
+                variant="ghost"
+                className="w-full justify-start px-4 py-3 rounded-none border-b text-left hover:bg-accent"
+                onClick={() => {
+                  setSearchOpen(false);
+                  router.push(item.href);
+                }}
+              >
+                <div className="flex flex-col">
+                  <span className="font-medium">{item.title}</span>
+                  <span className="text-xs text-muted-foreground">{item.type}</span>
+                </div>
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (

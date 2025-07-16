@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Laptop, Shirt, Home, Book, Dumbbell, Car, Baby, Apple, Watch, Camera, Gamepad2, PawPrint, Sparkles, Briefcase, Globe, Gift, Music, FlaskConical, Wrench, Gem, BedDouble, Bike, Tv, Phone, Wallet, ShoppingBag, Package, Cake } from "lucide-react";
 import confetti from "canvas-confetti";
+import { Button } from "@/components/ui/button";
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -453,7 +454,7 @@ function DetailsStep({ category, form, onNext, user }: any) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 animate-fade-in">
-      <div className="bg-background rounded-xl shadow p-6 space-y-4 border border-green-200">
+      <div className="bg-background rounded-xl shadow p-4 sm:p-6 space-y-4 border border-green-200">
         {fields.map((field: any) => (
           <div key={field.name} className="flex flex-col gap-1">
             <label className="font-medium mb-1 text-green-700">
@@ -494,9 +495,10 @@ function DetailsStep({ category, form, onNext, user }: any) {
           </div>
         ))}
       </div>
-      <div className="flex justify-between pt-2 gap-2">
-        <button type="button" className={outlineBtn} onClick={() => onNext(null)}>Change Category</button>
-        <button type="submit" className={primaryBtn} disabled={!isValid}>Next</button>
+      {/* Button group: stack on mobile, row on desktop */}
+      <div className="flex flex-col sm:flex-row justify-between pt-2 gap-2">
+        <button type="button" className={outlineBtn + ' w-full sm:w-auto'} onClick={() => onNext(null)}>Change Category</button>
+        <button type="submit" className={primaryBtn + ' w-full sm:w-auto'} disabled={!isValid}>Next</button>
       </div>
     </form>
   );
@@ -532,9 +534,10 @@ function ImagesStep({ images, setImages, onNext, onBack }: any) {
         • Recommended size: 1000x1000 pixels
       </div>
       {error ? <div className="text-red-600 text-sm font-medium">{error}</div> : null}
-      <div className="flex justify-between pt-2 gap-2">
-        <button type="button" className={outlineBtn} onClick={onBack}>Back</button>
-        <button type="button" className={primaryBtn} onClick={handleNext} disabled={!canProceed}>Next</button>
+      {/* Button group: stack on mobile, row on desktop */}
+      <div className="flex flex-col sm:flex-row justify-between pt-2 gap-2">
+        <button type="button" className={outlineBtn + ' w-full sm:w-auto'} onClick={onBack}>Back</button>
+        <button type="button" className={primaryBtn + ' w-full sm:w-auto'} onClick={handleNext} disabled={!canProceed}>Next</button>
       </div>
     </div>
   );
@@ -579,7 +582,7 @@ function PreviewStep({ data, onNext, onBack }: any) {
           <div className="font-bold text-lg mb-2">${fields.price || "-"}</div>
           <div className="mb-2 text-muted-foreground">{fields.description || <span>No description</span>}</div>
           {/* Show other key fields dynamically */}
-          <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
             {Object.entries(fields).map(([k, v]: [string, any]) => (
               ["title", "price", "description", "images", "category"].includes(k) || !v ? null : (
                 <div key={k} className="flex flex-col">
@@ -591,9 +594,10 @@ function PreviewStep({ data, onNext, onBack }: any) {
           </div>
         </CardContent>
       </Card>
-      <div className="flex justify-between pt-2 gap-2">
-        <button type="button" className={outlineBtn} onClick={onBack}>Back</button>
-        <button type="button" className={primaryBtn} onClick={onNext} disabled={!canProceed}>Next</button>
+      {/* Button group: stack on mobile, row on desktop */}
+      <div className="flex flex-col sm:flex-row justify-between pt-2 gap-2">
+        <button type="button" className={outlineBtn + ' w-full sm:w-auto'} onClick={onBack}>Back</button>
+        <button type="button" className={primaryBtn + ' w-full sm:w-auto'} onClick={onNext} disabled={!canProceed}>Next</button>
       </div>
     </div>
   );
@@ -603,7 +607,8 @@ function ReviewStep({ data, onSubmit, onBack, isSubmitting, submitError, submitS
   return (
     <div className="space-y-4">
       <div className="text-lg font-semibold mb-2">Review & Confirm Your Listing</div>
-      <div className="grid grid-cols-2 gap-2 mb-4">
+      {/* Responsive image grid: 1 column on mobile, 2 on desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
         {images.map((img: string, i: number) => (
           <img
             key={i}
@@ -617,7 +622,7 @@ function ReviewStep({ data, onSubmit, onBack, isSubmitting, submitError, submitS
         <div className="font-bold text-xl mb-1">{fields.title}</div>
         <div className="text-primary font-bold text-lg mb-1">${fields.price}</div>
         <div className="mb-2 text-muted-foreground">{fields.description}</div>
-        <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
           {Object.entries(fields).map(([k, v]: [string, any]) => (
             ["title", "price", "description", "images", "category"].includes(k) || !v ? null : (
               <div key={k} className="flex flex-col">
@@ -630,9 +635,10 @@ function ReviewStep({ data, onSubmit, onBack, isSubmitting, submitError, submitS
       </div>
       {submitError ? <div className="text-red-500 text-sm">{submitError}</div> : null}
       {submitSuccess ? <div className="text-green-600 text-sm font-medium">{submitSuccess}</div> : null}
-      <div className="flex justify-between pt-2 gap-2">
-        <button type="button" className={outlineBtn} onClick={onBack} disabled={isSubmitting}>Back</button>
-        <button type="button" className={primaryBtn} onClick={onSubmit} disabled={isSubmitting}>
+      {/* Button group: stack on mobile, row on desktop */}
+      <div className="flex flex-col sm:flex-row justify-between pt-2 gap-2">
+        <button type="button" className={outlineBtn + ' w-full sm:w-auto'} onClick={onBack} disabled={isSubmitting}>Back</button>
+        <button type="button" className={primaryBtn + ' w-full sm:w-auto'} onClick={onSubmit} disabled={isSubmitting}>
           {isSubmitting ? "Submitting..." : "Submit Listing"}
         </button>
       </div>
