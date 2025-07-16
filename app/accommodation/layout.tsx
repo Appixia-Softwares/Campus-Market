@@ -60,7 +60,7 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
       <AuthProvider>
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <div className="flex h-screen w-screen overflow-hidden">
+            <div className="flex h-screen w-screen overflow-hidden flex-col md:flex-row">
               {/* Desktop sidebar */}
               {user && hasListings !== false && (
                 <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
@@ -78,16 +78,14 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
                   </div>
                 </div>
               )}
-              
-              {/* Main Content Area */}
-              <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Header - Static in layout flow */}
-                <div className="flex-shrink-0 bg-background border-b">
+              {/* Main Content Area - Responsive padding and spacing */}
+              <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+                {/* Header - Sticky for mobile */}
+                <div className="flex-shrink-0 bg-background border-b sticky top-0 z-30">
                   <DashboardHeader />
                 </div>
-                
-                {/* Main content - Takes remaining space with top margin for fixed header */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background mt-16">
+                {/* Main content - Responsive padding for mobile */}
+                <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 bg-background mt-2 md:mt-4">
                   {children}
                 </main>
               </div>
