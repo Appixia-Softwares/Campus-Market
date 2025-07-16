@@ -125,7 +125,7 @@ export default function AccommodationList({ listings, isLoading, view = 'grid' }
     <div>
       {/* Remove the internal Grid/List toggle button block */}
       {view === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
       {listings.map((listing) => (
         <Card key={listing.id} className="overflow-hidden">
           <div className="flex flex-col md:flex-row">
@@ -198,17 +198,16 @@ export default function AccommodationList({ listings, isLoading, view = 'grid' }
                       )
                     })}
                   </div>
-                  <div className="mt-auto pt-4 flex items-center justify-between">
+                  <div className="mt-auto pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-2 w-full">
                     <div className="font-semibold text-lg">
                       ${listing.price}
                       <span className="text-xs text-muted-foreground">/{listing.priceUnit}</span>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        Contact
-                      </Button>
-                      <Link href={`/accommodation/${listing.id}`}>
-                        <Button size="sm">View Details</Button>
+                    {/* Action buttons: full-width and stacked on mobile */}
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                      <Button variant="outline" size="sm" className="w-full sm:w-auto">Contact</Button>
+                      <Link href={`/accommodation/${listing.id}`} className="w-full sm:w-auto">
+                        <Button size="sm" className="w-full sm:w-auto">View Details</Button>
                       </Link>
                     </div>
                   </div>
