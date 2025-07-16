@@ -54,19 +54,17 @@ export default function DashboardLayout({
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <div className="flex h-screen w-screen overflow-hidden">
               {/* Desktop sidebar */}
-              {user && hasListings !== false && (
-                <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
-                  <DashboardSidebar />
-                </div>
-              )}
+              <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
+                {user && hasListings !== false && <DashboardSidebar />}
+              </div>
               {/* Mobile sidebar overlay */}
-              {sidebarOpen && user && hasListings !== false && (
+              {sidebarOpen && (
                 <div className="fixed inset-0 z-50 flex md:hidden">
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
                   {/* Sidebar */}
                   <div className="relative w-64 h-full bg-background border-r shadow-lg">
-                    <DashboardSidebar />
+                    {user && hasListings !== false && <DashboardSidebar />}
                   </div>
                 </div>
               )}
