@@ -48,6 +48,6 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
           </li>
         ))}
       </ul>
-    </div>
+                    </div>
   );
 }

@@ -19,7 +19,7 @@ export default function PushNotificationPrompt({ userId }: { userId: string }) {
       if (!(await isSupported())) return;
       if (Notification.permission === "denied") return;
       const messaging = getMessaging(app);
-      const vapidKey = "YOUR_ACTUAL_VAPID_PUBLIC_KEY_HERE".trim();
+      const vapidKey = "BHj1j4RV8PYcm5pIekp9EGLibC5v7UbYE5ngC9SD5kqrij-w4i0T40a3TyE9orbfORHVcnnA0GVgEW9U5tS65P0".trim();
       if (!isValidVapidKey(vapidKey)) {
         console.error("Invalid or missing VAPID key for FCM push notifications.");
         return;
