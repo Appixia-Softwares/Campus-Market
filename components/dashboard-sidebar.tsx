@@ -84,7 +84,11 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
 
   // Check for user listings (products or accommodations)
   useEffect(() => {
-    let cancelled = false
+    if (!user) {
+      setHasListings(null);
+      return;
+    }
+    let cancelled = false;
     async function checkListings() {
       // Check products
       const productsSnap = await getDocs(query(collection(db, "products"), where("seller_id", "==", user!.id)))
