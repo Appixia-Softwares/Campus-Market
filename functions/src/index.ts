@@ -33,11 +33,16 @@ admin.initializeApp();
 
 export const sendPushOnNotificationCreate = functions.firestore
   .document("notifications/{notifId}")
-  .onCreate(async (snap: any, context: any) => {
+  .onCreate(async (snap: FirebaseFirestore.DocumentSnapshot) => {
     const notif = snap.data();
     if (!notif || !notif.userId) return null;
 
-    const userDoc = await admin.firestore().collection("users").doc(notif.userId).get();
+    const userDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(notif.userId)
+      .get();
+
     const fcmToken = userDoc.exists && userDoc.data()?.fcmToken;
     if (!fcmToken) return null;
 
