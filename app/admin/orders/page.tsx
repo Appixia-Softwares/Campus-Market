@@ -230,7 +230,7 @@ function OrdersPage() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="w-full py-8 space-y-8 px-6">
+      <div className="flex-1 w-full h-full p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

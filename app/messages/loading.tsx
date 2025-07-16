@@ -1,4 +1,5 @@
-import { MessagesLoading } from "../loading"
+import { MessagesLoading } from "../loading";
+
 
 export default function MessagesPageLoading() {
   return <MessagesLoading />

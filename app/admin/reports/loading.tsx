@@ -1,9 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-function AdminOrdersLoading() {
+function AdminReportsLoading() {
   return (
-    <div className="flex flex-col flex-1 w-full p-8">
+    <div className="flex-grow flex items-center justify-center">
       <div className="mb-6">
         <Skeleton className="h-8 w-48 mb-2" />
         <Skeleton className="h-4 w-64" />
@@ -31,5 +31,5 @@ function AdminOrdersLoading() {
 }
 
 export default function Loading() {
-  return <AdminOrdersLoading />;
-}
+  return <AdminReportsLoading />;
+} 

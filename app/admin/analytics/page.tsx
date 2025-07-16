@@ -83,7 +83,7 @@ export default function AdminAnalyticsPage() {
   }).length;
 
   return (
-    <div className="p-8 w-full max-w-6xl mx-auto">
+    <div className="flex-1 w-full h-full p-6">
       <h1 className="text-2xl font-bold mb-2 flex items-center gap-2">System Analytics</h1>
       <p className="text-muted-foreground mb-6">Real-time analytics for users, products, orders, and revenue.</p>
       <FilterBar />

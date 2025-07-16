@@ -19,6 +19,14 @@ import confetti from "canvas-confetti"
 import { createAccommodation } from '@/services/accommodation'
 import { getUniversities } from "@/lib/get-universities";
 
+interface University {
+  id: string;
+  name: string;
+  location: string;
+  type: string;
+  is_active: boolean;
+}
+
 const amenitiesList = [
   "Wifi",
   "Furnished",
@@ -81,12 +89,12 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
   const { user } = useAuth()
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [universities, setUniversities] = useState([]);
+  const [universities, setUniversities] = useState<University[]>([]);
 
   useEffect(() => {
     async function loadUnis() {
       const unis = await getUniversities();
-      setUniversities(unis.filter(u => u.type === "university" && u.is_active !== false));
+      setUniversities((unis as University[]).filter(u => u.type === "university" && u.is_active !== false));
     }
     loadUnis();
   }, []);
@@ -596,7 +604,7 @@ export default function AccommodationFormDialogContent({ onSuccess }: { onSucces
                           <SelectValue placeholder="Select university" />
                         </SelectTrigger>
                         <SelectContent>
-                          {universities.map(u => (
+                          {(universities as Array<{ id: string; name: string; location: string }>).map(u => (
                             <SelectItem key={u.id} value={u.id}>
                               {u.name} ({u.location})
                             </SelectItem>

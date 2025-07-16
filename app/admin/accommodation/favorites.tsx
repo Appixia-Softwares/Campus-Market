@@ -14,6 +14,12 @@ export default function AccommodationFavorites() {
     async function fetchFavorites() {
       setLoading(true)
       // Get favorite accommodation IDs
+      // Ensure user is not null before accessing user.id
+      if (!user?.id) {
+        setListings([])
+        setLoading(false)
+        return
+      }
       const favSnap = await getDocs(query(
         collection(db, "user_favorites"),
         where("user_id", "==", user.id),

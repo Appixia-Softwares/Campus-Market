@@ -11,11 +11,17 @@ export function NewListingsChart() {
       const products = snap.docs.map(doc => doc.data());
       const byDay: Record<string, number> = {};
       products.forEach(p => {
-        const d = p.created_at?.seconds
-          ? new Date(p.created_at.seconds * 1000)
-          : new Date(p.created_at);
-        const key = d.toISOString().slice(0, 10);
-        byDay[key] = (byDay[key] || 0) + 1;
+        let d: Date | null = null;
+        if (p.created_at?.seconds) {
+          d = new Date(p.created_at.seconds * 1000);
+        } else if (p.created_at) {
+          const tryDate = new Date(p.created_at);
+          d = isNaN(tryDate.getTime()) ? null : tryDate;
+        }
+        if (d && !isNaN(d.getTime())) {
+          const key = d.toISOString().slice(0, 10);
+          byDay[key] = (byDay[key] || 0) + 1;
+        }
       });
       const arr = Object.entries(byDay).map(([date, count]) => ({ date, count }));
       arr.sort((a, b) => a.date.localeCompare(b.date));

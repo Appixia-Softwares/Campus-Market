@@ -80,8 +80,8 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
 
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1">
-        <div className="container py-6">
+      <main className="flex-1 w-full h-full p-6">
+        <div>
           <div className="flex flex-col gap-6">
             <div className="flex flex-col md:flex-row justify-between gap-4">
               <div>

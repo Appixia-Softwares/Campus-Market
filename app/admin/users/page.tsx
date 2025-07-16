@@ -29,7 +29,7 @@ export default function AdminUsersPage() {
   );
 
   return (
-    <div className="p-8">
+    <div className="flex-1 w-full h-full p-6">
       <h1 className="text-2xl font-bold mb-2">Users</h1>
       <p className="text-muted-foreground mb-6">View, verify, and manage all users.</p>
       <div className="mb-6 flex items-center gap-4">
@@ -61,7 +61,12 @@ export default function AdminUsersPage() {
               <div className="font-semibold text-center">{user.full_name}</div>
               <div className="text-xs text-muted-foreground mb-2">{user.email || user.id}</div>
               <div className="flex gap-2 flex-wrap justify-center mb-2">
-                {user.verified && <Badge variant="blue" className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 mr-1" />Verified</Badge>}
+                {user.verified && (
+                  <Badge variant="default" className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Verified
+                  </Badge>
+                )}
                 {user.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
               </div>
               <div className="flex gap-2 mt-auto">
@@ -89,7 +94,12 @@ export default function AdminUsersPage() {
               <div className="font-semibold text-lg">{selectedUser.full_name}</div>
               <div className="text-xs text-muted-foreground mb-2">{selectedUser.email || selectedUser.id}</div>
               <div className="flex gap-2 flex-wrap justify-center mb-2">
-                {selectedUser.verified && <Badge variant="blue">Verified</Badge>}
+                {selectedUser.verified && (
+                  <Badge variant="default" className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Verified
+                  </Badge>
+                )}
                 {selectedUser.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
               </div>
               <div className="w-full text-sm">
