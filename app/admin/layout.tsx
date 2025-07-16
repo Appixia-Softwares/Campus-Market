@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth-context";
-import { collection, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from "@/lib/firebase";
 import AdminSidebar from "@/components/admin-sidebar";
 import { getAllUsersRealtime } from '@/lib/api/users';
@@ -121,22 +121,55 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!user?.id) return;
-    // Listen to notifications for this admin or all
-    const q = query(
-      collection(db, 'notifications'),
-      where('forUserId', 'in', [user.id, 'all'])
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const notifs = snap.docs.map(docu => ({ ...(docu.data() as Notification), id: docu.id }));
-      notifs.sort((a, b) => {
-        const aTime = a.createdAt && typeof a.createdAt === 'object' && 'seconds' in a.createdAt ? a.createdAt.seconds : 0;
-        const bTime = b.createdAt && typeof b.createdAt === 'object' && 'seconds' in b.createdAt ? b.createdAt.seconds : 0;
-        return bTime - aTime;
-      });
-      setNotifications(notifs);
-      setUnreadCount(notifs.filter(n => n.read === false).length);
-    });
-    return () => unsub();
+    let unsub: (() => void) | undefined;
+    let didFallback = false;
+    const listen = () => {
+      try {
+        // Listen to notifications for this admin or all, ordered by createdAt desc
+        const q = query(
+          collection(db, 'notifications'),
+          where('forUserId', 'in', [user.id, 'all']),
+          orderBy('createdAt', 'desc')
+        );
+        unsub = onSnapshot(q, (snap) => {
+          const notifs = snap.docs.map(docu => ({ ...(docu.data() as Notification), id: docu.id }));
+          notifs.sort((a, b) => {
+            const aTime = a.createdAt && typeof a.createdAt === 'object' && 'seconds' in a.createdAt ? a.createdAt.seconds : 0;
+            const bTime = b.createdAt && typeof b.createdAt === 'object' && 'seconds' in b.createdAt ? b.createdAt.seconds : 0;
+            return bTime - aTime;
+          });
+          setNotifications(notifs);
+          setUnreadCount(notifs.filter(n => n.read === false).length);
+        }, (error) => {
+          // If index error, fallback to less restrictive query
+          if (!didFallback && error.code === 'failed-precondition') {
+            didFallback = true;
+            console.warn('Firestore index missing for notifications query, falling back to less restrictive query.');
+            // Fallback: get all notifications for this admin or all, no orderBy
+            const fallbackQ = query(
+              collection(db, 'notifications'),
+              where('forUserId', 'in', [user.id, 'all'])
+            );
+            unsub = onSnapshot(fallbackQ, (snap) => {
+              const notifs = snap.docs.map(docu => ({ ...(docu.data() as Notification), id: docu.id }));
+              notifs.sort((a, b) => {
+                const aTime = a.createdAt && typeof a.createdAt === 'object' && 'seconds' in a.createdAt ? a.createdAt.seconds : 0;
+                const bTime = b.createdAt && typeof b.createdAt === 'object' && 'seconds' in b.createdAt ? b.createdAt.seconds : 0;
+                return bTime - aTime;
+              });
+              setNotifications(notifs);
+              setUnreadCount(notifs.filter(n => n.read === false).length);
+            });
+          } else {
+            console.error('Error listening to notifications:', error);
+          }
+        });
+      } catch (err) {
+        console.error('Error setting up notifications listener:', err);
+      }
+    };
+    listen();
+    return () => { if (unsub) unsub(); };
   }, [user?.id]);
 
   // Mark all as read

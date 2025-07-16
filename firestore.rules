@@ -98,5 +98,13 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && 
         resource.data.user_id == request.auth.uid;
     }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow update: if isOwner(userId);
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if false;
+    }
   }
 } 

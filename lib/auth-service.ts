@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -53,6 +53,15 @@ export const signIn = async (email: string, password: string) => {
     // Get user profile from Firestore
     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
     const userData = userDoc.data() as User;
+    // Update last_login timestamp
+    try {
+      await updateDoc(doc(db, 'users', firebaseUser.uid), {
+        last_login: serverTimestamp(),
+      });
+      console.log('last_login updated for', firebaseUser.uid);
+    } catch (err) {
+      console.error('Failed to update last_login for', firebaseUser.uid, err);
+    }
     return {
       user: {
         ...userData,

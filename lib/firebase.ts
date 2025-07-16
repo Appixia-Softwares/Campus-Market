@@ -38,4 +38,4 @@ export async function getMessagingInstance() {
   return messaging;
 }
 
-export { app, analytics, db, auth, storage }; 
+export { app, analytics, db, auth, storage, firebaseConfig }; 
