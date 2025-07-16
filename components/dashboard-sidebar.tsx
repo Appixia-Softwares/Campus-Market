@@ -150,6 +150,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
 
   // Only return null after all hooks
   if (!user || hasListings === false) return null;
+  if (hasListings === null) return null;
 
   const getInitials = (fullName: string) => {
     return fullName
