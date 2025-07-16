@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { AccommodationFilterForm } from "@/components/accommodation-filters"
 import Link from "next/link"
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
@@ -29,6 +30,7 @@ const DEFAULT_FILTERS: AccommodationFilterState & { sortBy: string } = {
 }
 
 export default function AccommodationPage() {
+  const { featureFlags, loading: flagsLoading } = useFeatureFlags();
   const [filters, setFilters] = useState<AccommodationFilterState>({
     price: [0, 500],
     types: [],
@@ -112,6 +114,18 @@ export default function AccommodationPage() {
   // Sort dropdown handler
   const handleSortChange = (sortBy: string) => {
     setSortBy(sortBy)
+  }
+
+  if (flagsLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading feature flags...</div>;
+  }
+  if (!featureFlags.accommodation) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center">
+        <h2 className="text-2xl font-bold mb-2">Accommodation Disabled</h2>
+        <p className="text-muted-foreground">The accommodation feature is currently unavailable. Please check back later.</p>
+      </div>
+    );
   }
 
   return (

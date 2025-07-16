@@ -15,7 +15,6 @@ import {
   getCountFromServer
 } from 'firebase/firestore';
 import type { Notification } from '../types';
-import { sendPushNotification } from '../actions/push';
 
 const NOTIFICATIONS_COLLECTION = 'notifications';
 
@@ -65,43 +64,13 @@ export async function markAllNotificationsAsRead(userId: string): Promise<{ data
 
 export async function createNotification(notification: Omit<Notification, 'id' | 'createdAt'>): Promise<{ data: Notification | null; error: any }> {
   try {
-    if (notification.userId === null) {
-      // Broadcast: send to all users
-      const usersSnapshot = await getDocs(collection(db, 'users'));
-      const userIds = usersSnapshot.docs.map(doc => doc.id);
-      const notifData = {
-        ...notification,
-        createdAt: serverTimestamp(),
-        read: false,
-      };
-      // Create a notification for each user
-      await Promise.all(userIds.map(async (userId) => {
-        const docRef = await addDoc(collection(db, NOTIFICATIONS_COLLECTION), { ...notifData, userId });
-        await sendPushNotification(
-          userId,
-          notification.title,
-          notification.body,
-          { link: notification.link || '', ...notification.extraData }
-        );
-      }));
-      return { data: null, error: null };
-    }
     const notifData = {
       ...notification,
       createdAt: serverTimestamp(),
       read: false,
     };
     const docRef = await addDoc(collection(db, NOTIFICATIONS_COLLECTION), notifData);
-    // Send push notification if userId is present
-    if (notification.userId) {
-      await sendPushNotification(
-        notification.userId,
-        notification.title,
-        notification.body,
-        { link: notification.link || '', ...notification.extraData }
-      );
-    }
-    return { data: { id: docRef.id, ...notifData } as Notification, error: null };
+    return { data: { id: docRef.id, ...notifData } as unknown as Notification, error: null };
   } catch (error) {
     return { data: null, error };
   }

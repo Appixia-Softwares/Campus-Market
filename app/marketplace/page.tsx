@@ -16,6 +16,7 @@ import { collection, query, where, orderBy, getDocs, limit, doc, getDoc, startAf
 import { db } from "@/lib/firebase"
 import { Timestamp } from "firebase/firestore"
 import { getUniversities } from "@/lib/get-universities";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 interface Category {
   id: string
@@ -119,6 +120,7 @@ export default function MarketplacePage() {
   const [recentlyViewed, setRecentlyViewed] = useState<any[]>([])
   const [lastDoc, setLastDoc] = useState<any>(null)
   const [hasMore, setHasMore] = useState(true)
+  const { featureFlags, loading: flagsLoading } = useFeatureFlags();
 
   // Fetch initial data only once on mount
   useEffect(() => {
@@ -490,6 +492,18 @@ export default function MarketplacePage() {
 
   const getFilteredProductsCount = () => {
     return products.length
+  }
+
+  if (flagsLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading feature flags...</div>;
+  }
+  if (!featureFlags.marketplace) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center">
+        <h2 className="text-2xl font-bold mb-2">Marketplace Disabled</h2>
+        <p className="text-muted-foreground">The marketplace is currently unavailable. Please check back later.</p>
+      </div>
+    );
   }
 
   return (
