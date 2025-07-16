@@ -575,31 +575,32 @@ export default function MarketplacePage() {
           {/* Tabs Navigation */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <div className="flex items-center justify-between mb-4 md:mb-6">
-              <TabsList className="grid w-full max-w-md grid-cols-4 bg-card/90 backdrop-blur-sm shadow-lg overflow-x-auto whitespace-nowrap min-w-0">
+              {/* Make TabsList horizontally scrollable on mobile */}
+              <TabsList className="flex w-full max-w-md bg-card/90 backdrop-blur-sm shadow-lg overflow-x-auto whitespace-nowrap min-w-0 flex-nowrap gap-2">
                 <TabsTrigger 
                   value="all" 
-                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max"
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max px-3 py-2"
                 >
                   <Grid className="h-4 w-4" />
                   All
                 </TabsTrigger>
                 <TabsTrigger 
                   value="trending" 
-                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max"
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max px-3 py-2"
                 >
                   <TrendingUp className="h-4 w-4" />
                   Trending
                 </TabsTrigger>
                 <TabsTrigger 
                   value="nearby" 
-                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max"
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max px-3 py-2"
                 >
                   <MapPin className="h-4 w-4" />
                   Nearby
                 </TabsTrigger>
                 <TabsTrigger 
                   value="delivery" 
-                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max"
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors min-w-max px-3 py-2"
                 >
                   <Star className="h-4 w-4" />
                   Delivery
