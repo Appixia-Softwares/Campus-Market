@@ -35,26 +35,45 @@ export default function BottomNavigation({ userId }: { userId?: string }) {
 
   const pathname = usePathname() || ""
   return (
-    <nav className="fixed bottom-0 w-full bg-background text-foreground shadow z-50 flex justify-between items-center px-4 py-2 md:hidden">
-      {navItems.map(({ href, label, icon: Icon }) => {
+    // Enhanced nav: frosted glass, shadow, border, and safe-area
+    <nav className="fixed bottom-0 w-full bg-background/80 backdrop-blur-lg text-foreground shadow-lg border-t border-border z-50 flex justify-between items-center px-2 py-1 md:hidden safe-area-inset-bottom">
+      {navItems.map(({ href, label, icon: Icon }, idx) => {
         const active = pathname === href || (href !== "/" && pathname.startsWith(href))
+        // Floating Action Button for 'Sell'
+        if (label === "Sell") {
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-label={label}
+              className="relative z-10 -mt-6 flex flex-col items-center justify-center"
+            >
+              <span className={`flex items-center justify-center rounded-full bg-primary shadow-lg transition-transform duration-200 h-14 w-14 border-4 border-background ${active ? 'scale-110' : 'scale-100'}`}> 
+                <Icon className="h-8 w-8 text-white" />
+              </span>
+              <span className={`mt-1 text-xs font-semibold ${active ? 'text-primary' : 'text-muted-foreground'}`}>{label}</span>
+            </Link>
+          )
+        }
+        // Standard nav item
         return (
           <Link
             key={href}
             href={href}
             aria-label={label}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition text-xs font-medium ${active ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+            className={`flex flex-col items-center justify-center flex-1 h-full transition text-xs font-medium group ${active ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
           >
-            <Icon className={`h-6 w-6 mb-1 ${active ? "stroke-2" : "stroke-1.5"}`} />
-            <span>{label}</span>
+            <Icon className={`h-7 w-7 mb-0.5 transition-all duration-200 group-hover:scale-110 ${active ? "scale-110 text-primary" : "scale-100"}`} />
+            <span className={`transition-all duration-200 ${active ? "font-bold text-primary" : ""}`}>{label}</span>
           </Link>
         )
       })}
-      <div className="relative">
-        <button onClick={() => setShowPanel((v) => !v)} className="relative">
-          <span className="icon-bell" />
+      {/* Notification Bell - visually consistent and accessible */}
+      <div className="relative flex flex-col items-center justify-center ml-2">
+        <button onClick={() => setShowPanel((v) => !v)} className="relative focus:outline-none group">
+          <span className="icon-bell h-7 w-7 block group-hover:text-primary transition-colors" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">{unreadCount}</span>
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1 shadow">{unreadCount}</span>
           )}
         </button>
         {showPanel && userId && (
@@ -63,6 +82,7 @@ export default function BottomNavigation({ userId }: { userId?: string }) {
           </div>
         )}
       </div>
+      {/* Push notification prompt */}
       {userId && <PushNotificationPrompt userId={userId} />}
     </nav>
   )
