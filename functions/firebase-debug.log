@@ -1,0 +1,45 @@
+[debug] [2025-07-16T12:09:11.697Z] ----------------------------------------------------------------------
+[debug] [2025-07-16T12:09:11.700Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2025-07-16T12:09:11.702Z] CLI Version:   14.10.1
+[debug] [2025-07-16T12:09:11.702Z] Platform:      win32
+[debug] [2025-07-16T12:09:11.702Z] Node Version:  v22.11.0
+[debug] [2025-07-16T12:09:11.703Z] Time:          Wed Jul 16 2025 14:09:11 GMT+0200 (Central Africa Time)
+[debug] [2025-07-16T12:09:11.703Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-07-16T12:09:12.107Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-16T12:09:12.108Z] > authorizing via signed-in user (praisetechzw@gmail.com)
+[debug] [2025-07-16T12:09:12.108Z] [iam] checking project universestay-8c0e4 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-07-16T12:09:12.111Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:09:12.111Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:09:12.113Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions [none]
+[debug] [2025-07-16T12:09:12.113Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:09:12.113Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-07-16T12:09:56.628Z] ----------------------------------------------------------------------
+[debug] [2025-07-16T12:09:56.633Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2025-07-16T12:09:56.634Z] CLI Version:   14.10.1
+[debug] [2025-07-16T12:09:56.634Z] Platform:      win32
+[debug] [2025-07-16T12:09:56.635Z] Node Version:  v22.11.0
+[debug] [2025-07-16T12:09:56.635Z] Time:          Wed Jul 16 2025 14:09:56 GMT+0200 (Central Africa Time)
+[debug] [2025-07-16T12:09:56.635Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-07-16T12:09:56.963Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-16T12:09:56.964Z] > authorizing via signed-in user (praisetechzw@gmail.com)
+[debug] [2025-07-16T12:09:56.964Z] [iam] checking project universestay-8c0e4 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-07-16T12:09:56.966Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:09:56.966Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:09:56.967Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions [none]
+[debug] [2025-07-16T12:09:56.967Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:09:56.968Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-07-16T12:09:58.707Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions 200
+[debug] [2025-07-16T12:09:58.708Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-07-16T12:09:58.708Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:09:58.708Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:09:58.708Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-07-16T12:09:58.708Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-07-16T12:10:00.368Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-07-16T12:10:00.368Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'universestay-8c0e4'...
+[info] 
+[info] i  deploying functions 
+[info] Running command: npm --prefix "$RESOURCE_DIR" run lint
