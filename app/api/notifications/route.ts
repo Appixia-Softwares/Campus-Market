@@ -3,6 +3,9 @@ import { createNotification, getNotifications } from '@/lib/api/notifications';
 import { adminDb, adminMessaging } from '@/lib/firebase-admin';
 
 export async function GET(req: NextRequest) {
+  if (!adminDb || !adminMessaging) {
+    return new Response('Notifications are temporarily unavailable.', { status: 503 });
+  }
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get('userId');
   if (!userId) return NextResponse.json({ data: [], error: 'Missing userId' }, { status: 400 });
@@ -11,6 +14,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!adminDb || !adminMessaging) {
+    return new Response('Notifications are temporarily unavailable.', { status: 503 });
+  }
   try {
     const { notification } = await req.json();
     const result = await createNotification(notification);
