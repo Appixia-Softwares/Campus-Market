@@ -140,7 +140,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
     <SidebarProvider>
       <TooltipProvider>
         {/* Responsive wrapper: sidebar hidden on mobile, visible on md+ */}
-        <div className="hidden md:flex">
+        <div className="flex">
           <div className={`fixed md:sticky top-0 left-0 z-40 h-screen transition-all duration-300 bg-white dark:bg-gray-950 shadow-xl flex flex-col ${sidebarWidth} overflow-hidden ${sidebarBorder}`}
             aria-expanded={true}
             aria-label="Sidebar navigation"

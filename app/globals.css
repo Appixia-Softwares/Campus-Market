@@ -189,3 +189,13 @@
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+@layer utilities {
+  @keyframes slideDown {
+    0% { transform: translateY(-100%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  .animate-slideDown {
+    animation: slideDown 0.5s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+}

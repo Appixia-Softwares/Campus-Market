@@ -20,5 +20,19 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
       </div>
     );
   }
-  return <>{children}</>;
+  return (
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* Sidebar */}
+      <div className="transition-all duration-300 h-full w-64 flex-shrink-0">
+        <DashboardSidebar />
+      </div>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <DashboardHeader />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
 }
