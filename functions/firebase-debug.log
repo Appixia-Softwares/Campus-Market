@@ -43,3 +43,571 @@
 [info] 
 [info] i  deploying functions 
 [info] Running command: npm --prefix "$RESOURCE_DIR" run lint
+[info] Running command: npm --prefix "$RESOURCE_DIR" run build
+[info] +  functions: Finished running predeploy script. 
+[debug] [2025-07-16T12:10:29.345Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:29.345Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:29.346Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudresourcemanager.googleapis.com [none]
+[debug] [2025-07-16T12:10:29.346Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudresourcemanager.googleapis.com x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:10:31.643Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudresourcemanager.googleapis.com 200
+[debug] [2025-07-16T12:10:31.643Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudresourcemanager.googleapis.com [omitted]
+[debug] [2025-07-16T12:10:31.654Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:31.654Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:31.654Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 [none]
+[debug] [2025-07-16T12:10:33.346Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 200
+[debug] [2025-07-16T12:10:33.346Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 {"projectNumber":"984032807399","projectId":"universestay-8c0e4","lifecycleState":"ACTIVE","name":"Campus-Market","labels":{"firebase":"enabled"},"createTime":"2024-06-30T15:07:09.053589Z"}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[debug] [2025-07-16T12:10:33.355Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:33.356Z] Checked if tokens are valid: true, expires at: 1752670060006
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2025-07-16T12:10:33.357Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:33.357Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:33.358Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudbuild.googleapis.com [none]
+[debug] [2025-07-16T12:10:33.359Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudbuild.googleapis.com x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:10:33.361Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/artifactregistry.googleapis.com [none]
+[debug] [2025-07-16T12:10:33.362Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/artifactregistry.googleapis.com x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:10:35.030Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudbuild.googleapis.com 200
+[debug] [2025-07-16T12:10:35.030Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudbuild.googleapis.com [omitted]
+[warn] !  functions: missing required API cloudbuild.googleapis.com. Enabling now... 
+[debug] [2025-07-16T12:10:35.032Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:35.033Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:35.033Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudbuild.googleapis.com:enable [none]
+[debug] [2025-07-16T12:10:35.033Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudbuild.googleapis.com:enable x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:10:35.431Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/artifactregistry.googleapis.com 200
+[debug] [2025-07-16T12:10:35.432Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/artifactregistry.googleapis.com [omitted]
+[warn] !  artifactregistry: missing required API artifactregistry.googleapis.com. Enabling now... 
+[debug] [2025-07-16T12:10:35.433Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:35.433Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:35.433Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/artifactregistry.googleapis.com:enable [none]
+[debug] [2025-07-16T12:10:35.434Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/artifactregistry.googleapis.com:enable x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:10:37.168Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudbuild.googleapis.com:enable 200
+[debug] [2025-07-16T12:10:37.168Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/cloudbuild.googleapis.com:enable [omitted]
+[debug] [2025-07-16T12:10:37.798Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/artifactregistry.googleapis.com:enable 200
+[debug] [2025-07-16T12:10:37.799Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/artifactregistry.googleapis.com:enable [omitted]
+[debug] [2025-07-16T12:10:47.821Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:47.821Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:47.822Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/universestay-8c0e4/adminSdkConfig [none]
+[debug] [2025-07-16T12:10:49.060Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/universestay-8c0e4/adminSdkConfig 200
+[debug] [2025-07-16T12:10:49.060Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/universestay-8c0e4/adminSdkConfig {"projectId":"universestay-8c0e4","databaseURL":"https://universestay-8c0e4-default-rtdb.firebaseio.com","storageBucket":"universestay-8c0e4.appspot.com","locationId":"us-central"}
+[debug] [2025-07-16T12:10:49.061Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:49.062Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:49.062Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/universestay-8c0e4/configs [none]
+[debug] [2025-07-16T12:10:49.867Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/universestay-8c0e4/configs 200
+[debug] [2025-07-16T12:10:49.868Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/universestay-8c0e4/configs {}
+[debug] [2025-07-16T12:10:49.872Z] Validating nodejs source
+[debug] [2025-07-16T12:10:53.018Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.57.1",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.1.0",
+    "typescript": "^5.7.3"
+  },
+  "private": true
+}
+[debug] [2025-07-16T12:10:53.019Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2025-07-16T12:10:53.021Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-07-16T12:10:53.071Z] Found firebase-functions binary at 'C:\Users\PraiseTech\Desktop\Campus-Market\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8462
+
+[debug] [2025-07-16T12:10:56.619Z] Got response from /__/functions.yaml {"endpoints":{"sendPushOnNotificationCreate":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","eventFilters":{"resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}"},"retry":false},"labels":{},"entryPoint":"sendPushOnNotificationCreate"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2025-07-16T12:10:56.688Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:56.688Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:56.688Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/firebaseextensions.googleapis.com [none]
+[debug] [2025-07-16T12:10:56.688Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/firebaseextensions.googleapis.com x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:10:58.551Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/firebaseextensions.googleapis.com 200
+[debug] [2025-07-16T12:10:58.551Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/firebaseextensions.googleapis.com [omitted]
+[warn] !  extensions: missing required API firebaseextensions.googleapis.com. Enabling now... 
+[debug] [2025-07-16T12:10:58.551Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:58.552Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:10:58.552Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/firebaseextensions.googleapis.com:enable [none]
+[debug] [2025-07-16T12:10:58.552Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/firebaseextensions.googleapis.com:enable x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:11:00.568Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/firebaseextensions.googleapis.com:enable 200
+[debug] [2025-07-16T12:11:00.568Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/universestay-8c0e4/services/firebaseextensions.googleapis.com:enable [omitted]
+[debug] [2025-07-16T12:11:10.582Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-16T12:11:10.582Z] > authorizing via signed-in user (praisetechzw@gmail.com)
+[debug] [2025-07-16T12:11:10.582Z] [iam] checking project universestay-8c0e4 for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2025-07-16T12:11:10.583Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:10.583Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:10.583Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions [none]
+[debug] [2025-07-16T12:11:10.583Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:11:10.583Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-07-16T12:11:12.230Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions 200
+[debug] [2025-07-16T12:11:12.230Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-07-16T12:11:12.230Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:12.230Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:12.230Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/universestay-8c0e4/instances pageSize=100&pageToken=
+[debug] [2025-07-16T12:11:15.382Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/universestay-8c0e4/instances 200
+[debug] [2025-07-16T12:11:15.382Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/universestay-8c0e4/instances {}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged C:\Users\PraiseTech\Desktop\Campus-Market\functions (78.24 KB) for uploading 
+[debug] [2025-07-16T12:11:15.711Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:15.711Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:15.713Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/-/functions [none]
+[debug] [2025-07-16T12:11:16.815Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/-/functions 200
+[debug] [2025-07-16T12:11:16.816Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/-/functions {}
+[debug] [2025-07-16T12:11:16.817Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:16.818Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:16.818Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/universestay-8c0e4/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2025-07-16T12:11:17.947Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/universestay-8c0e4/locations/-/functions 200
+[debug] [2025-07-16T12:11:17.947Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/universestay-8c0e4/locations/-/functions {}
+[debug] [2025-07-16T12:11:17.954Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:17.954Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:17.954Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 [none]
+[debug] [2025-07-16T12:11:19.651Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 200
+[debug] [2025-07-16T12:11:19.652Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 {"projectNumber":"984032807399","projectId":"universestay-8c0e4","lifecycleState":"ACTIVE","name":"Campus-Market","labels":{"firebase":"enabled"},"createTime":"2024-06-30T15:07:09.053589Z"}
+[debug] [2025-07-16T12:11:19.654Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:19.654Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:19.654Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/universestay-8c0e4/billingInfo [none]
+[debug] [2025-07-16T12:11:20.449Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/universestay-8c0e4/billingInfo 200
+[debug] [2025-07-16T12:11:20.450Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/universestay-8c0e4/billingInfo {"name":"projects/universestay-8c0e4/billingInfo","projectId":"universestay-8c0e4","billingAccountName":"billingAccounts/013403-AF9B18-5E1309","billingEnabled":true}
+[debug] [2025-07-16T12:11:20.452Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:20.453Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:20.453Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions:generateUploadUrl [none]
+[debug] [2025-07-16T12:11:20.453Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions:generateUploadUrl {}
+[debug] [2025-07-16T12:11:32.812Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions:generateUploadUrl 200
+[debug] [2025-07-16T12:11:32.812Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions:generateUploadUrl {"uploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/ab7b05bc-4d48-493c-a458-ed95c42e822d.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669694&Signature=iUl8e2I67eMiPjSKVGwWrfeeR539f2ixzzagcadg9r3Tpk%2F6YhhvsUbYsM5E%2Bd0ncBz6c087lkUuaSLoW1gHqS7q7ZOs%2FcHevYzMLFLLro9xih7vM8OTtDjfH5nHFSd50ug%2FsOrFFdWsKq0Qj6XQJshKWxjd9LX7zDWazuXlb8JpDd1Gz1bENez9sc1IteJ2rpjcqJdL%2FUXHWrACwcd18%2FTMansX5ZYJAntp4g8es3Zfn%2BzQAAP2IYuAz6Wf9UNyN%2FwipFC0dW6Bn8PIL%2FQSigXoLC9VZmPMbxZVG1l5N0334ESevvOQDt%2FBisL3jkTxio8gF6dFERIfVWoRPkYbug%3D%3D"}
+[debug] [2025-07-16T12:11:32.814Z] >>> [apiv2][query] PUT https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/ab7b05bc-4d48-493c-a458-ed95c42e822d.zip GoogleAccessId=service-984032807399%40gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669694&Signature=iUl8e2I67eMiPjSKVGwWrfeeR539f2ixzzagcadg9r3Tpk%2F6YhhvsUbYsM5E%2Bd0ncBz6c087lkUuaSLoW1gHqS7q7ZOs%2FcHevYzMLFLLro9xih7vM8OTtDjfH5nHFSd50ug%2FsOrFFdWsKq0Qj6XQJshKWxjd9LX7zDWazuXlb8JpDd1Gz1bENez9sc1IteJ2rpjcqJdL%2FUXHWrACwcd18%2FTMansX5ZYJAntp4g8es3Zfn%2BzQAAP2IYuAz6Wf9UNyN%2FwipFC0dW6Bn8PIL%2FQSigXoLC9VZmPMbxZVG1l5N0334ESevvOQDt%2FBisL3jkTxio8gF6dFERIfVWoRPkYbug%3D%3D
+[debug] [2025-07-16T12:11:32.814Z] >>> [apiv2][body] PUT https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/ab7b05bc-4d48-493c-a458-ed95c42e822d.zip [stream]
+[debug] [2025-07-16T12:11:35.254Z] <<< [apiv2][status] PUT https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/ab7b05bc-4d48-493c-a458-ed95c42e822d.zip 200
+[debug] [2025-07-16T12:11:35.255Z] <<< [apiv2][body] PUT https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/ab7b05bc-4d48-493c-a458-ed95c42e822d.zip [omitted]
+[info] +  functions: functions folder uploaded successfully 
+[info] i  functions: creating Node.js 22 (1st Gen) function sendPushOnNotificationCreate(us-central1)... 
+[debug] [2025-07-16T12:11:35.261Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:35.261Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:35.261Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions [none]
+[debug] [2025-07-16T12:11:35.261Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions {"name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/ab7b05bc-4d48-493c-a458-ed95c42e822d.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669694&Signature=iUl8e2I67eMiPjSKVGwWrfeeR539f2ixzzagcadg9r3Tpk%2F6YhhvsUbYsM5E%2Bd0ncBz6c087lkUuaSLoW1gHqS7q7ZOs%2FcHevYzMLFLLro9xih7vM8OTtDjfH5nHFSd50ug%2FsOrFFdWsKq0Qj6XQJshKWxjd9LX7zDWazuXlb8JpDd1Gz1bENez9sc1IteJ2rpjcqJdL%2FUXHWrACwcd18%2FTMansX5ZYJAntp4g8es3Zfn%2BzQAAP2IYuAz6Wf9UNyN%2FwipFC0dW6Bn8PIL%2FQSigXoLC9VZmPMbxZVG1l5N0334ESevvOQDt%2FBisL3jkTxio8gF6dFERIfVWoRPkYbug%3D%3D","entryPoint":"sendPushOnNotificationCreate","runtime":"nodejs22","dockerRegistry":"ARTIFACT_REGISTRY","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"c59ba5cb1813d0d376fc68bdeea4ddca82a7ddc2"},"eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}"},"minInstances":null,"maxInstances":null,"ingressSettings":null,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"serviceAccountEmail":null,"availableMemoryMb":null,"timeout":null,"vpcConnector":null,"vpcConnectorEgressSettings":null,"buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}}
+[debug] [2025-07-16T12:11:35.816Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions 400
+[debug] [2025-07-16T12:11:35.816Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions {"error":{"code":400,"message":"Failed to create 1st Gen function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate: runtime: Runtime validation errors: [error_code: INVALID_RUNTIME\nmessage: \"Runtime \\\"nodejs22\\\" is not supported on GCF Gen1\"\n]","status":"INVALID_ARGUMENT"}}
+[warn] !  functions: Runtime "nodejs22" is not supported on GCF Gen1 for function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate 
+[warn] !  functions: failed to create function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate 
+[error] Failed to create function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate
+[debug] [2025-07-16T12:11:35.830Z] Total Function Deployment time: 560
+[debug] [2025-07-16T12:11:35.830Z] 1 Functions Deployed
+[debug] [2025-07-16T12:11:35.830Z] 1 Functions Errored
+[debug] [2025-07-16T12:11:35.830Z] 0 Function Deployments Aborted
+[debug] [2025-07-16T12:11:35.830Z] Average Function Deployment time: 559
+[info] 
+[info] Functions deploy had errors with the following functions:
+	sendPushOnNotificationCreate(us-central1)
+[debug] [2025-07-16T12:11:36.265Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:36.265Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:11:36.265Z] >>> [apiv2][query] GET https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts [none]
+[debug] [2025-07-16T12:11:37.540Z] <<< [apiv2][status] GET https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts 404
+[debug] [2025-07-16T12:11:37.540Z] <<< [apiv2][body] GET https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts {"error":{"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}}
+[debug] [2025-07-16T12:11:37.540Z] Failed to check artifact cleanup policy for region us-central1: Request to https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts had HTTP Error: 404, Requested entity was not found. {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts had HTTP Error: 404, Requested entity was not found.","status":404}
+[debug] [2025-07-16T12:11:37.541Z] Functions deploy failed.
+[debug] [2025-07-16T12:11:37.541Z] {
+  "endpoint": {
+    "id": "sendPushOnNotificationCreate",
+    "project": "universestay-8c0e4",
+    "region": "us-central1",
+    "entryPoint": "sendPushOnNotificationCreate",
+    "platform": "gcfv1",
+    "runtime": "nodejs22",
+    "eventTrigger": {
+      "eventType": "providers/cloud.firestore/eventTypes/document.create",
+      "retry": false,
+      "eventFilters": {
+        "resource": "projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}"
+      }
+    },
+    "labels": {
+      "deployment-tool": "cli-firebase"
+    },
+    "serviceAccount": null,
+    "ingressSettings": null,
+    "availableMemoryMb": null,
+    "timeoutSeconds": null,
+    "maxInstances": null,
+    "minInstances": null,
+    "vpc": null,
+    "environmentVariables": {
+      "FIREBASE_CONFIG": "{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}",
+      "GCLOUD_PROJECT": "universestay-8c0e4",
+      "EVENTARC_CLOUD_EVENT_SOURCE": "projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"
+    },
+    "codebase": "default",
+    "targetedByOnly": false,
+    "hash": "c59ba5cb1813d0d376fc68bdeea4ddca82a7ddc2"
+  },
+  "op": "create",
+  "original": {
+    "name": "FirebaseError",
+    "children": [],
+    "context": {
+      "function": "projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"
+    },
+    "exit": 1,
+    "message": "Failed to create function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate",
+    "original": {
+      "name": "FirebaseError",
+      "children": [],
+      "context": {
+        "body": {
+          "error": {
+            "code": 400,
+            "message": "Failed to create 1st Gen function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate: runtime: Runtime validation errors: [error_code: INVALID_RUNTIME\nmessage: \"Runtime \\\"nodejs22\\\" is not supported on GCF Gen1\"\n]",
+            "status": "INVALID_ARGUMENT"
+          }
+        },
+        "response": {
+          "statusCode": 400
+        }
+      },
+      "exit": 1,
+      "message": "Request to https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions had HTTP Error: 400, Failed to create 1st Gen function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate: runtime: Runtime validation errors: [error_code: INVALID_RUNTIME\nmessage: \"Runtime \\\"nodejs22\\\" is not supported on GCF Gen1\"\n]",
+      "status": 400
+    },
+    "status": 400,
+    "code": 400
+  }
+}
+[debug] [2025-07-16T12:11:37.972Z] Error: Failed to create function sendPushOnNotificationCreate in region us-central1
+    at C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:52:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Fabricator.createV1Function (C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:182:32)
+    at async Fabricator.createEndpoint (C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:134:13)
+    at async handle (C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:89:17)
+[error] 
+[error] Error: There was an error deploying functions
+[debug] [2025-07-16T12:13:47.630Z] ----------------------------------------------------------------------
+[debug] [2025-07-16T12:13:47.634Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2025-07-16T12:13:47.634Z] CLI Version:   14.10.1
+[debug] [2025-07-16T12:13:47.635Z] Platform:      win32
+[debug] [2025-07-16T12:13:47.635Z] Node Version:  v22.11.0
+[debug] [2025-07-16T12:13:47.635Z] Time:          Wed Jul 16 2025 14:13:47 GMT+0200 (Central Africa Time)
+[debug] [2025-07-16T12:13:47.635Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-07-16T12:13:47.889Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-16T12:13:47.890Z] > authorizing via signed-in user (praisetechzw@gmail.com)
+[debug] [2025-07-16T12:13:47.890Z] [iam] checking project universestay-8c0e4 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-07-16T12:13:47.891Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:13:47.891Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:13:47.892Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions [none]
+[debug] [2025-07-16T12:13:47.893Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:13:47.893Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-07-16T12:13:49.777Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions 200
+[debug] [2025-07-16T12:13:49.777Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-07-16T12:13:49.777Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:13:49.777Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:13:49.777Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-07-16T12:13:49.777Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-07-16T12:13:51.646Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-07-16T12:13:51.646Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'universestay-8c0e4'...
+[info] 
+[info] i  deploying functions 
+[info] Running command: npm --prefix "$RESOURCE_DIR" run lint
+[info] Running command: npm --prefix "$RESOURCE_DIR" run build
+[info] +  functions: Finished running predeploy script. 
+[debug] [2025-07-16T12:14:19.682Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:19.685Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:19.686Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 [none]
+[debug] [2025-07-16T12:14:21.393Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 200
+[debug] [2025-07-16T12:14:21.394Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 {"projectNumber":"984032807399","projectId":"universestay-8c0e4","lifecycleState":"ACTIVE","name":"Campus-Market","labels":{"firebase":"enabled"},"createTime":"2024-06-30T15:07:09.053589Z"}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2025-07-16T12:14:21.409Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:21.410Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:21.410Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/universestay-8c0e4/adminSdkConfig [none]
+[debug] [2025-07-16T12:14:22.454Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/universestay-8c0e4/adminSdkConfig 200
+[debug] [2025-07-16T12:14:22.454Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/universestay-8c0e4/adminSdkConfig {"projectId":"universestay-8c0e4","databaseURL":"https://universestay-8c0e4-default-rtdb.firebaseio.com","storageBucket":"universestay-8c0e4.appspot.com","locationId":"us-central"}
+[debug] [2025-07-16T12:14:22.456Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:22.456Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:22.457Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/universestay-8c0e4/configs [none]
+[debug] [2025-07-16T12:14:23.077Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/universestay-8c0e4/configs 200
+[debug] [2025-07-16T12:14:23.077Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/universestay-8c0e4/configs {}
+[debug] [2025-07-16T12:14:23.084Z] Validating nodejs source
+[debug] [2025-07-16T12:14:26.319Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.57.1",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.1.0",
+    "typescript": "^5.7.3"
+  },
+  "private": true
+}
+[debug] [2025-07-16T12:14:26.319Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2025-07-16T12:14:26.321Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-07-16T12:14:26.348Z] Found firebase-functions binary at 'C:\Users\PraiseTech\Desktop\Campus-Market\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8710
+
+[debug] [2025-07-16T12:14:27.967Z] Got response from /__/functions.yaml {"endpoints":{"sendPushOnNotificationCreate":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","eventFilters":{"resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}"},"retry":false},"labels":{},"entryPoint":"sendPushOnNotificationCreate"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2025-07-16T12:14:28.010Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-16T12:14:28.010Z] > authorizing via signed-in user (praisetechzw@gmail.com)
+[debug] [2025-07-16T12:14:28.010Z] [iam] checking project universestay-8c0e4 for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2025-07-16T12:14:28.011Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:28.011Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:28.011Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions [none]
+[debug] [2025-07-16T12:14:28.011Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:14:28.011Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-07-16T12:14:29.649Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions 200
+[debug] [2025-07-16T12:14:29.649Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-07-16T12:14:29.650Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:29.650Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:29.651Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/universestay-8c0e4/instances pageSize=100&pageToken=
+[debug] [2025-07-16T12:14:31.389Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/universestay-8c0e4/instances 200
+[debug] [2025-07-16T12:14:31.389Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/universestay-8c0e4/instances {}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged C:\Users\PraiseTech\Desktop\Campus-Market\functions (78.24 KB) for uploading 
+[debug] [2025-07-16T12:14:31.531Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:31.532Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:31.532Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/-/functions [none]
+[debug] [2025-07-16T12:14:32.459Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/-/functions 200
+[debug] [2025-07-16T12:14:32.459Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/-/functions {}
+[debug] [2025-07-16T12:14:32.459Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:32.459Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:32.460Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/universestay-8c0e4/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2025-07-16T12:14:33.559Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/universestay-8c0e4/locations/-/functions 200
+[debug] [2025-07-16T12:14:33.559Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/universestay-8c0e4/locations/-/functions {}
+[debug] [2025-07-16T12:14:33.569Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:33.569Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:33.570Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 [none]
+[debug] [2025-07-16T12:14:33.906Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 200
+[debug] [2025-07-16T12:14:33.906Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4 {"projectNumber":"984032807399","projectId":"universestay-8c0e4","lifecycleState":"ACTIVE","name":"Campus-Market","labels":{"firebase":"enabled"},"createTime":"2024-06-30T15:07:09.053589Z"}
+[debug] [2025-07-16T12:14:33.908Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:33.909Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:33.909Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/universestay-8c0e4/billingInfo [none]
+[debug] [2025-07-16T12:14:34.933Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/universestay-8c0e4/billingInfo 200
+[debug] [2025-07-16T12:14:34.933Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/universestay-8c0e4/billingInfo {"name":"projects/universestay-8c0e4/billingInfo","projectId":"universestay-8c0e4","billingAccountName":"billingAccounts/013403-AF9B18-5E1309","billingEnabled":true}
+[debug] [2025-07-16T12:14:34.936Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:34.936Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:34.937Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions:generateUploadUrl [none]
+[debug] [2025-07-16T12:14:34.937Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions:generateUploadUrl {}
+[debug] [2025-07-16T12:14:35.754Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions:generateUploadUrl 200
+[debug] [2025-07-16T12:14:35.754Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions:generateUploadUrl {"uploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D"}
+[debug] [2025-07-16T12:14:35.755Z] >>> [apiv2][query] PUT https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip GoogleAccessId=service-984032807399%40gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D
+[debug] [2025-07-16T12:14:35.755Z] >>> [apiv2][body] PUT https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip [stream]
+[debug] [2025-07-16T12:14:37.087Z] <<< [apiv2][status] PUT https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip 200
+[debug] [2025-07-16T12:14:37.087Z] <<< [apiv2][body] PUT https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip [omitted]
+[info] +  functions: functions folder uploaded successfully 
+[info] i  functions: creating Node.js 20 (1st Gen) function sendPushOnNotificationCreate(us-central1)... 
+[debug] [2025-07-16T12:14:37.095Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:37.095Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:37.096Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions [none]
+[debug] [2025-07-16T12:14:37.096Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions {"name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D","entryPoint":"sendPushOnNotificationCreate","runtime":"nodejs20","dockerRegistry":"ARTIFACT_REGISTRY","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"d3acba75e7788882d3221d0459d5bf3b32981004"},"eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}"},"minInstances":null,"maxInstances":null,"ingressSettings":null,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"serviceAccountEmail":null,"availableMemoryMb":null,"timeout":null,"vpcConnector":null,"vpcConnectorEgressSettings":null,"buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}}
+[debug] [2025-07-16T12:14:39.141Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions 200
+[debug] [2025-07-16T12:14:39.141Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/functions {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","updateTime":"2025-07-16T12:14:41.284044066Z"}}
+[debug] [2025-07-16T12:14:39.142Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:39.142Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:39.142Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM [none]
+[debug] [2025-07-16T12:14:39.521Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM 200
+[debug] [2025-07-16T12:14:39.521Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","updateTime":"2025-07-16T12:14:41.284044066Z"}}
+[debug] [2025-07-16T12:14:40.022Z] [create-default-us-central1-sendPushOnNotificationCreate] Retrying task index 0
+[debug] [2025-07-16T12:14:40.022Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:40.022Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:40.022Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM [none]
+[debug] [2025-07-16T12:14:40.367Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM 200
+[debug] [2025-07-16T12:14:40.367Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}","failurePolicy":{}},"entryPoint":"sendPushOnNotificationCreate","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"d3acba75e7788882d3221d0459d5bf3b32981004"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"runtime":"nodejs20","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-07-16T12:14:41.284044066Z"}}
+[debug] [2025-07-16T12:14:41.379Z] [create-default-us-central1-sendPushOnNotificationCreate] Retrying task index 0
+[debug] [2025-07-16T12:14:41.380Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:41.380Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:41.380Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM [none]
+[debug] [2025-07-16T12:14:41.729Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM 200
+[debug] [2025-07-16T12:14:41.729Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}","failurePolicy":{}},"entryPoint":"sendPushOnNotificationCreate","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"d3acba75e7788882d3221d0459d5bf3b32981004"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"runtime":"nodejs20","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-07-16T12:14:41.284044066Z"}}
+[debug] [2025-07-16T12:14:43.734Z] [create-default-us-central1-sendPushOnNotificationCreate] Retrying task index 0
+[debug] [2025-07-16T12:14:43.734Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:43.734Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:43.734Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM [none]
+[debug] [2025-07-16T12:14:44.107Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM 200
+[debug] [2025-07-16T12:14:44.107Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}","failurePolicy":{}},"entryPoint":"sendPushOnNotificationCreate","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"d3acba75e7788882d3221d0459d5bf3b32981004"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"runtime":"nodejs20","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-07-16T12:14:41.284044066Z"}}
+[debug] [2025-07-16T12:14:48.113Z] [create-default-us-central1-sendPushOnNotificationCreate] Retrying task index 0
+[debug] [2025-07-16T12:14:48.113Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:48.113Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:48.114Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM [none]
+[debug] [2025-07-16T12:14:48.464Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM 200
+[debug] [2025-07-16T12:14:48.464Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}","failurePolicy":{}},"entryPoint":"sendPushOnNotificationCreate","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"d3acba75e7788882d3221d0459d5bf3b32981004"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"runtime":"nodejs20","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-07-16T12:14:41.284044066Z"}}
+[debug] [2025-07-16T12:14:56.472Z] [create-default-us-central1-sendPushOnNotificationCreate] Retrying task index 0
+[debug] [2025-07-16T12:14:56.472Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:56.473Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:14:56.473Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM [none]
+[debug] [2025-07-16T12:14:57.020Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM 200
+[debug] [2025-07-16T12:14:57.020Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}","failurePolicy":{}},"entryPoint":"sendPushOnNotificationCreate","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"d3acba75e7788882d3221d0459d5bf3b32981004"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"runtime":"nodejs20","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-07-16T12:14:41.284044066Z","buildId":"1ac6d878-823f-49f3-90dd-c5ebee88bc6a","buildName":"projects/984032807399/locations/us-central1/builds/1ac6d878-823f-49f3-90dd-c5ebee88bc6a"}}
+[debug] [2025-07-16T12:15:07.025Z] [create-default-us-central1-sendPushOnNotificationCreate] Retrying task index 0
+[debug] [2025-07-16T12:15:07.026Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:15:07.026Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:15:07.026Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM [none]
+[debug] [2025-07-16T12:15:07.562Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM 200
+[debug] [2025-07-16T12:15:07.562Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}","failurePolicy":{}},"entryPoint":"sendPushOnNotificationCreate","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"d3acba75e7788882d3221d0459d5bf3b32981004"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"runtime":"nodejs20","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-07-16T12:14:41.284044066Z","buildId":"1ac6d878-823f-49f3-90dd-c5ebee88bc6a","buildName":"projects/984032807399/locations/us-central1/builds/1ac6d878-823f-49f3-90dd-c5ebee88bc6a"}}
+[debug] [2025-07-16T12:15:17.565Z] [create-default-us-central1-sendPushOnNotificationCreate] Retrying task index 0
+[debug] [2025-07-16T12:15:17.566Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:15:17.566Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:15:17.566Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM [none]
+[debug] [2025-07-16T12:15:18.144Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM 200
+[debug] [2025-07-16T12:15:18.144Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}","failurePolicy":{}},"entryPoint":"sendPushOnNotificationCreate","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"d3acba75e7788882d3221d0459d5bf3b32981004"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"runtime":"nodejs20","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-07-16T12:14:41.284044066Z","buildId":"1ac6d878-823f-49f3-90dd-c5ebee88bc6a","buildName":"projects/984032807399/locations/us-central1/builds/1ac6d878-823f-49f3-90dd-c5ebee88bc6a"}}
+[debug] [2025-07-16T12:15:28.148Z] [create-default-us-central1-sendPushOnNotificationCreate] Retrying task index 0
+[debug] [2025-07-16T12:15:28.148Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:15:28.148Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:15:28.148Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM [none]
+[debug] [2025-07-16T12:15:28.689Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM 200
+[debug] [2025-07-16T12:15:28.689Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}","failurePolicy":{}},"entryPoint":"sendPushOnNotificationCreate","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"d3acba75e7788882d3221d0459d5bf3b32981004"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"runtime":"nodejs20","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-07-16T12:14:41.284044066Z","buildId":"1ac6d878-823f-49f3-90dd-c5ebee88bc6a","buildName":"projects/984032807399/locations/us-central1/builds/1ac6d878-823f-49f3-90dd-c5ebee88bc6a"}}
+[debug] [2025-07-16T12:15:38.693Z] [create-default-us-central1-sendPushOnNotificationCreate] Retrying task index 0
+[debug] [2025-07-16T12:15:38.694Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:15:38.694Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:15:38.694Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM [none]
+[debug] [2025-07-16T12:15:39.442Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM 200
+[debug] [2025-07-16T12:15:39.442Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM {"name":"operations/cHJvamVjdHMvdW5pdmVyc2VzdGF5LThjMGU0L2xvY2F0aW9ucy91cy1jZW50cmFsMS9vcGVyYXRpb25zL29wZXJhdGlvbi0xNzUyNjY4MDc5NjIxLTYzYTBhZDY0Yjg2ZjctNDExZTljMDUtY2NkY2FjYzM","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate","eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}","failurePolicy":{}},"entryPoint":"sendPushOnNotificationCreate","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"d3acba75e7788882d3221d0459d5bf3b32981004"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-993456181975.us-central1.cloudfunctions.appspot.com/5b1088fe-3e35-4670-a7e1-0173effe04a8.zip?GoogleAccessId=service-984032807399@gcf-admin-robot.iam.gserviceaccount.com&Expires=1752669877&Signature=apCk5%2F2wi493s%2FEEa1ZredmYxJCsxiD8%2BsQEXObQ5dut9Xc1Rlk5df3wBZ9w7%2BBwXaTJaazs0LRTsaIVrfBdaZD0KegNa0f0stuWc1sM%2BaJcCRG2iveDxr85iuH6Zmdm7Rkasf2ZitZzPyCN1LhNdqMiHqghiYb2SP9Fl6%2BY6AgWcyD7eIq%2B4qtwJ6s2Cjr0vX7PX2TZJvK82xPmWA0VaufcWzNSmv2zWeSg92zxUC04Hvg93Kbv%2FWjXymNHvp9OXC8qJr3LnjZregDkswXaSiuLc5STOFPEfotPiO6EXw%2FHdeU3lgjj%2FUnwkIN5cQvtEz%2B7gVCVKRtg2gu2AVpFzw%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}","GCLOUD_PROJECT":"universestay-8c0e4","EVENTARC_CLOUD_EVENT_SOURCE":"projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"},"runtime":"nodejs20","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-07-16T12:15:36.646985949Z","buildId":"1ac6d878-823f-49f3-90dd-c5ebee88bc6a","buildName":"projects/984032807399/locations/us-central1/builds/1ac6d878-823f-49f3-90dd-c5ebee88bc6a"},"done":true,"error":{"code":3,"message":"Gen1 operation for function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate failed: Build failed: This project is using pnpm but you have not included the Functions Framework in your dependencies. Please add it by running: 'pnpm add @google-cloud/functions-framework'.; Error ID: 5b6dc8b5."}}
+[debug] [2025-07-16T12:15:39.442Z] Got source token undefined for region us-central1
+[error] Gen1 operation for function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate failed: Build failed: This project is using pnpm but you have not included the Functions Framework in your dependencies. Please add it by running: 'pnpm add @google-cloud/functions-framework'.; Error ID: 5b6dc8b5.
+[debug] [2025-07-16T12:15:39.450Z] Total Function Deployment time: 62351
+[debug] [2025-07-16T12:15:39.450Z] 1 Functions Deployed
+[debug] [2025-07-16T12:15:39.450Z] 1 Functions Errored
+[debug] [2025-07-16T12:15:39.451Z] 0 Function Deployments Aborted
+[debug] [2025-07-16T12:15:39.451Z] Average Function Deployment time: 62350
+[info] 
+[info] Functions deploy had errors with the following functions:
+	sendPushOnNotificationCreate(us-central1)
+[debug] [2025-07-16T12:15:39.875Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:15:39.875Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:15:39.875Z] >>> [apiv2][query] GET https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts [none]
+[debug] [2025-07-16T12:15:40.982Z] <<< [apiv2][status] GET https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts 200
+[debug] [2025-07-16T12:15:40.982Z] <<< [apiv2][body] GET https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts {"name":"projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts","format":"DOCKER","description":"This repository is created and used by Cloud Functions for storing function docker images.","labels":{"goog-managed-by":"cloudfunctions"},"createTime":"2025-07-16T12:14:51.559961Z","updateTime":"2025-07-16T12:14:51.559961Z","mode":"STANDARD_REPOSITORY","vulnerabilityScanningConfig":{"lastEnableTime":"2025-07-16T12:14:43.135104313Z","enablementState":"SCANNING_DISABLED","enablementStateReason":"API containerscanning.googleapis.com is not enabled."},"satisfiesPzi":true,"registryUri":"us-central1-docker.pkg.dev/universestay-8c0e4/gcf-artifacts"}
+[warn] !  functions: No cleanup policy detected for repositories in us-central1. This may result in a small monthly bill as container images accumulate over time. 
+[info] i  functions: Configuring cleanup policy for repository in us-central1. Images older than 1 days will be automatically deleted. 
+[debug] [2025-07-16T12:16:19.154Z] Setting up artifact cleanup policy for region us-central1
+[debug] [2025-07-16T12:16:19.155Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:16:19.155Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:16:19.155Z] >>> [apiv2][query] PATCH https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts updateMask=name%2CcleanupPolicies%2CcleanupPolicyDryRun%2Clabels
+[debug] [2025-07-16T12:16:19.155Z] >>> [apiv2][body] PATCH https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts {"name":"projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts","cleanupPolicies":{"firebase-functions-cleanup":{"id":"firebase-functions-cleanup","condition":{"tagState":"ANY","olderThan":"86400s"},"action":"DELETE"}},"cleanupPolicyDryRun":false,"labels":{"goog-managed-by":"cloudfunctions"}}
+[debug] [2025-07-16T12:16:20.328Z] <<< [apiv2][status] PATCH https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts 200
+[debug] [2025-07-16T12:16:20.328Z] <<< [apiv2][body] PATCH https://artifactregistry.googleapis.com/v1/projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts {"name":"projects/universestay-8c0e4/locations/us-central1/repositories/gcf-artifacts","format":"DOCKER","description":"This repository is created and used by Cloud Functions for storing function docker images.","labels":{"goog-managed-by":"cloudfunctions"},"createTime":"2025-07-16T12:14:51.559961Z","updateTime":"2025-07-16T12:16:22.441753Z","mode":"STANDARD_REPOSITORY","cleanupPolicies":{"firebase-functions-cleanup":{"id":"firebase-functions-cleanup","action":"DELETE","condition":{"tagState":"ANY","olderThan":"86400s"}}},"vulnerabilityScanningConfig":{"lastEnableTime":"2025-07-16T12:14:43.135104313Z","enablementState":"SCANNING_DISABLED","enablementStateReason":"API containerscanning.googleapis.com is not enabled."},"satisfiesPzi":true}
+[info] i  functions: Configured cleanup policy for repository in us-central1. 
+[debug] [2025-07-16T12:16:20.329Z] Functions deploy failed.
+[debug] [2025-07-16T12:16:20.329Z] {
+  "endpoint": {
+    "id": "sendPushOnNotificationCreate",
+    "project": "universestay-8c0e4",
+    "region": "us-central1",
+    "entryPoint": "sendPushOnNotificationCreate",
+    "platform": "gcfv1",
+    "runtime": "nodejs20",
+    "eventTrigger": {
+      "eventType": "providers/cloud.firestore/eventTypes/document.create",
+      "retry": false,
+      "eventFilters": {
+        "resource": "projects/universestay-8c0e4/databases/(default)/documents/notifications/{notifId}"
+      }
+    },
+    "labels": {
+      "deployment-tool": "cli-firebase"
+    },
+    "serviceAccount": null,
+    "ingressSettings": null,
+    "availableMemoryMb": null,
+    "timeoutSeconds": null,
+    "maxInstances": null,
+    "minInstances": null,
+    "vpc": null,
+    "environmentVariables": {
+      "FIREBASE_CONFIG": "{\"projectId\":\"universestay-8c0e4\",\"databaseURL\":\"https://universestay-8c0e4-default-rtdb.firebaseio.com\",\"storageBucket\":\"universestay-8c0e4.appspot.com\",\"locationId\":\"us-central\"}",
+      "GCLOUD_PROJECT": "universestay-8c0e4",
+      "EVENTARC_CLOUD_EVENT_SOURCE": "projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate"
+    },
+    "codebase": "default",
+    "targetedByOnly": false,
+    "hash": "d3acba75e7788882d3221d0459d5bf3b32981004"
+  },
+  "op": "create",
+  "original": {
+    "name": "FirebaseError",
+    "children": [],
+    "exit": 1,
+    "message": "Gen1 operation for function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate failed: Build failed: This project is using pnpm but you have not included the Functions Framework in your dependencies. Please add it by running: 'pnpm add @google-cloud/functions-framework'.; Error ID: 5b6dc8b5.",
+    "original": {
+      "code": 3,
+      "message": "Gen1 operation for function projects/universestay-8c0e4/locations/us-central1/functions/sendPushOnNotificationCreate failed: Build failed: This project is using pnpm but you have not included the Functions Framework in your dependencies. Please add it by running: 'pnpm add @google-cloud/functions-framework'.; Error ID: 5b6dc8b5."
+    },
+    "status": 3,
+    "code": 3
+  }
+}
+[debug] [2025-07-16T12:16:20.757Z] Error: Failed to create function sendPushOnNotificationCreate in region us-central1
+    at C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:52:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Fabricator.createV1Function (C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:182:32)
+    at async Fabricator.createEndpoint (C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:134:13)
+    at async handle (C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:89:17)
+[error] 
+[error] Error: There was an error deploying functions
+[debug] [2025-07-16T12:17:37.292Z] ----------------------------------------------------------------------
+[debug] [2025-07-16T12:17:37.298Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\PraiseTech\AppData\Local\pnpm\global\5\.pnpm\firebase-tools@14.10.1_@types+node@22.15.16_encoding@0.1.13\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2025-07-16T12:17:37.299Z] CLI Version:   14.10.1
+[debug] [2025-07-16T12:17:37.300Z] Platform:      win32
+[debug] [2025-07-16T12:17:37.301Z] Node Version:  v22.11.0
+[debug] [2025-07-16T12:17:37.301Z] Time:          Wed Jul 16 2025 14:17:37 GMT+0200 (Central Africa Time)
+[debug] [2025-07-16T12:17:37.302Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-07-16T12:17:37.832Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-16T12:17:37.834Z] > authorizing via signed-in user (praisetechzw@gmail.com)
+[debug] [2025-07-16T12:17:37.834Z] [iam] checking project universestay-8c0e4 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-07-16T12:17:37.838Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:17:37.839Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:17:37.842Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions [none]
+[debug] [2025-07-16T12:17:37.843Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions x-goog-quota-user=projects/universestay-8c0e4
+[debug] [2025-07-16T12:17:37.843Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-07-16T12:17:39.667Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions 200
+[debug] [2025-07-16T12:17:39.668Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/universestay-8c0e4:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-07-16T12:17:39.668Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:17:39.668Z] Checked if tokens are valid: true, expires at: 1752670060006
+[debug] [2025-07-16T12:17:39.669Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-07-16T12:17:39.669Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-07-16T12:17:41.315Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-07-16T12:17:41.315Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/universestay-8c0e4/serviceAccounts/universestay-8c0e4@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'universestay-8c0e4'...
+[info] 
+[info] i  deploying functions 
+[info] Running command: npm --prefix "$RESOURCE_DIR" run lint
