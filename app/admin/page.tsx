@@ -885,34 +885,7 @@ export default function AdminPage() {
         </div>
       )}
       {/* Notification Bell */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="relative">
-            <Bell className="h-4 w-4" />
-            {unreadCount > 0 && (
-              <span className="absolute -right-1 -top-1 h-4 w-4 p-0 flex items-center justify-center bg-red-500 text-white rounded-full text-xs">{unreadCount}</span>
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[320px]">
-          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <div className="max-h-[300px] overflow-auto">
-            {notifications.length === 0 ? (
-              <div className="text-xs text-muted-foreground p-2">No notifications</div>
-            ) : (
-              notifications.map((n, i) => (
-                <DropdownMenuItem key={n.type + n.id + i} className="cursor-pointer py-3">
-                  <Link href={n.link} className="flex flex-col gap-1 w-full">
-                    <span className="font-medium capitalize">{n.type}: {n.label}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(n.time).toLocaleString()}</span>
-                  </Link>
-                </DropdownMenuItem>
-              ))
-            )}
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+   
       {/* Order confirmation dialog */}
       {confirmOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
