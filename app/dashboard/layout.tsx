@@ -2,7 +2,6 @@
 
 import type React from "react"
 import { useState } from "react"
-import { DashboardHeader } from "@/components/dashboard-header"
 import DashboardSidebar from "@/components/dashboard-sidebar"
 import { ProtectedRoute } from "@/components/protected-route"
 import BottomNavigation from "@/components/BottomNavigation"
@@ -12,6 +11,7 @@ import { SessionProvider } from "@/providers/session-provider"
 import { ThemeProvider } from "next-themes"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "sonner"
+import { DashboardHeader } from "@/components/dashboard-header"
 export default function DashboardLayout({
   children,
 }: {
