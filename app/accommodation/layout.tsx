@@ -3,17 +3,30 @@
 import type { ReactNode } from "react"
 import { useState } from "react"
 import DashboardSidebar from "@/components/dashboard-sidebar"
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 export default function AccommodationLayout({ children }: { children: ReactNode }) {
+  const { featureFlags, loading: flagsLoading } = useFeatureFlags();
+  if (flagsLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading feature flags...</div>;
+  }
+  if (!featureFlags.accommodation) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center">
+        <h2 className="text-2xl font-bold mb-2">Accommodation Disabled</h2>
+        <p className="text-muted-foreground">The accommodation feature is currently unavailable. Please check back later.</p>
+      </div>
+    );
+  }
   const [collapsed, setCollapsed] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      {/* Sidebar: overlay on mobile, collapsible on desktop */}
+     
       {/* Desktop sidebar */}
       <div className={`hidden md:block transition-all duration-300 h-full ${collapsed ? 'w-16' : 'w-64'} flex-shrink-0 ${collapsed ? '' : 'bg-background border-r'}`}>
-        <DashboardSidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} isMobile={false} />
+        <DashboardSidebar />
       </div>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -22,7 +35,7 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           {/* Sidebar */}
           <div className="relative w-64 h-full bg-background border-r shadow-lg">
-            <DashboardSidebar collapsed={false} onToggle={() => setSidebarOpen(false)} isMobile={true} />
+            <DashboardSidebar />
           </div>
         </div>
       )}

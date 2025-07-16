@@ -1,7 +1,12 @@
 "use client"
 
+<<<<<<< HEAD
 import { useState, useEffect, useCallback } from "react"
 import { Bell, Globe, Shield, User, Zap, Settings, Database } from "lucide-react"
+=======
+import { useState, useEffect, useCallback, useRef } from "react"
+import { Bell, Copy, Globe, Lock, Save, Shield, User, Zap, Settings, Database, Activity, ToggleLeft, ToggleRight } from "lucide-react"
+>>>>>>> c18d029e7da92ff25a563f492af0be27015214da
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,7 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { listenToSettings, updateSettings } from "@/lib/api/settings"
+import { listenToSettings, updateSettings, getFeatureFlags, setFeatureFlag, getExperiments, setExperiment } from "@/lib/api/settings"
 import { getAllUsersRealtime, updateUser, deleteUser } from "@/lib/api/users";
 import { getAllReportsRealtime } from "@/lib/api/reports";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -41,6 +46,9 @@ export default function AdminSettingsPage() {
   // State for dialogs
   const [showKeysDialog, setShowKeysDialog] = useState(false);
   const [showLogsDialog, setShowLogsDialog] = useState(false);
+  const [showFlagsDialog, setShowFlagsDialog] = useState(false);
+  const [showExperimentsDialog, setShowExperimentsDialog] = useState(false);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
 
   // Mock API keys and logs for now
   const [apiKeys, setApiKeys] = useState([
@@ -52,10 +60,19 @@ export default function AdminSettingsPage() {
     { id: 'log2', action: 'banUser', target: 'user456', admin: 'silver', time: '2024-06-02 12:00' },
   ]);
 
+  // Real-time feature flags
+  const [featureFlags, setFeatureFlags] = useState<any>({});
+  const [experiments, setExperiments] = useState<any>({});
+
+  const newFlagRef = useRef<HTMLInputElement>(null);
+  const newExpRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const unsub = listenToSettings((data) => {
       setSettings(data)
       setLoading(false)
+      // Sync featureFlags state with Firestore in real time
+      setFeatureFlags(data.featureFlags || {});
     })
     return () => unsub()
   }, [])
@@ -85,6 +102,32 @@ export default function AdminSettingsPage() {
     });
     return () => unsub();
   }, [user?.id]);
+
+  // Real-time feature flags
+  useEffect(() => {
+    if (!showFlagsDialog) return;
+    let ignore = false;
+    async function fetchFlags() {
+      const flags = await getFeatureFlags();
+      if (!ignore) setFeatureFlags(flags);
+    }
+    fetchFlags();
+    const interval = setInterval(fetchFlags, 3000);
+    return () => { ignore = true; clearInterval(interval); };
+  }, [showFlagsDialog]);
+
+  // Real-time experiments
+  useEffect(() => {
+    if (!showExperimentsDialog) return;
+    let ignore = false;
+    async function fetchExperiments() {
+      const exps = await getExperiments();
+      if (!ignore) setExperiments(exps);
+    }
+    fetchExperiments();
+    const interval = setInterval(fetchExperiments, 3000);
+    return () => { ignore = true; clearInterval(interval); };
+  }, [showExperimentsDialog]);
 
   // Handlers for updating settings in Firestore
   const handleChange = useCallback((field: string, value: any) => {
@@ -508,7 +551,7 @@ export default function AdminSettingsPage() {
         </TabsContent>
         {/* Features Tab */}
         <TabsContent value="features">
-          <Card className="mb-6">
+          <Card className="mb-6 w-full">
             <CardHeader>
               <CardTitle>Feature Toggles</CardTitle>
               <CardDescription>Enable or disable major features for the platform.</CardDescription>
@@ -516,34 +559,103 @@ export default function AdminSettingsPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label>Marketplace</Label>
-                <Switch checked={!!settings.featureMarketplace} onCheckedChange={v => handleChange("featureMarketplace", v)} />
+                <Switch checked={!!featureFlags['marketplace']} onCheckedChange={v => setFeatureFlag('marketplace', v)} />
               </div>
               <div className="flex items-center justify-between">
                 <Label>Accommodation</Label>
-                <Switch checked={!!settings.featureAccommodation} onCheckedChange={v => handleChange("featureAccommodation", v)} />
+                <Switch checked={!!featureFlags['accommodation']} onCheckedChange={v => setFeatureFlag('accommodation', v)} />
               </div>
               <div className="flex items-center justify-between">
                 <Label>Messaging</Label>
-                <Switch checked={!!settings.featureMessaging} onCheckedChange={v => handleChange("featureMessaging", v)} />
+                <Switch checked={!!featureFlags['messaging']} onCheckedChange={v => setFeatureFlag('messaging', v)} />
               </div>
-              {/* Feature Flags, A/B Testing, Maintenance Announcements (placeholders) */}
               <div className="flex items-center justify-between mt-4">
                 <Label>Feature Flags</Label>
-                <Button variant="outline" size="sm">Manage Flags</Button>
+                <Button variant="outline" size="sm" onClick={() => setShowFlagsDialog(true)}>Manage Flags</Button>
               </div>
               <div className="flex items-center justify-between mt-4">
                 <Label>A/B Testing</Label>
-                <Button variant="outline" size="sm">Manage Experiments</Button>
+                <Button variant="outline" size="sm" onClick={() => setShowExperimentsDialog(true)}>Manage Experiments</Button>
               </div>
               <div className="flex items-center justify-between mt-4">
                 <Label>Maintenance Announcements</Label>
-                <Button variant="outline" size="sm">Schedule</Button>
+                <Button variant="outline" size="sm" onClick={() => setShowScheduleDialog(true)}>Schedule</Button>
               </div>
             </CardContent>
             <CardFooter>
               <Button onClick={() => toast({ title: "Settings Saved", description: "Feature settings have been saved." })}>Save</Button>
             </CardFooter>
           </Card>
+          {/* Manage Flags Dialog */}
+          <Dialog open={showFlagsDialog} onOpenChange={setShowFlagsDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Manage Feature Flags</DialogTitle>
+              </DialogHeader>
+              <div className="py-2 space-y-3">
+                {Object.keys(featureFlags).length === 0 && <div className="text-muted-foreground text-sm">No feature flags found.</div>}
+                {Object.entries(featureFlags).map(([flag, value]) => (
+                  <div key={flag} className="flex items-center justify-between">
+                    <span className="capitalize">{flag.replace(/([A-Z])/g, ' $1')}</span>
+                    <Switch checked={!!value} onCheckedChange={v => setFeatureFlag(flag, v)} />
+                  </div>
+                ))}
+                <div className="flex items-center gap-2 mt-4">
+                  <Input placeholder="New flag name" ref={newFlagRef} />
+                  <Button size="sm" onClick={async () => {
+                    if (newFlagRef.current && newFlagRef.current.value) {
+                      await setFeatureFlag(newFlagRef.current.value, true);
+                      newFlagRef.current.value = '';
+                    }
+                  }}>Add Flag</Button>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowFlagsDialog(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          {/* Manage Experiments Dialog */}
+          <Dialog open={showExperimentsDialog} onOpenChange={setShowExperimentsDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Manage A/B Experiments</DialogTitle>
+              </DialogHeader>
+              <div className="py-2 space-y-3">
+                {Object.keys(experiments).length === 0 && <div className="text-muted-foreground text-sm">No experiments found.</div>}
+                {Object.entries(experiments).map(([exp, value]) => (
+                  <div key={exp} className="flex items-center justify-between">
+                    <span className="capitalize">{exp.replace(/([A-Z])/g, ' $1')}</span>
+                    <Switch checked={!!value} onCheckedChange={v => setExperiment(exp, v)} />
+                  </div>
+                ))}
+                <div className="flex items-center gap-2 mt-4">
+                  <Input placeholder="New experiment name" ref={newExpRef} />
+                  <Button size="sm" onClick={async () => {
+                    if (newExpRef.current && newExpRef.current.value) {
+                      await setExperiment(newExpRef.current.value, true);
+                      newExpRef.current.value = '';
+                    }
+                  }}>Add Experiment</Button>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowExperimentsDialog(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          {/* Schedule Maintenance Dialog */}
+          <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Schedule Maintenance Announcement</DialogTitle>
+              </DialogHeader>
+              <div className="py-2">Maintenance announcement scheduling UI coming soon.</div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
         {/* Branding Tab */}
         <TabsContent value="branding">
