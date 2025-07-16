@@ -15,9 +15,12 @@ import BottomNavigation from "@/components/BottomNavigation"
 
 export default function AccommodationLayout({ children }: { children: ReactNode }) {
   const { featureFlags, loading: flagsLoading } = useFeatureFlags();
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  
   if (flagsLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading feature flags...</div>;
   }
+  
   if (!featureFlags.accommodation) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center">
@@ -26,8 +29,6 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
       </div>
     );
   }
-  const [collapsed, setCollapsed] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <SessionProvider>
@@ -39,6 +40,7 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
               <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
                 <DashboardSidebar />
               </div>
+              
               {/* Mobile sidebar overlay */}
               {sidebarOpen && (
                 <div className="fixed inset-0 z-50 flex md:hidden">
@@ -50,15 +52,25 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
                   </div>
                 </div>
               )}
+              
               {/* Main Content Area */}
               <div className="flex-1 flex flex-col overflow-hidden">
-                <DashboardHeader />
-                <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
+                {/* Header - Static in layout flow */}
+                <div className="flex-shrink-0 bg-background border-b">
+                  <DashboardHeader />
+                </div>
+                
+                {/* Main content - Takes remaining space with top margin for fixed header */}
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background mt-16">
                   {children}
                 </main>
               </div>
             </div>
+            
+            {/* Bottom Navigation for mobile */}
             <BottomNavigation />
+            
+            {/* Toast notifications */}
             <Toaster />
             <SonnerToaster />
           </ThemeProvider>
@@ -66,4 +78,4 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
       </AuthProvider>
     </SessionProvider>
   )
-} 
+}

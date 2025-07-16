@@ -213,12 +213,8 @@ export default function AdminSettingsPage() {
   }
 
   return (
-<<<<<<< HEAD
-    <div className="flex-1 w-full h-full p-6">
-=======
     <div className="p-8 w-full max-w-none">
       <AdminAnnouncementForm />
->>>>>>> eafe4e930e7ac97beda533612ccf999a758cea6e
       <h1 className="text-2xl font-bold mb-2 flex items-center gap-2"><Settings className="h-6 w-6" /> Settings</h1>
       <p className="text-muted-foreground mb-6">Configure admin and platform settings here.</p>
       <Tabs defaultValue="general" className="w-full">

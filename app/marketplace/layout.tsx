@@ -19,7 +19,6 @@ export default function MarketplaceLayout({
   children: React.ReactNode
 }) {
   const { featureFlags, loading: flagsLoading } = useFeatureFlags();
-  const [collapsed, setCollapsed] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   if (flagsLoading) {
@@ -35,28 +34,50 @@ export default function MarketplaceLayout({
   }
   return (
     <SessionProvider>
-      <AuthProvider>
-        <QueryProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <div className="flex min-h-screen w-full overflow-hidden">
-              {/* Sidebar for md+ */}
-              <div className="hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0">
-                <DashboardSidebar />
-              </div>
-              {/* Main Content Area */}
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <DashboardHeader />
-                <main className="flex-1 overflow-y-auto overflow-x-auto p-2 md:p-6 bg-background">
-                  {children}
-                </main>
-              </div>
+    <AuthProvider>
+      <QueryProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <div className="flex h-screen w-screen overflow-hidden">
+            {/* Desktop sidebar */}
+            <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
+              <DashboardSidebar />
             </div>
-            <BottomNavigation />
-            <Toaster />
-            <SonnerToaster />
-          </ThemeProvider>
-        </QueryProvider>
-      </AuthProvider>
-    </SessionProvider>
+            
+            {/* Mobile sidebar overlay */}
+            {sidebarOpen && (
+              <div className="fixed inset-0 z-50 flex md:hidden">
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+                {/* Sidebar */}
+                <div className="relative w-64 h-full bg-background border-r shadow-lg">
+                  <DashboardSidebar />
+                </div>
+              </div>
+            )}
+            
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Header - Static in layout flow */}
+              <div className="flex-shrink-0 bg-background border-b">
+                <DashboardHeader />
+              </div>
+              
+              {/* Main content - Takes remaining space with top margin for fixed header */}
+              <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background mt-16">
+                {children}
+              </main>
+            </div>
+          </div>
+          
+          {/* Bottom Navigation for mobile */}
+          <BottomNavigation />
+          
+          {/* Toast notifications */}
+          <Toaster />
+          <SonnerToaster />
+        </ThemeProvider>
+      </QueryProvider>
+    </AuthProvider>
+  </SessionProvider>
   )
 }
