@@ -12,12 +12,39 @@ import { SessionProvider } from "@/providers/session-provider"
 import { ThemeProvider } from "next-themes"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "sonner"
+import { useAuth } from "@/lib/auth-context"
+import { collection, query, where, getDocs } from "firebase/firestore"
+import { useEffect } from "react"
+import { db } from "@/lib/firebase"
+
 export default function AnalyticsLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user } = useAuth();
+  const [hasListings, setHasListings] = useState<boolean | null>(null)
+
+  // Check for user listings (products or accommodations)
+  useEffect(() => {
+    if (!user) {
+      setHasListings(null)
+      return
+    }
+    let cancelled = false
+    async function checkListings() {
+      // Check products
+      const productsSnap = await getDocs(query(collection(db, "products"), where("seller_id", "==", user.id)))
+      // Check accommodations
+      const accomSnap = await getDocs(query(collection(db, "accommodations"), where("seller.id", "==", user.id)))
+      if (!cancelled) {
+        setHasListings(productsSnap.size > 0 || accomSnap.size > 0)
+      }
+    }
+    checkListings()
+    return () => { cancelled = true }
+  }, [user])
 
   return (
     <ProtectedRoute>
@@ -27,12 +54,14 @@ export default function AnalyticsLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <div className="flex h-screen w-screen overflow-hidden">
             {/* Desktop sidebar */}
-            <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
-              <DashboardSidebar />
-            </div>
+            {user && hasListings !== false && (
+              <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
+                <DashboardSidebar />
+              </div>
+            )}
             
             {/* Mobile sidebar overlay */}
-            {sidebarOpen && (
+            {sidebarOpen && user && hasListings !== false && (
               <div className="fixed inset-0 z-50 flex md:hidden">
                 {/* Overlay */}
                 <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
