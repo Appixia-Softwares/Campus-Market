@@ -16,7 +16,7 @@ import { useAuth } from "@/lib/auth-context"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { useEffect } from "react"
 import { db } from "@/lib/firebase"
-import { useFeatureFlags } from "@/lib/feature-flags"
+import { useFeatureFlags } from "@/hooks/use-feature-flags"
 
 export default function CommunityLayout({
   children,
