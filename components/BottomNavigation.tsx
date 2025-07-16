@@ -9,14 +9,14 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const navItems = [
-  { href: "/dashboard", label: "Home", icon: Home },
   { href: "/marketplace", label: "Marketplace", icon: Search },
+  { href: "/accommodation", label: "Accommodation", icon: Home },
   { href: "/marketplace/sell", label: "Sell", icon: Plus },
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/profile", label: "Profile", icon: User },
 ]
 
-export default function BottomNavigation({ userId }) {
+export default function BottomNavigation({ userId }: { userId?: string }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showPanel, setShowPanel] = useState(false);
 
@@ -35,7 +35,7 @@ export default function BottomNavigation({ userId }) {
 
   const pathname = usePathname() || ""
   return (
-    <nav className="fixed bottom-0 w-full bg-white shadow z-50 flex justify-between items-center px-4 py-2">
+    <nav className="fixed bottom-0 w-full bg-background text-foreground shadow z-50 flex justify-between items-center px-4 py-2 md:hidden">
       {navItems.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || (href !== "/" && pathname.startsWith(href))
         return (
@@ -57,13 +57,13 @@ export default function BottomNavigation({ userId }) {
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">{unreadCount}</span>
           )}
         </button>
-        {showPanel && (
+        {showPanel && userId && (
           <div className="absolute right-0 bottom-10 z-50">
             <NotificationsPanel userId={userId} />
           </div>
         )}
       </div>
-      <PushNotificationPrompt userId={userId} />
+      {userId && <PushNotificationPrompt userId={userId} />}
     </nav>
   )
 } 
