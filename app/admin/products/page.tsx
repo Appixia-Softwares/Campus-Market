@@ -27,7 +27,7 @@ export default function AdminProductsPage() {
   );
 
   return (
-    <div className="p-8">
+    <div className="flex-1 w-full h-full p-6">
       <h1 className="text-2xl font-bold mb-2">Products</h1>
       <p className="text-muted-foreground mb-6">Manage all products listed on the platform.</p>
       <div className="mb-6 flex items-center gap-4">
@@ -57,9 +57,13 @@ export default function AdminProductsPage() {
                 className="h-20 w-20 rounded border object-cover mb-2"
               />
               <div className="font-semibold text-center">{product.title}</div>
-              <div className="text-xs text-muted-foreground mb-2">₦{product.price?.toLocaleString() || '-'}</div>
+              <div className="text-xs text-muted-foreground mb-2">
+                ₦{product.price?.toLocaleString() || '-'}
+              </div>
               <div className="flex gap-2 flex-wrap justify-center mb-2">
-                <Badge variant={product.status === 'sold' ? 'destructive' : 'blue'}>{product.status || 'active'}</Badge>
+                <Badge variant={product.status === 'sold' ? 'destructive' : 'secondary'}>
+                  {product.status || 'active'}
+                </Badge>
               </div>
               <div className="flex gap-2 mt-auto">
                 <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setSelectedProduct(product); }}>View</Button>
@@ -84,13 +88,21 @@ export default function AdminProductsPage() {
                 className="h-24 w-24 rounded border object-cover mb-2"
               />
               <div className="font-semibold text-lg">{selectedProduct.title}</div>
-              <div className="text-xs text-muted-foreground mb-2">₦{selectedProduct.price?.toLocaleString() || '-'}</div>
+              <div className="text-xs text-muted-foreground mb-2">
+                ₦{selectedProduct.price?.toLocaleString() || '-'}
+              </div>
               <div className="flex gap-2 flex-wrap justify-center mb-2">
-                <Badge variant={selectedProduct.status === 'sold' ? 'destructive' : 'blue'}>{selectedProduct.status || 'active'}</Badge>
+                <Badge variant={selectedProduct.status === 'sold' ? 'destructive' : 'secondary'}>
+                  {selectedProduct.status || 'active'}
+                </Badge>
               </div>
               <div className="w-full text-sm">
-                <div><span className="font-medium">Category:</span> {selectedProduct.category_id || '-'}</div>
-                <div><span className="font-medium">Condition:</span> {selectedProduct.condition || '-'}</div>
+                <div>
+                  <span className="font-medium">Category:</span> {selectedProduct.category_id || '-'}
+                </div>
+                <div>
+                  <span className="font-medium">Condition:</span> {selectedProduct.condition || '-'}
+                </div>
                 <div><span className="font-medium">Location:</span> {selectedProduct.location || '-'}</div>
                 <div><span className="font-medium">Description:</span> {selectedProduct.description || '-'}</div>
               </div>

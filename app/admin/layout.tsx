@@ -53,6 +53,8 @@ import AdminSidebar from "@/components/admin-sidebar";
 import { getAllUsersRealtime } from '@/lib/api/users';
 import { getAllOrdersRealtime } from '@/lib/api/orders';
 import { getAllReportsRealtime } from '@/lib/api/reports';
+import { toast } from "@/components/ui/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 // Add Notification type
 interface Notification {
@@ -73,8 +75,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const searchParams = useSearchParams()
-  const { user: authUser, loading } = useAuth();
+  const { user: authUser, loading, signOut } = useAuth();
   const [user, setUser] = useState(authUser);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Notifications state
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -257,6 +260,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setUnreadCount(notifications.length);
   }, [notifications]);
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({ title: "Logged out", description: "You have been signed out.", variant: "default" });
+      router.replace("/login");
+    } catch (error) {
+      toast({ title: "Logout failed", description: "Could not log out. Please try again.", variant: "destructive" });
+    }
+  };
+
   if (!mounted || loading || !user || user.role !== "admin") {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -281,7 +294,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Button
                 variant="outline"
                 className="w-full justify-start gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-                onClick={() => router.push("/login")}
+                onClick={() => setShowLogoutDialog(true)}
               >
                 <LogOut className="h-4 w-4" />
                 <span>Log out</span>
@@ -377,7 +390,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <span>Settings</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => router.push("/login")}>
+                      <DropdownMenuItem onClick={() => setShowLogoutDialog(true)}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log out</span>
                       </DropdownMenuItem>
@@ -391,6 +404,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <main className="flex-1 p-6">{children}</main>
         </div>
       </div>
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Logout</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>Are you sure you want to log out? You will be signed out of the admin dashboard.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLogoutDialog(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleLogout}>Log out</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   )
 }

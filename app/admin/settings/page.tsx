@@ -221,7 +221,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="p-8 w-full max-w-none">
+    <div className="flex-1 w-full h-full p-6">
       <h1 className="text-2xl font-bold mb-2 flex items-center gap-2"><Settings className="h-6 w-6" /> Settings</h1>
       <p className="text-muted-foreground mb-6">Configure admin and platform settings here.</p>
       <Tabs defaultValue="general" className="w-full">

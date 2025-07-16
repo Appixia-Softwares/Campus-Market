@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react';
-import { getAllReports } from '@/lib/api/reports';
+import { getAllReports, getAllReportsRealtime } from '@/lib/api/reports';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -12,19 +12,18 @@ export default function AdminReportsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchReports() {
-      setLoading(true);
-      const data = await getAllReports();
+    setLoading(true);
+    const unsub = getAllReportsRealtime((data) => {
       setReports(data);
       setLoading(false);
-    }
-    fetchReports();
+    });
+    return () => unsub();
   }, []);
 
   const filteredReports = filter === 'all' ? reports : reports.filter(r => r.status === filter);
 
   return (
-    <div className="p-8">
+    <div className="flex-1 w-full h-full p-6">
       <h1 className="text-2xl font-bold mb-2">User Reports</h1>
       <p className="text-muted-foreground mb-6">Review and moderate user-submitted reports.</p>
       <div className="mb-6 flex items-center gap-4">

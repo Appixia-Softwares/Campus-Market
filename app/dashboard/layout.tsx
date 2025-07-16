@@ -20,7 +20,7 @@ export default function DashboardLayout({
         {/* Sidebar: overlay on mobile, collapsible on desktop */}
         {/* Desktop sidebar */}
         <div className={`hidden md:block transition-all duration-300 h-full ${collapsed ? 'w-16' : 'w-64'} flex-shrink-0 ${collapsed ? '' : 'bg-background border-r'}`}>
-          <DashboardSidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} isMobile={false} />
+          <DashboardSidebar isMobile={false} />
         </div>
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
@@ -29,7 +29,7 @@ export default function DashboardLayout({
             <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
             {/* Sidebar */}
             <div className="relative w-64 h-full bg-background border-r shadow-lg">
-              <DashboardSidebar collapsed={false} onToggle={() => setSidebarOpen(false)} isMobile={true} />
+              <DashboardSidebar isMobile={true} />
             </div>
           </div>
         )}

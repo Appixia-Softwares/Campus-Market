@@ -115,7 +115,7 @@ export default function AccommodationPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex-1 w-full h-full p-6">
       <main className="flex-1 container py-0">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Accommodation</h1>

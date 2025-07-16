@@ -113,11 +113,11 @@ export default function AnalyticsPage() {
             title: product.title,
             views: product.views || 0,
             likes: product.likes || 0,
-            messages: conversations?.filter((c) => c.product_id === product.id).length || 0,
+            messages: conversations?.filter((c: any) => c['product_id'] === product.id).length || 0,
             price: product.price,
             status: product.status,
           }))
-          .sort((a, b) => b.views + b.likes * 2 - (a.views + a.likes * 2))
+          .sort((a, b) => (b.views + b.likes * 2) - (a.views + a.likes * 2))
           .slice(0, 5) || []
 
       // Calculate category stats
@@ -150,7 +150,7 @@ export default function AnalyticsPage() {
           month: monthName,
           views: monthProducts.reduce((sum, p) => sum + (p.views || 0), 0),
           likes: monthProducts.reduce((sum, p) => sum + (p.likes || 0), 0),
-          messages: conversations?.filter((c) => monthProducts.some((p) => p.id === c.product_id)).length || 0,
+          messages: conversations?.filter((c: any) => monthProducts.some((p) => p.id === c.product_id)).length || 0,
           listings: monthProducts.length,
         }
       })
@@ -198,7 +198,7 @@ export default function AnalyticsPage() {
     // Fetch bookings for these accommodations
     const accomIds = accommodations.map(a => a.id)
     // Firestore doesn't support 'in' with too many values, but for most users this is fine
-    let bookings = []
+    let bookings: any[] = []
     let revenue = 0
     let completedCount = 0
     for (const accomId of accomIds) {

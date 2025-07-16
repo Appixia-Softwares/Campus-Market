@@ -130,7 +130,7 @@ export default function AccommodationPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 container py-0">
+      <main className="flex-1 w-full h-full p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Accommodation</h1>
           <div className="flex gap-2">
