@@ -114,7 +114,8 @@ export default function FavoritesPage() {
           <h1 className="text-3xl font-bold">My Favorites</h1>
           <p className="text-muted-foreground">Items you've saved for later</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* Responsive grid: smaller gap on mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <Card key={i} className="overflow-hidden">
               <Skeleton className="h-48 w-full" />
@@ -150,7 +151,7 @@ export default function FavoritesPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
           {favorites.map((favorite) => {
             const product = favorite.products
             return (
@@ -161,11 +162,12 @@ export default function FavoritesPage() {
                     alt={product.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 w-full flex flex-col gap-2 items-end">
+                    {/* Remove button: full-width on mobile for easy tapping */}
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="bg-background/50 hover:bg-background/80"
+                      className="bg-background/50 hover:bg-background/80 w-10 h-10 sm:w-auto sm:h-auto"
                       onClick={() => removeFavorite(favorite.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -180,7 +182,6 @@ export default function FavoritesPage() {
                     {product.status}
                   </Badge>
                 </div>
-
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
