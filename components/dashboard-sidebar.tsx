@@ -83,6 +83,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingOrders, setPendingOrders] = useState(0);
   const [hasBookingRequests, setHasBookingRequests] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   // Check for user listings (products or accommodations)
   useEffect(() => {
@@ -716,6 +717,29 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                     </SidebarMenuButton>
                   </Tooltip>
                 </SidebarMenuItem>
+                {/* Logout Confirmation Dialog */}
+                <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Confirm Logout</DialogTitle>
+                      <p className="text-muted-foreground mt-2">Are you sure you want to log out?</p>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-2 mt-4">
+                      <button
+                        className="px-4 py-2 rounded bg-muted text-foreground"
+                        onClick={() => setLogoutDialogOpen(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="px-4 py-2 rounded bg-primary text-white"
+                        onClick={handleSignOut}
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
                 {/* Collapse button (optional, for future) */}
                 <SidebarMenuItem>
                   <Tooltip>

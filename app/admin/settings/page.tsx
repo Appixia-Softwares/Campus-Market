@@ -64,6 +64,72 @@ export default function AdminSettingsPage() {
   const newFlagRef = useRef<HTMLInputElement>(null);
   const newExpRef = useRef<HTMLInputElement>(null);
 
+  // Search/filter state for users
+  const [userSearch, setUserSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("");
+  const [userStatusFilter, setUserStatusFilter] = useState("");
+
+  // Filtered users
+  const filteredUsers = users.filter(user => {
+    const matchesSearch =
+      userSearch.trim() === "" ||
+      (user.full_name && user.full_name.toLowerCase().includes(userSearch.toLowerCase())) ||
+      (user.email && user.email.toLowerCase().includes(userSearch.toLowerCase()));
+    const matchesRole = userRoleFilter === "" || user.role === userRoleFilter;
+    const matchesStatus = userStatusFilter === "" || user.status === userStatusFilter;
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  // Bulk selection state for users
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const allFilteredUserIds = filteredUsers.map(u => u.id);
+  const allSelected = selectedUserIds.length > 0 && selectedUserIds.length === allFilteredUserIds.length;
+  const someSelected = selectedUserIds.length > 0 && selectedUserIds.length < allFilteredUserIds.length;
+
+  // Bulk action handlers
+  const handleSelectUser = (id: string) => {
+    setSelectedUserIds(ids => ids.includes(id) ? ids.filter(uid => uid !== id) : [...ids, id]);
+  };
+  const handleSelectAllUsers = () => {
+    if (allSelected) setSelectedUserIds([]);
+    else setSelectedUserIds(allFilteredUserIds);
+  };
+  const handleBulkBan = async () => {
+    // Optimistic UI: update status immediately
+    const prevUsers = [...users];
+    setUsers(users => users.map(u => selectedUserIds.includes(u.id) ? { ...u, status: 'banned' } : u));
+    try {
+      await Promise.all(selectedUserIds.map(uid => handleBanUser(uid, true)));
+      // Audit log
+      await Promise.all(selectedUserIds.map(uid => addAuditLog('ban', uid ?? '', user?.id ?? '')));
+      setSelectedUserIds([]);
+    } catch (err) {
+      setUsers(prevUsers); // Rollback
+      toast({ title: 'Bulk ban failed', variant: 'destructive' });
+    }
+  };
+  const handleBulkDelete = async () => {
+    const prevUsers = [...users];
+    setUsers(users => users.filter(u => !selectedUserIds.includes(u.id)));
+    try {
+      await Promise.all(selectedUserIds.map(uid => handleDeleteUser(uid)));
+      await Promise.all(selectedUserIds.map(uid => addAuditLog('delete', uid ?? '', user?.id ?? '')));
+      setSelectedUserIds([]);
+    } catch (err) {
+      setUsers(prevUsers);
+      toast({ title: 'Bulk delete failed', variant: 'destructive' });
+    }
+  };
+  // Audit log helper
+  async function addAuditLog(action: string, targetId: string, adminId: string) {
+    await addDoc(collection(db, 'auditLogs'), {
+      action,
+      target: targetId,
+      admin: adminId,
+      time: new Date().toISOString(),
+    });
+  }
+
   useEffect(() => {
     const unsub = listenToSettings((data) => {
       setSettings(data)
@@ -103,27 +169,19 @@ export default function AdminSettingsPage() {
   // Real-time feature flags
   useEffect(() => {
     if (!showFlagsDialog) return;
-    let ignore = false;
-    async function fetchFlags() {
-      const flags = await getFeatureFlags();
-      if (!ignore) setFeatureFlags(flags);
-    }
-    fetchFlags();
-    const interval = setInterval(fetchFlags, 3000);
-    return () => { ignore = true; clearInterval(interval); };
+    const unsub = onSnapshot(doc(db, "settings", "featureFlags"), (docSnap) => {
+      setFeatureFlags(docSnap.data() || {});
+    });
+    return () => unsub();
   }, [showFlagsDialog]);
 
   // Real-time experiments
   useEffect(() => {
     if (!showExperimentsDialog) return;
-    let ignore = false;
-    async function fetchExperiments() {
-      const exps = await getExperiments();
-      if (!ignore) setExperiments(exps);
-    }
-    fetchExperiments();
-    const interval = setInterval(fetchExperiments, 3000);
-    return () => { ignore = true; clearInterval(interval); };
+    const unsub = onSnapshot(doc(db, "settings", "experiments"), (docSnap) => {
+      setExperiments(docSnap.data() || {});
+    });
+    return () => unsub();
   }, [showExperimentsDialog]);
 
   // Handlers for updating settings in Firestore
@@ -210,13 +268,125 @@ export default function AdminSettingsPage() {
     setApiKeys(apiKeys.filter(k => k.id !== id));
   };
 
+  // Search/filter state for notifications
+  const [notifSearch, setNotifSearch] = useState("");
+  const [notifTypeFilter, setNotifTypeFilter] = useState("");
+  const [notifStatusFilter, setNotifStatusFilter] = useState("");
+
+  // Filtered notifications
+  const filteredNotifications = notifications.filter(notif => {
+    const matchesSearch =
+      notifSearch.trim() === "" ||
+      (notif.title && notif.title.toLowerCase().includes(notifSearch.toLowerCase())) ||
+      (notif.body && notif.body.toLowerCase().includes(notifSearch.toLowerCase()));
+    const matchesType = notifTypeFilter === "" || notif.type === notifTypeFilter;
+    const matchesStatus = notifStatusFilter === "" || (notif.read ? "read" : "unread") === notifStatusFilter;
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  // Bulk selection state for notifications
+  const [selectedNotifIds, setSelectedNotifIds] = useState<string[]>([]);
+  const allFilteredNotifIds = filteredNotifications.map(n => n.id);
+  const allNotifSelected = selectedNotifIds.length > 0 && selectedNotifIds.length === allFilteredNotifIds.length;
+  const someNotifSelected = selectedNotifIds.length > 0 && selectedNotifIds.length < allFilteredNotifIds.length;
+
+  // Bulk action handlers for notifications
+  const handleSelectNotif = (id: string) => {
+    setSelectedNotifIds(ids => ids.includes(id) ? ids.filter(nid => nid !== id) : [...ids, id]);
+  };
+  const handleSelectAllNotifs = () => {
+    if (allNotifSelected) setSelectedNotifIds([]);
+    else setSelectedNotifIds(allFilteredNotifIds);
+  };
+  const handleBulkMarkRead = async () => {
+    const prevNotifs = [...notifications];
+    setNotifications(notifs => notifs.map(n => selectedNotifIds.includes(n.id) ? { ...n, read: true } : n));
+    try {
+      await Promise.all(selectedNotifIds.map(nid => handleMarkNotifRead(nid)));
+      await Promise.all(selectedNotifIds.map(nid => addAuditLog('markRead', nid ?? '', user?.id ?? '')));
+      setSelectedNotifIds([]);
+    } catch (err) {
+      setNotifications(prevNotifs);
+      toast({ title: 'Bulk mark as read failed', variant: 'destructive' });
+    }
+  };
+  const handleBulkDeleteNotif = async () => {
+    const prevNotifs = [...notifications];
+    setNotifications(notifs => notifs.filter(n => !selectedNotifIds.includes(n.id)));
+    try {
+      await Promise.all(selectedNotifIds.map(nid => handleDeleteNotif(nid)));
+      await Promise.all(selectedNotifIds.map(nid => addAuditLog('deleteNotif', nid ?? '', user?.id ?? '')));
+      setSelectedNotifIds([]);
+    } catch (err) {
+      setNotifications(prevNotifs);
+      toast({ title: 'Bulk delete failed', variant: 'destructive' });
+    }
+  };
+
+  // Search/filter state for logs
+  const [logSearch, setLogSearch] = useState("");
+  const [logTypeFilter, setLogTypeFilter] = useState("");
+
+  // Filtered logs
+  const filteredLogs = logs.filter(log => {
+    const matchesSearch =
+      logSearch.trim() === "" ||
+      (log.title && log.title.toLowerCase().includes(logSearch.toLowerCase())) ||
+      (log.id && log.id.toLowerCase().includes(logSearch.toLowerCase()));
+    const matchesType = logTypeFilter === "" || log.type === logTypeFilter;
+    return matchesSearch && matchesType;
+  });
+
+  // Bulk selection state for logs
+  const [selectedLogIds, setSelectedLogIds] = useState<string[]>([]);
+  const allFilteredLogIds = filteredLogs.map(l => l.id);
+  const allLogsSelected = selectedLogIds.length > 0 && selectedLogIds.length === allFilteredLogIds.length;
+  const someLogsSelected = selectedLogIds.length > 0 && selectedLogIds.length < allFilteredLogIds.length;
+
+  // Bulk action handlers for logs
+  const handleSelectLog = (id: string) => {
+    setSelectedLogIds(ids => ids.includes(id) ? ids.filter(lid => lid !== id) : [...ids, id]);
+  };
+  const handleSelectAllLogs = () => {
+    if (allLogsSelected) setSelectedLogIds([]);
+    else setSelectedLogIds(allFilteredLogIds);
+  };
+  const handleBulkDeleteLogs = async () => {
+    const prevLogs = [...logs];
+    setLogs(logs => logs.filter(l => !selectedLogIds.includes(l.id)));
+    try {
+      // Optionally, delete from Firestore if needed
+      await Promise.all(selectedLogIds.map(lid => addAuditLog('deleteLog', lid ?? '', user?.id ?? '')));
+      setSelectedLogIds([]);
+    } catch (err) {
+      setLogs(prevLogs);
+      toast({ title: 'Bulk delete failed', variant: 'destructive' });
+    }
+  };
+  const handleBulkExportLogs = () => {
+    // Export selected logs as CSV
+    const selected = logs.filter(l => selectedLogIds.includes(l.id));
+    const csv = [
+      ["Type", "Title", "Time", "ID"],
+      ...selected.map(log => [log.type || "-", log.title || log.id, log.created_at && log.created_at.seconds ? new Date(log.created_at.seconds * 1000).toLocaleString() : "-", log.id])
+    ].map(row => row.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "logs.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    setSelectedLogIds([]);
+  };
+
   if (loading) {
     return <div className="p-8 text-center text-muted-foreground">Loading settings...</div>
   }
 
   return (
     <div className="p-8 w-full max-w-none">
-      <AdminAnnouncementForm />
+    
       <h1 className="text-2xl font-bold mb-2 flex items-center gap-2"><Settings className="h-6 w-6" /> Settings</h1>
       <p className="text-muted-foreground mb-6">Configure admin and platform settings here.</p>
       <Tabs defaultValue="general" className="w-full">
@@ -270,10 +440,57 @@ export default function AdminSettingsPage() {
                 <CardDescription>Control user registration, roles, and verification.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Search and filter controls */}
+                <div className="flex flex-wrap gap-2 mb-4 items-center">
+                  <Input
+                    placeholder="Search by name or email..."
+                    value={userSearch}
+                    onChange={e => setUserSearch(e.target.value)}
+                    className="w-64"
+                  />
+                  <Select value={userRoleFilter} onValueChange={setUserRoleFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Roles</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="student">Student</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={userStatusFilter} onValueChange={setUserStatusFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Statuses</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="banned">Banned</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Bulk action bar */}
+                {selectedUserIds.length > 0 && (
+                  <div className="flex gap-2 mb-2 items-center bg-muted p-2 rounded">
+                    <span className="font-medium">{selectedUserIds.length} selected</span>
+                    <Button size="sm" variant="outline" onClick={handleBulkBan}>Ban</Button>
+                    <Button size="sm" variant="destructive" onClick={handleBulkDelete}>Delete</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedUserIds([])}>Clear</Button>
+                  </div>
+                )}
                 <div className="overflow-x-auto w-full">
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr>
+                        <th className="px-2 py-1">
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            ref={el => { if (el) el.indeterminate = someSelected; }}
+                            onChange={handleSelectAllUsers}
+                          />
+                        </th>
                         <th className="px-2 py-1">Name</th>
                         <th className="px-2 py-1">Email</th>
                         <th className="px-2 py-1">Role</th>
@@ -282,8 +499,15 @@ export default function AdminSettingsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {users.map(user => (
+                      {filteredUsers.map(user => (
                         <tr key={user.id} className="border-b">
+                          <td className="px-2 py-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedUserIds.includes(user.id)}
+                              onChange={() => handleSelectUser(user.id)}
+                            />
+                          </td>
                           <td className="px-2 py-1">{user.full_name || user.email || user.id}</td>
                           <td className="px-2 py-1">{user.email}</td>
                           <td className="px-2 py-1">{user.role}</td>
@@ -300,7 +524,7 @@ export default function AdminSettingsPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <span className="text-xs text-muted-foreground">Total users: {users.length}</span>
+                <span className="text-xs text-muted-foreground">Total users: {filteredUsers.length}</span>
               </CardFooter>
             </Card>
             {/* Confirmation Dialog */}
@@ -370,10 +594,57 @@ export default function AdminSettingsPage() {
                 <CardDescription>Configure email and notification preferences.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Search and filter controls */}
+                <div className="flex flex-wrap gap-2 mb-4 items-center">
+                  <Input
+                    placeholder="Search by title or body..."
+                    value={notifSearch}
+                    onChange={e => setNotifSearch(e.target.value)}
+                    className="w-64"
+                  />
+                  <Select value={notifTypeFilter} onValueChange={setNotifTypeFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="system">System</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={notifStatusFilter} onValueChange={setNotifStatusFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Statuses</SelectItem>
+                      <SelectItem value="unread">Unread</SelectItem>
+                      <SelectItem value="read">Read</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Bulk action bar */}
+                {selectedNotifIds.length > 0 && (
+                  <div className="flex gap-2 mb-2 items-center bg-muted p-2 rounded">
+                    <span className="font-medium">{selectedNotifIds.length} selected</span>
+                    <Button size="sm" variant="outline" onClick={handleBulkMarkRead}>Mark Read</Button>
+                    <Button size="sm" variant="destructive" onClick={handleBulkDeleteNotif}>Delete</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedNotifIds([])}>Clear</Button>
+                  </div>
+                )}
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr>
+                        <th className="px-2 py-1">
+                          <input
+                            type="checkbox"
+                            checked={allNotifSelected}
+                            ref={el => { if (el) el.indeterminate = someNotifSelected; }}
+                            onChange={handleSelectAllNotifs}
+                          />
+                        </th>
                         <th className="px-2 py-1">Title</th>
                         <th className="px-2 py-1">Body</th>
                         <th className="px-2 py-1">Type</th>
@@ -382,8 +653,15 @@ export default function AdminSettingsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {notifications.map(notif => (
+                      {filteredNotifications.map(notif => (
                         <tr key={notif.id} className="border-b">
+                          <td className="px-2 py-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedNotifIds.includes(notif.id)}
+                              onChange={() => handleSelectNotif(notif.id)}
+                            />
+                          </td>
                           <td className="px-2 py-1">{notif.title}</td>
                           <td className="px-2 py-1">{notif.body}</td>
                           <td className="px-2 py-1">{notif.type}</td>
@@ -693,10 +971,50 @@ export default function AdminSettingsPage() {
                 <CardDescription>Track all admin and user actions for security and compliance.</CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Search and filter controls */}
+                <div className="flex flex-wrap gap-2 mb-4 items-center">
+                  <Input
+                    placeholder="Search by title or ID..."
+                    value={logSearch}
+                    onChange={e => setLogSearch(e.target.value)}
+                    className="w-64"
+                  />
+                  <Select value={logTypeFilter} onValueChange={setLogTypeFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value="ban">Ban</SelectItem>
+                      <SelectItem value="delete">Delete</SelectItem>
+                      <SelectItem value="markRead">Mark Read</SelectItem>
+                      <SelectItem value="deleteNotif">Delete Notification</SelectItem>
+                      <SelectItem value="deleteLog">Delete Log</SelectItem>
+                      {/* Add more log types as needed */}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Bulk action bar */}
+                {selectedLogIds.length > 0 && (
+                  <div className="flex gap-2 mb-2 items-center bg-muted p-2 rounded">
+                    <span className="font-medium">{selectedLogIds.length} selected</span>
+                    <Button size="sm" variant="destructive" onClick={handleBulkDeleteLogs}>Delete</Button>
+                    <Button size="sm" variant="outline" onClick={handleBulkExportLogs}>Export</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedLogIds([])}>Clear</Button>
+                  </div>
+                )}
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-xs">
                     <thead>
                       <tr>
+                        <th className="px-2 py-1">
+                          <input
+                            type="checkbox"
+                            checked={allLogsSelected}
+                            ref={el => { if (el) el.indeterminate = someLogsSelected; }}
+                            onChange={handleSelectAllLogs}
+                          />
+                        </th>
                         <th className="px-2 py-1">Type</th>
                         <th className="px-2 py-1">Title</th>
                         <th className="px-2 py-1">Time</th>
@@ -704,8 +1022,15 @@ export default function AdminSettingsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {logs.map(log => (
+                      {filteredLogs.map(log => (
                         <tr key={log.id} className="border-b">
+                          <td className="px-2 py-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedLogIds.includes(log.id)}
+                              onChange={() => handleSelectLog(log.id)}
+                            />
+                          </td>
                           <td className="px-2 py-1">{log.type || "-"}</td>
                           <td className="px-2 py-1">{log.title || log.id}</td>
                           <td className="px-2 py-1">{log.created_at && log.created_at.seconds ? new Date(log.created_at.seconds * 1000).toLocaleString() : "-"}</td>

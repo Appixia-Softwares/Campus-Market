@@ -12,6 +12,7 @@ export default function AccommodationFavorites() {
   useEffect(() => {
     if (!user) return
     async function fetchFavorites() {
+      if (!user) return; // Guard for TypeScript
       setLoading(true)
       // Get favorite accommodation IDs
       const favSnap = await getDocs(query(

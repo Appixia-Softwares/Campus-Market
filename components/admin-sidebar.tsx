@@ -110,6 +110,22 @@ export default function AdminSidebar({ pathname }: { pathname: string }) {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname === "/admin/help-center"} tooltip="Help Center">
+          <Link href="/admin/help-center">
+            <BookOpen className="h-4 w-4" />
+            <span>Help Center</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname === "/admin/privacy-policy"} tooltip="Privacy Policy">
+          <Link href="/admin/privacy-policy">
+            <Shield className="h-4 w-4" />
+            <span>Privacy Policy</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
         <SidebarMenuButton asChild isActive={pathname === "/admin/admins"} tooltip="Admins & Roles">
           <Link href="/admin/admins">
             <Shield className="h-4 w-4" />

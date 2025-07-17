@@ -570,17 +570,17 @@ export default function LandingPage() {
               <h3 className="text-sm font-medium text-gradient">Resources</h3>
               <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
                 <li>
-                  <Link href="/help" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <Link href="/help-center" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
                     Help Center
                   </Link>
                 </li>
                 <li>
-                  <Link href="/faq" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <Link href="/faqs" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
                     FAQs
                   </Link>
                 </li>
                 <li>
-                  <Link href="/safety" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <Link href="/safety-tips" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
                     Safety Tips
                   </Link>
                 </li>
@@ -600,7 +600,7 @@ export default function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/privacy" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <Link href="/privacy-policy" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
                     Privacy Policy
                   </Link>
                 </li>

@@ -45,7 +45,11 @@ function TopCategoriesCard() {
     const unsub = onSnapshot(collection(db, "products"), (snap) => {
       const counts: Record<string, number> = {};
       snap.docs.forEach(doc => {
-        const cat = doc.data().category || "Uncategorized";
+        let cat = doc.data().category;
+        if (typeof cat === 'object' && cat !== null) {
+          cat = cat.name || cat.label || JSON.stringify(cat);
+        }
+        if (!cat || typeof cat !== 'string') cat = "Uncategorized";
         counts[cat] = (counts[cat] || 0) + 1;
       });
       const arr = Object.entries(counts)

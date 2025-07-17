@@ -49,6 +49,42 @@ export function SiteHeader() {
               <MessageSquare className="mr-1 h-4 w-4" />
               Messages
             </Link>
+            <Link
+              href="/about"
+              className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              About Us
+            </Link>
+            <Link
+              href="/help-center"
+              className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Help Center
+            </Link>
+            <Link
+              href="/faqs"
+              className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              FAQs
+            </Link>
+            <Link
+              href="/safety-tips"
+              className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Safety Tips
+            </Link>
+            <Link
+              href="/contact"
+              className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Contact
+            </Link>
+            <Link
+              href="/privacy-policy"
+              className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Privacy Policy
+            </Link>
           </nav>
         </div>
 

@@ -15,13 +15,18 @@ export default function MyAccommodationListings() {
     if (!user) return
     async function fetchListings() {
       setLoading(true)
+      // Ensure user is not null before accessing user.id
+      if (!user) {
+        setListings([]);
+        return;
+      }
       const q = query(
         collection(db, "accommodations"),
         where("seller.id", "==", user.id),
         orderBy("created_at", "desc")
-      )
-      const snap = await getDocs(q)
-      setListings(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+      );
+      const snap = await getDocs(q);
+      setListings(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false)
     }
     fetchListings()
