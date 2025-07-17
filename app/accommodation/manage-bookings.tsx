@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Loader2, Mail, CheckCircle2, XCircle, MessageSquare } from 'lucide-react'
+import confetti from "canvas-confetti"
+import { toast } from "sonner"
 
 export default function ManageBookingsPage() {
   // DEBUG: Confirm this page is rendering
@@ -77,6 +79,28 @@ export default function ManageBookingsPage() {
     try {
       await updateDoc(doc(db, 'accommodation_bookings', id), { status })
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
+      // --- Animated feedback for booking approval/reject ---
+      if (status === 'confirmed') {
+        confetti({
+          particleCount: 60,
+          spread: 50,
+          origin: { y: 0.7 },
+        })
+        toast.success("Booking approved!", {
+          description: "The tenant has been notified.",
+          duration: 3500,
+        })
+      } else if (status === 'cancelled') {
+        confetti({
+          particleCount: 40,
+          spread: 40,
+          origin: { y: 0.7 },
+        })
+        toast("Booking rejected", {
+          description: "The tenant has been notified.",
+          duration: 3500,
+        })
+      }
     } finally {
       setActionLoading(null)
     }
