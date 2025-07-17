@@ -89,7 +89,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
                     <DashboardHeader />
                   </div>
                   {/* Main content - Takes remaining space with top margin for fixed header */}
-                  <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background mt-16 pb-24">
+                  <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background mt-16">
                     {children}
                   </main>
                 </div>
