@@ -674,59 +674,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                     </TooltipTrigger>
                     <TooltipContent>Verification</TooltipContent>
                   </Tooltip>
-                </SidebarMenuItem>
-                <Separator className="my-2" />
-                {/* 👤 ACCOUNT GROUP */}
-                <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary" /> Account
-                </div>
-                <SidebarMenuItem>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SidebarMenuButton asChild isActive={pathname === "/profile" || pathname.startsWith("/profile")}>
-                        <Link href="/profile" className="sidebar-link">
-                          <User className="h-4 w-4" />
-                          <span>Profile</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </TooltipTrigger>
-                    <TooltipContent>Profile</TooltipContent>
-                  </Tooltip>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SidebarMenuButton asChild isActive={pathname === "/settings" || pathname.startsWith("/settings")}>
-                        <Link href="/settings" className="sidebar-link">
-                          <Settings className="h-4 w-4" />
-                          <span>Settings</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </TooltipTrigger>
-                    <TooltipContent>Settings</TooltipContent>
-                  </Tooltip>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <Tooltip>
-                    <SidebarMenuButton asChild tooltip="Logout" onClick={handleSignOut}>
-                      <button className="sidebar-link transition-all hover:text-destructive w-full flex items-center gap-2">
-                        <LogOut className="h-4 w-4" />
-                        <span>Logout</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </Tooltip>
-                </SidebarMenuItem>
-                {/* Collapse button (optional, for future) */}
-                <SidebarMenuItem>
-                  <Tooltip>
-                    <SidebarMenuButton asChild tooltip="Collapse Sidebar">
-                      <button className="sidebar-link w-full flex items-center gap-2">
-                        <ChevronLeft className="h-4 w-4" />
-                        <span>Collapse</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </Tooltip>
-                </SidebarMenuItem>
+                </SidebarMenuItem>             
               </SidebarMenu>
             </SidebarContent>
             <SidebarFooter className="border-t bg-muted/30 shadow-inner p-0">
