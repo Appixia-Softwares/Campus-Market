@@ -1,21 +1,12 @@
-import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from "@/lib/auth-context"
-import { Toaster } from "@/components/ui/toaster"
-import { Toaster as SonnerToaster } from "sonner"
-import { SessionProvider } from '@/providers/session-provider'
-import QueryProvider from "@/providers/query-provider"
-import BottomNavigation from "@/components/BottomNavigation"
-import { useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { useAuth } from "@/lib/auth-context";
+import ClientLayout from "./ClientLayout"
 
+// Font setup
 const inter = Inter({ subsets: ["latin"] })
 
+// Export metadata for the app
 export const metadata: Metadata = {
   title: "Campus Market - Student Marketplace",
   description: "Buy and sell items within your campus community",
@@ -24,11 +15,11 @@ export const metadata: Metadata = {
   creator: "Campus Market",
   publisher: "Campus Market",
   formatDetection: {
-    email: false,
+    email: false, // must be boolean
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://www.campusmarket.co.zw/" || "http://localhost:3000"),
+  metadataBase: new URL("https://www.campusmarket.co.zw/"),
   openGraph: {
     title: "Campus Market - Student Marketplace",
     description: "Buy and sell items within your campus community",
@@ -59,43 +50,13 @@ export const metadata: Metadata = {
   },
 }
 
+// Root layout (server component)
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Visitor logging effect
-  const { user } = useAuth();
-  useEffect(() => {
-    async function logVisit() {
-      try {
-        await addDoc(collection(db, "visitors"), {
-          userId: user?.id || null,
-          timestamp: serverTimestamp(),
-        });
-      } catch (e) {
-        // Optionally log error
-      }
-    }
-    logVisit();
-    // Only log once per mount
-    // eslint-disable-next-line
-  }, [user]);
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <SessionProvider>
-          <AuthProvider>
-          <QueryProvider>
-
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-              {children}
-              {/* Show bottom navigation only on mobile */}
-              <BottomNavigation />
-              <Toaster />
-              <SonnerToaster />
-            </ThemeProvider>
-            </QueryProvider>
-
-          </AuthProvider>
-        </SessionProvider>
+        {/* All client-side providers and effects are in ClientLayout */}
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   )
