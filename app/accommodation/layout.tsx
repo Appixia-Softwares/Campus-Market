@@ -93,7 +93,7 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
             </div>
             
             {/* Bottom Navigation for mobile */}
-            <BottomNavigation />
+            <BottomNavigation userId={user?.id} hasListings={hasListings === null ? undefined : !!hasListings} />
             
             {/* Toast notifications */}
             <Toaster />

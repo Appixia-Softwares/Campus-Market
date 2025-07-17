@@ -212,7 +212,14 @@ export default function ProfilePage() {
 
   return (
     <div className="flex min-h-screen w-full overflow-hidden">
-    
+      {/* Profile Cover/Banner */}
+      <div className="relative w-full h-40 md:h-56 bg-gradient-to-r from-primary/80 to-secondary/80 flex items-end justify-center mb-4">
+        <div className="absolute inset-0 bg-[url('/placeholder-user.jpg')] bg-cover bg-center opacity-20 rounded-b-2xl" aria-hidden="true" />
+        <div className="relative z-10 flex flex-col items-center justify-end w-full h-full pb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">Welcome, {user?.full_name || user?.email || 'User'}</h2>
+          <span className="text-white/80 text-sm">Profile Overview</span>
+        </div>
+      </div>
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -226,24 +233,42 @@ export default function ProfilePage() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sticky top-0 z-20 bg-background/80 backdrop-blur-md py-2">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Profile</h1>
                 <p className="text-muted-foreground">Manage your account settings and preferences</p>
               </div>
-              <Button
-                variant={isEditing ? "default" : "outline"}
-                onClick={() => setIsEditing(true)}
-                disabled={saving}
-                className="w-full sm:w-auto"
-              >
-                {saving ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
-              </Button>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                  aria-label="View as public"
+                  onClick={() => window.open(`/user/${user?.id}`, '_blank')}
+                >
+                  View as Public
+                </Button>
+                <Button
+                  variant={isEditing ? "default" : "outline"}
+                  onClick={() => setIsEditing(true)}
+                  disabled={saving}
+                  className="w-full sm:w-auto"
+                  aria-label="Edit profile"
+                >
+                  {saving ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
+                </Button>
+              </div>
             </div>
+
+            {/* Inline Saved! feedback */}
+            {(!saving && !isEditing) && (
+              <div className="flex items-center gap-2 text-green-600 animate-fade-in">
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="font-medium">Saved!</span>
+              </div>
+            )}
 
             <div className="grid gap-6 lg:grid-cols-3">
               {/* Avatar Card */}
@@ -520,6 +545,20 @@ export default function ProfilePage() {
                 </Tabs>
               </div>
             </div>
+
+            {/* Social Links Section */}
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle>Social Links</CardTitle>
+                <CardDescription>Add your social profiles (optional)</CardDescription>
+              </CardHeader>
+              <CardContent className="flex gap-4 items-center">
+                <Input placeholder="Twitter URL" aria-label="Twitter" className="max-w-xs" />
+                <Input placeholder="LinkedIn URL" aria-label="LinkedIn" className="max-w-xs" />
+                <Input placeholder="Facebook URL" aria-label="Facebook" className="max-w-xs" />
+                <Button variant="outline" size="sm">Save</Button>
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>

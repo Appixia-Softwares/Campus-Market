@@ -105,7 +105,7 @@ export default function MarketplaceLayout({
             </div>
           </div>
           {/* Bottom Navigation for mobile */}
-          <BottomNavigation />
+          <BottomNavigation userId={user?.id} hasListings={hasListings === null ? undefined : !!hasListings} />
           {/* Toast notifications */}
           <Toaster />
           <SonnerToaster />

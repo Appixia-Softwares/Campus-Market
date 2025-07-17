@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth-context"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { useEffect } from "react"
 import { db } from "@/lib/firebase"
+import { useRouter, usePathname } from "next/navigation"
 
 export default function DashboardLayout({
   children,
@@ -25,6 +26,8 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user } = useAuth();
   const [hasListings, setHasListings] = useState<boolean | null>(null)
+  const router = useRouter();
+  const pathname = usePathname();
 
   // Check for user listings (products or accommodations)
   useEffect(() => {
@@ -46,6 +49,15 @@ export default function DashboardLayout({
     checkListings()
     return () => { cancelled = true }
   }, [user])
+
+  // Redirect users with no listings to /marketplace
+  useEffect(() => {
+    if (user && hasListings === false) {
+      if (pathname !== "/marketplace" && pathname !== "/marketplace/sell") {
+        router.replace("/marketplace");
+      }
+    }
+  }, [user, hasListings, pathname, router]);
 
   return (
     <ProtectedRoute>
@@ -85,7 +97,7 @@ export default function DashboardLayout({
             </div>
             
             {/* Bottom Navigation for mobile */}
-            <BottomNavigation />
+            <BottomNavigation userId={user?.id} hasListings={hasListings === null ? undefined : !!hasListings} />
             
             {/* Toast notifications */}
             <Toaster />

@@ -82,6 +82,16 @@ export default function SettingsPage() {
     total: 0,
   })
 
+  // Sticky/floating Save and Reset buttons
+  const [showStickyActions, setShowStickyActions] = useState(false);
+  useEffect(() => {
+    const onScroll = () => {
+      setShowStickyActions(window.scrollY > 120);
+    };
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   useEffect(() => {
     if (user) {
       fetchUserSettings()
@@ -248,36 +258,318 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
-          </div>
+      <div className="max-w-3xl mx-auto py-12">
+        <Skeleton className="h-32 w-full mb-6 rounded-xl" />
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl" />
         </div>
-        <Skeleton className="h-96 w-full" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Manage your application preferences and account settings</p>
+    <div className="max-w-4xl mx-auto py-8 space-y-8">
+      {/* Sticky Save/Reset Actions */}
+      {showStickyActions && (
+        <div className="fixed bottom-6 right-6 z-50 flex gap-2 animate-fade-in">
+          <Button variant="default" size="lg" onClick={() => saveSettings({})} aria-label="Save all settings">
+            Save All
+          </Button>
+          <Button variant="outline" size="lg" onClick={() => setSettings({ ...settings })} aria-label="Reset to defaults">
+            Reset to Defaults
+          </Button>
         </div>
-      </div>
+      )}
+      {/* Summary Card */}
+      <Card className="mb-6">
+        <CardHeader className="flex flex-row items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="rounded-full bg-muted p-2">
+              <Badge variant="outline" className="text-xs px-2 py-1">{user?.email?.split('@')[0] || 'User'}</Badge>
+            </div>
+            <div>
+              <CardTitle className="text-lg">{user?.full_name || user?.email || 'User'}</CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">{user?.email}</CardDescription>
+            </div>
+          </div>
+          <div className="ml-auto flex flex-col items-end">
+            <span className="text-xs text-muted-foreground">Storage Used</span>
+            <span className="font-semibold text-base">{storageUsage.total.toFixed(1)} MB</span>
+            <Button size="sm" variant="outline" className="mt-1" onClick={clearCache}>Clear Cache</Button>
+          </div>
+        </CardHeader>
+      </Card>
 
-      <Tabs defaultValue="general" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy</TabsTrigger>
-          <TabsTrigger value="data">Data & Storage</TabsTrigger>
+      {/* Tabbed Settings Layout */}
+      <Tabs defaultValue="account" className="w-full">
+        <TabsList className="grid grid-cols-6 mb-4">
+          <TabsTrigger value="account"><Shield className="h-4 w-4 mr-1" />Account</TabsTrigger>
+          <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-1" />Notifications</TabsTrigger>
+          <TabsTrigger value="privacy"><Globe className="h-4 w-4 mr-1" />Privacy</TabsTrigger>
+          <TabsTrigger value="appearance"><Palette className="h-4 w-4 mr-1" />Appearance</TabsTrigger>
+          <TabsTrigger value="storage"><Download className="h-4 w-4 mr-1" />Storage</TabsTrigger>
+          <TabsTrigger value="security"><AlertTriangle className="h-4 w-4 mr-1" />Security</TabsTrigger>
         </TabsList>
+        {/* Account Tab */}
+        <TabsContent value="account">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Account Settings
+              </CardTitle>
+              <CardDescription>Manage your account information and preferences</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Full Name</Label>
+                <p className="text-sm text-muted-foreground">{user?.full_name || 'Not set'}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Account Created</Label>
+                <p className="text-sm text-muted-foreground">{user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Last Login</Label>
+                <p className="text-sm text-muted-foreground">{user?.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never logged in'}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        {/* Notifications Tab */}
+        <TabsContent value="notifications">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Notification Preferences
+              </CardTitle>
+              <CardDescription>Choose what notifications you want to receive</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>New Messages</Label>
+                  <p className="text-sm text-muted-foreground">Get notified when you receive new messages</p>
+                </div>
+                <Switch
+                  checked={settings.email_notifications}
+                  onCheckedChange={(checked) => saveSettings({ email_notifications: checked })}
+                  disabled={saving}
+                />
+              </div>
 
-        <TabsContent value="general" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Price Drops</Label>
+                  <p className="text-sm text-muted-foreground">Get notified when items you're watching drop in price</p>
+                </div>
+                <Switch
+                  checked={settings.price_drop_alerts}
+                  onCheckedChange={(checked) => saveSettings({ price_drop_alerts: checked })}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>New Listings</Label>
+                  <p className="text-sm text-muted-foreground">Notifications for new listings in your categories</p>
+                </div>
+                <Switch
+                  checked={settings.new_listing_alerts}
+                  onCheckedChange={(checked) => saveSettings({ new_listing_alerts: checked })}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Marketing Updates</Label>
+                  <p className="text-sm text-muted-foreground">Receive updates about new features and promotions</p>
+                </div>
+                <Switch
+                  checked={settings.marketing_emails}
+                  onCheckedChange={(checked) => saveSettings({ marketing_emails: checked })}
+                  disabled={saving}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Notification Methods</CardTitle>
+              <CardDescription>Choose how you want to receive notifications</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Email Notifications</Label>
+                  <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                </div>
+                <Switch
+                  checked={settings.email_notifications}
+                  onCheckedChange={(checked) => saveSettings({ email_notifications: checked })}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Push Notifications</Label>
+                  <p className="text-sm text-muted-foreground">Browser push notifications</p>
+                </div>
+                <Switch
+                  checked={settings.push_notifications}
+                  onCheckedChange={(checked) => saveSettings({ push_notifications: checked })}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>SMS Notifications</Label>
+                  <p className="text-sm text-muted-foreground">Important notifications via SMS</p>
+                  <Badge variant="outline" className="text-xs">
+                    Premium
+                  </Badge>
+                </div>
+                <Switch
+                  checked={settings.sms_notifications}
+                  onCheckedChange={(checked) => saveSettings({ sms_notifications: checked })}
+                  disabled={saving}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        {/* Privacy Tab */}
+        <TabsContent value="privacy">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Privacy Controls
+              </CardTitle>
+              <CardDescription>Control who can see your information and activity</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Profile Visibility</Label>
+                  <p className="text-sm text-muted-foreground">Make your profile visible to other users</p>
+                </div>
+                <Switch
+                  checked={settings.profile_visible}
+                  onCheckedChange={(checked) => saveSettings({ profile_visible: checked })}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Show Online Status</Label>
+                  <p className="text-sm text-muted-foreground">Let others see when you're online</p>
+                </div>
+                <Switch
+                  checked={settings.show_online_status}
+                  onCheckedChange={(checked) => saveSettings({ show_online_status: checked })}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Show Last Seen</Label>
+                  <p className="text-sm text-muted-foreground">Display when you were last active</p>
+                </div>
+                <Switch
+                  checked={settings.show_last_seen}
+                  onCheckedChange={(checked) => saveSettings({ show_last_seen: checked })}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Contact Information</Label>
+                  <p className="text-sm text-muted-foreground">Allow others to see your contact details</p>
+                </div>
+                <Switch
+                  checked={settings.show_contact_info}
+                  onCheckedChange={(checked) => saveSettings({ show_contact_info: checked })}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Activity History</Label>
+                  <p className="text-sm text-muted-foreground">Show your recent activity to others</p>
+                </div>
+                <Switch
+                  checked={settings.activity_history}
+                  onCheckedChange={(checked) => saveSettings({ activity_history: checked })}
+                  disabled={saving}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Data Collection</CardTitle>
+              <CardDescription>Control what data we collect to improve your experience</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Analytics</Label>
+                  <p className="text-sm text-muted-foreground">Help us improve by sharing anonymous usage data</p>
+                </div>
+                <Switch
+                  checked={settings.analytics_enabled}
+                  onCheckedChange={(checked) => saveSettings({ analytics_enabled: checked })}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Personalization</Label>
+                  <p className="text-sm text-muted-foreground">Use your data to personalize recommendations</p>
+                </div>
+                <Switch
+                  checked={settings.personalization}
+                  onCheckedChange={(checked) => saveSettings({ personalization: checked })}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Crash Reports</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically send crash reports to help us fix issues
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.crash_reports}
+                  onCheckedChange={(checked) => saveSettings({ crash_reports: checked })}
+                  disabled={saving}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        {/* Appearance Tab */}
+        <TabsContent value="appearance">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -401,235 +693,8 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notification Preferences
-              </CardTitle>
-              <CardDescription>Choose what notifications you want to receive</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>New Messages</Label>
-                  <p className="text-sm text-muted-foreground">Get notified when you receive new messages</p>
-                </div>
-                <Switch
-                  checked={settings.email_notifications}
-                  onCheckedChange={(checked) => saveSettings({ email_notifications: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Price Drops</Label>
-                  <p className="text-sm text-muted-foreground">Get notified when items you're watching drop in price</p>
-                </div>
-                <Switch
-                  checked={settings.price_drop_alerts}
-                  onCheckedChange={(checked) => saveSettings({ price_drop_alerts: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>New Listings</Label>
-                  <p className="text-sm text-muted-foreground">Notifications for new listings in your categories</p>
-                </div>
-                <Switch
-                  checked={settings.new_listing_alerts}
-                  onCheckedChange={(checked) => saveSettings({ new_listing_alerts: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Marketing Updates</Label>
-                  <p className="text-sm text-muted-foreground">Receive updates about new features and promotions</p>
-                </div>
-                <Switch
-                  checked={settings.marketing_emails}
-                  onCheckedChange={(checked) => saveSettings({ marketing_emails: checked })}
-                  disabled={saving}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Methods</CardTitle>
-              <CardDescription>Choose how you want to receive notifications</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-                </div>
-                <Switch
-                  checked={settings.email_notifications}
-                  onCheckedChange={(checked) => saveSettings({ email_notifications: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Push Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Browser push notifications</p>
-                </div>
-                <Switch
-                  checked={settings.push_notifications}
-                  onCheckedChange={(checked) => saveSettings({ push_notifications: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>SMS Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Important notifications via SMS</p>
-                  <Badge variant="outline" className="text-xs">
-                    Premium
-                  </Badge>
-                </div>
-                <Switch
-                  checked={settings.sms_notifications}
-                  onCheckedChange={(checked) => saveSettings({ sms_notifications: checked })}
-                  disabled={saving}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="privacy" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Privacy Controls
-              </CardTitle>
-              <CardDescription>Control who can see your information and activity</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Profile Visibility</Label>
-                  <p className="text-sm text-muted-foreground">Make your profile visible to other users</p>
-                </div>
-                <Switch
-                  checked={settings.profile_visible}
-                  onCheckedChange={(checked) => saveSettings({ profile_visible: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Show Online Status</Label>
-                  <p className="text-sm text-muted-foreground">Let others see when you're online</p>
-                </div>
-                <Switch
-                  checked={settings.show_online_status}
-                  onCheckedChange={(checked) => saveSettings({ show_online_status: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Show Last Seen</Label>
-                  <p className="text-sm text-muted-foreground">Display when you were last active</p>
-                </div>
-                <Switch
-                  checked={settings.show_last_seen}
-                  onCheckedChange={(checked) => saveSettings({ show_last_seen: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Contact Information</Label>
-                  <p className="text-sm text-muted-foreground">Allow others to see your contact details</p>
-                </div>
-                <Switch
-                  checked={settings.show_contact_info}
-                  onCheckedChange={(checked) => saveSettings({ show_contact_info: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Activity History</Label>
-                  <p className="text-sm text-muted-foreground">Show your recent activity to others</p>
-                </div>
-                <Switch
-                  checked={settings.activity_history}
-                  onCheckedChange={(checked) => saveSettings({ activity_history: checked })}
-                  disabled={saving}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Data Collection</CardTitle>
-              <CardDescription>Control what data we collect to improve your experience</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Analytics</Label>
-                  <p className="text-sm text-muted-foreground">Help us improve by sharing anonymous usage data</p>
-                </div>
-                <Switch
-                  checked={settings.analytics_enabled}
-                  onCheckedChange={(checked) => saveSettings({ analytics_enabled: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Personalization</Label>
-                  <p className="text-sm text-muted-foreground">Use your data to personalize recommendations</p>
-                </div>
-                <Switch
-                  checked={settings.personalization}
-                  onCheckedChange={(checked) => saveSettings({ personalization: checked })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Crash Reports</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Automatically send crash reports to help us fix issues
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.crash_reports}
-                  onCheckedChange={(checked) => saveSettings({ crash_reports: checked })}
-                  disabled={saving}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="data" className="space-y-4">
+        {/* Storage Tab */}
+        <TabsContent value="storage">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -727,6 +792,67 @@ export default function SettingsPage() {
                 <Button variant="destructive" size="sm" onClick={deleteAccount}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Account
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        {/* Security Tab */}
+        <TabsContent value="security">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Account Security
+              </CardTitle>
+              <CardDescription>Manage your account security settings</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Two-Factor Authentication</Label>
+                <p className="text-sm text-muted-foreground">
+                  Enable two-factor authentication for enhanced security.
+                </p>
+                <Switch
+                  checked={false} // Placeholder for actual 2FA status
+                  onCheckedChange={() => {}}
+                  disabled={true} // 2FA is not implemented
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Password</Label>
+                <p className="text-sm text-muted-foreground">
+                  Change your account password.
+                </p>
+                <Button variant="outline" size="sm">
+                  Change Password
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Connected Accounts</CardTitle>
+              <CardDescription>Manage your connected social media accounts</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Google</Label>
+                <p className="text-sm text-muted-foreground">
+                  Connect your Google account for seamless authentication.
+                </p>
+                <Button variant="outline" size="sm">
+                  Connect Google
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <Label>Facebook</Label>
+                <p className="text-sm text-muted-foreground">
+                  Connect your Facebook account for enhanced user experience.
+                </p>
+                <Button variant="outline" size="sm">
+                  Connect Facebook
                 </Button>
               </div>
             </CardContent>
