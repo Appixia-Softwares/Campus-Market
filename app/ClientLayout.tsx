@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect } from "react";
+import React from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,8 +10,6 @@ import BottomNavigation from "@/components/BottomNavigation"
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/lib/auth-context";
-import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import VisitorLogger from "./VisitorLogger";
 
 // ClientLayout: wraps all client-side providers and effects
@@ -25,8 +23,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             {children}
             {/* Show bottom navigation only on mobile */}
-            <Analytics/>
-            <SpeedInsights/>
             <BottomNavigation />
             <Toaster />
             <SonnerToaster />
