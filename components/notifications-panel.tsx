@@ -21,11 +21,32 @@ interface Notification {
   cleared?: boolean;
 }
 
+// Theme-aware color meta for notification types
 const typeMeta = {
-  message: { icon: MessageSquare, color: "text-blue-600", bg: "bg-blue-50", label: "Message" },
-  accommodation: { icon: Home, color: "text-green-600", bg: "bg-green-50", label: "Booking" },
-  admin: { icon: Info, color: "text-purple-600", bg: "bg-purple-50", label: "System" },
-  default: { icon: Bell, color: "text-gray-400", bg: "bg-muted", label: "Other" },
+  message: {
+    icon: MessageSquare,
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-900/40",
+    label: "Message"
+  },
+  accommodation: {
+    icon: Home,
+    color: "text-green-600 dark:text-green-400",
+    bg: "bg-green-50 dark:bg-green-900/40",
+    label: "Booking"
+  },
+  admin: {
+    icon: Info,
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-50 dark:bg-purple-900/40",
+    label: "System"
+  },
+  default: {
+    icon: Bell,
+    color: "text-muted-foreground",
+    bg: "bg-muted",
+    label: "Other"
+  },
 };
 
 export default function NotificationsPanel({ userId }: { userId: string }) {
@@ -83,11 +104,21 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4" aria-label="Notifications Panel" role="region">
+    // Animated, modern notifications panel container
+    <motion.div
+      initial={{ opacity: 0, y: 32, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 32, scale: 0.98 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="w-full max-w-md mx-auto bg-card text-card-foreground rounded-2xl shadow-2xl p-4 border border-border backdrop-blur-md ring-1 ring-black/5 dark:ring-white/10 animate-fade-in"
+      aria-label="Notifications Panel"
+      role="region"
+      style={{ boxShadow: '0 8px 32px 0 rgba(0,0,0,0.18)' }}
+    >
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Bell className="h-5 w-5 text-primary" /> Notifications
-          {unreadCount > 0 && <span className="ml-2 bg-primary text-white text-xs rounded-full px-2 py-0.5">{unreadCount}</span>}
+          <Bell className="h-5 w-5 text-primary animate-float" /> Notifications
+          {unreadCount > 0 && <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5 animate-pulse-glow">{unreadCount}</span>}
         </h3>
         <div className="flex gap-2">
           <button onClick={markAllAsRead} className="text-xs text-primary hover:underline focus:underline" aria-label="Mark all as read" title="Mark all as read">Mark all as read</button>
@@ -96,25 +127,26 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
         </div>
       </div>
       {loading ? (
-        <div className="py-8 text-center text-gray-400">Loading...</div>
+        <div className="py-8 text-center text-muted-foreground">Loading...</div>
       ) : notifications.length === 0 ? (
         <div className="flex flex-col items-center py-12">
-          <CheckCircle2 className="h-12 w-12 text-green-400 mb-2" />
-          <div className="font-semibold text-gray-500">All caught up!</div>
-          <div className="text-xs text-gray-400">You have no notifications</div>
+          <CheckCircle2 className="h-12 w-12 text-green-400 mb-2 animate-float" />
+          <div className="font-semibold text-muted-foreground">All caught up!</div>
+          <div className="text-xs text-muted-foreground">You have no notifications</div>
         </div>
       ) : (
-        <div className="space-y-6">
+        // Scrollable notifications list with custom scrollbar
+        <div className="space-y-6 max-h-[55vh] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-primary/30 scrollbar-track-transparent hover:scrollbar-thumb-primary/50 transition-all">
           {Object.entries(grouped).map(([type, group]) => {
             const meta = typeMeta[type as keyof typeof typeMeta] || typeMeta.default;
             const typedGroup = group as Notification[];
             return (
               <div key={type}>
-                <div className="flex items-center gap-2 mb-1">
-                  <meta.icon className={`h-5 w-5 ${meta.color}`} aria-label={meta.label} />
+                <div className="flex items-center gap-2 mb-1 sticky top-0 z-10 bg-card/80 backdrop-blur-sm py-1">
+                  <meta.icon className={`h-5 w-5 ${meta.color} animate-float`} aria-label={meta.label} />
                   <span className="font-semibold text-sm text-muted-foreground">{meta.label}</span>
                 </div>
-                <ul className="divide-y divide-gray-200">
+                <ul className="divide-y divide-border">
                   <AnimatePresence>
                     {typedGroup.map((n: Notification) => (
                       <motion.li
@@ -123,17 +155,17 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -40 }}
                         transition={{ duration: 0.2 }}
-                        className={`py-3 flex items-start gap-2 rounded-lg px-2 ${n.read ? 'bg-muted text-foreground opacity-60' : `${meta.bg} text-foreground`}`}
+                        className={`py-3 flex items-start gap-2 rounded-lg px-2 transition-colors ${n.read ? 'bg-muted text-muted-foreground opacity-60' : `${meta.bg} text-foreground dark:text-card-foreground`}`}
                         aria-live={n.read ? undefined : "polite"}
                       >
                         <div className="flex-1">
                           <div className="font-medium flex items-center gap-2">
                             {n.title}
-                            {!n.read && <span className="inline-block w-2 h-2 bg-primary rounded-full" title="Unread" />}
+                            {!n.read && <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse-glow" title="Unread" />}
                           </div>
                           <div className="text-sm text-muted-foreground">{n.body}</div>
                           {n.link && <a href={n.link} className="text-primary text-xs underline hover:text-primary/80 focus:text-primary/80" aria-label="View notification details">View</a>}
-                          <div className="text-xs text-gray-400 mt-1">{n.createdAt?.toDate ? n.createdAt.toDate().toLocaleString() : ''}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{n.createdAt?.toDate ? n.createdAt.toDate().toLocaleString() : ''}</div>
                         </div>
                         {!n.read && (
                           <button
@@ -154,6 +186,22 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
           })}
         </div>
       )}
-    </div>
+      {/* Enhanced Footer */}
+      <div className="mt-6 pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs bg-muted/40 rounded-b-lg">
+        <div className="flex gap-4 items-center">
+          <a href="/settings" className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors" aria-label="Notification Preferences">
+            <Settings className="h-4 w-4" /> Preferences
+          </a>
+          <a href="/help" className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors" aria-label="Help">
+            <Info className="h-4 w-4" /> Help
+          </a>
+        </div>
+        <div className="flex gap-2 items-center text-muted-foreground">
+          <span>Last updated:</span>
+          <span suppressHydrationWarning>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+        <div className="hidden sm:block text-muted-foreground opacity-60 text-[10px] ml-auto">Powered by Campus Market</div>
+      </div>
+    </motion.div>
   );
 }
