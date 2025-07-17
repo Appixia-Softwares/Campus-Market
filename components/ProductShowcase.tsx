@@ -4,10 +4,12 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Heart, ShoppingBag } from "lucide-react"
+import { Heart, ShoppingBag, GraduationCap } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { getProducts } from "@/lib/firebase-service"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { CheckCircle2 } from "lucide-react"
 
 export default function ProductShowcase() {
   const [products, setProducts] = useState<any[]>([])
@@ -60,22 +62,44 @@ export default function ProductShowcase() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
-          <Card key={product.id} className="overflow-hidden group">
+          <Card key={product.id} className="overflow-hidden group transition-transform duration-300 hover:scale-[1.03] hover:shadow-xl">
             <div className="relative aspect-square overflow-hidden">
               <img
                 src={product.images && product.images.length > 0 ? product.images[0].url : "/placeholder.svg?height=200&width=200"}
                 alt={product.title}
                 className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
               />
-              <Badge className="absolute top-2 right-2 bg-green-600 hover:bg-green-700">
+              {/* Condition badge with color */}
+              <Badge className={`absolute top-2 right-2 ${product.condition === 'New' ? 'bg-green-600' : product.condition === 'Used' ? 'bg-yellow-600' : 'bg-gray-500'} hover:bg-opacity-90`}>
                 {product.condition}
               </Badge>
+              {/* Category badge */}
+              {product.category?.name && (
+                <Badge className="absolute top-2 left-2 bg-blue-600 hover:bg-blue-700">
+                  {product.category.name}
+                </Badge>
+              )}
             </div>
             <CardContent className="p-4">
               <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.title}</h3>
               <div className="text-2xl font-bold text-green-600 mb-2">${product.price}</div>
-              <div className="text-sm text-muted-foreground mb-2">
-                by {product.seller?.full_name || "Unknown Seller"}
+              {/* University */}
+              {product.university?.name && (
+                <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                  <GraduationCap className="h-4 w-4" />
+                  {product.university.name}
+                </div>
+              )}
+              {/* Seller info */}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={product.seller?.avatar_url || undefined} alt={product.seller?.full_name || "Seller"} />
+                  <AvatarFallback>{product.seller?.full_name?.[0] || "?"}</AvatarFallback>
+                </Avatar>
+                <span>{product.seller?.full_name || "Unknown Seller"}</span>
+                {product.seller?.verified && (
+                  <CheckCircle2 className="h-4 w-4 text-green-500 ml-1" aria-label="Verified Seller" />
+                )}
               </div>
             </CardContent>
             <CardFooter className="p-4 pt-0 flex items-center justify-between">
