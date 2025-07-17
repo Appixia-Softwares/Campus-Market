@@ -32,6 +32,7 @@ import { toast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import ReviewsSection from '@/components/reviews/reviews-section'
 import { useRouter } from "next/navigation"
+import React from "react"
 
 export default function AccommodationDetailPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
@@ -40,14 +41,13 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
   const [loading, setLoading] = useState(true)
   const [paramId, setParamId] = useState<string | null>(null)
 
+  // Unwrap params using React.use as per Next.js requirements
+  const paramsObj = React.use(params);
+
   useEffect(() => {
-    async function getParams() {
-      // Await params if needed (for Next.js dynamic route)
-      if (typeof params?.id === 'undefined') return
-      setParamId(params.id)
-    }
-    getParams()
-  }, [params])
+    if (!paramsObj?.id) return;
+    setParamId(paramsObj.id);
+  }, [paramsObj]);
 
   useEffect(() => {
     if (!paramId) return
