@@ -43,6 +43,7 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
   const [paramId, setParamId] = useState<string | null>(null)
   const [userBooking, setUserBooking] = useState<any | null>(null)
   const [propertyBookings, setPropertyBookings] = useState<any[]>([])
+  const [tenantNames, setTenantNames] = useState<{ [userId: string]: string }>({})
 
   // Unwrap params using React.use as per Next.js requirements
   const paramsObj = React.use(params);
@@ -94,7 +95,25 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
       const bookingsRef = collection(db, 'accommodation_bookings')
       const q = query(bookingsRef, where('propertyId', '==', paramId))
       const snap = await getDocs(q)
-      setPropertyBookings(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+      const bookings = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      setPropertyBookings(bookings)
+      // Fetch tenant names for each booking
+      const uniqueTenantIds = Array.from(new Set(bookings.map(b => b.customerId).filter(Boolean)))
+      const names: { [userId: string]: string } = {}
+      await Promise.all(uniqueTenantIds.map(async (uid) => {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', uid))
+          if (userDoc.exists()) {
+            const data = userDoc.data()
+            names[uid] = data.full_name || data.email || uid
+          } else {
+            names[uid] = uid
+          }
+        } catch {
+          names[uid] = uid
+        }
+      }))
+      setTenantNames(names)
     }
     fetchPropertyBookings()
   }, [user, paramId, property])
@@ -142,14 +161,17 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {propertyBookings.map(booking => (
-                        <div key={booking.id} className="p-2 rounded border flex flex-col md:flex-row md:items-center gap-2">
-                          <div><b>Tenant:</b> {booking.customerId}</div>
-                          <div><b>Status:</b> {booking.status}</div>
-                          <div><b>Check-in:</b> {booking.checkIn && new Date(booking.checkIn).toLocaleDateString()}</div>
-                          <div><b>Check-out:</b> {booking.checkOut && new Date(booking.checkOut).toLocaleDateString()}</div>
-                        </div>
-                      ))}
+                      {propertyBookings.map(booking => {
+                        const b: any = booking // Type guard for Firestore data
+                        return (
+                          <div key={b.id} className="p-2 rounded border flex flex-col md:flex-row md:items-center gap-2">
+                            <div><b>Tenant:</b> {tenantNames[b.customerId] || b.customerId}</div>
+                            <div><b>Status:</b> {b.status}</div>
+                            <div><b>Check-in:</b> {b.checkIn && new Date(b.checkIn).toLocaleDateString()}</div>
+                            <div><b>Check-out:</b> {b.checkOut && new Date(b.checkOut).toLocaleDateString()}</div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </CardContent>
                 </Card>
