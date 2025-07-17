@@ -308,7 +308,7 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
             <Button
               variant="ghost"
               className="w-full justify-start gap-3 h-10"
-              onClick={() => handleNavigation('/dashboard/profile')}
+              onClick={() => handleNavigation('/profile')}
             >
               <User className="h-4 w-4" />
               Profile

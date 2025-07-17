@@ -81,6 +81,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
   const [showAccommodationForm, setShowAccommodationForm] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingOrders, setPendingOrders] = useState(0);
+  const [hasBookingRequests, setHasBookingRequests] = useState(false);
 
   // Check for user listings (products or accommodations)
   useEffect(() => {
@@ -148,8 +149,25 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
     return () => unsub();
   }, [user?.id]);
 
+  // Check for booking requests on user's properties
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, 'accommodation_bookings'),
+      where('landlordId', '==', user.id),
+      where('status', '==', 'pending')
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setHasBookingRequests(snap.size > 0);
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Debug: log hasListings and user
+  console.log('DASHBOARD SIDEBAR: user', user, 'hasListings', hasListings);
+
   // Only return null after all hooks
-  if (!user || hasListings === false) return null;
+  if (!user) return null;
   if (hasListings === null) return null;
 
   const getInitials = (fullName: string) => {
@@ -189,6 +207,136 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
   }
   const verificationStatus = getVerificationStatus()
   const handleSignOut = async () => { try { await signOut() } catch (error) { console.error('Error signing out:', error) } }
+
+  // Helper: Minimal sidebar for users with no listings
+  const MinimalSidebar = () => (
+    <SidebarProvider>
+      <div className="flex">
+        <div className={`fixed md:sticky top-0 left-0 z-40 h-screen transition-all duration-300 bg-white dark:bg-gray-950 shadow-xl flex flex-col w-64 overflow-hidden border-r border-border`} aria-expanded={true} aria-label="Sidebar navigation">
+          <Sidebar className="h-full flex flex-col justify-between">
+            <SidebarHeader>
+              <div className="flex items-center justify-between px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <Building className="h-6 w-6 text-primary animate-bounce-slow" />
+                  <span className="font-bold text-xl tracking-tight">CampusMarket</span>
+                </div>
+              </div>
+              {/* Call-to-action for first listing */}
+              <div className="px-4 py-4 bg-muted/30 rounded-lg mx-2 mt-2 shadow-sm flex flex-col items-center">
+                <Avatar className="h-16 w-16 border-2 border-primary shadow mb-2">
+                  <AvatarImage src={profile?.avatar_url || user?.avatar_url} />
+                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-2xl">{getUserInitials()}</AvatarFallback>
+                </Avatar>
+                <p className="text-base font-semibold truncate">{getDisplayName()}</p>
+                <p className="text-xs text-muted-foreground truncate mb-2">{user?.email}</p>
+                <button
+                  className="mt-2 px-4 py-2 bg-primary text-white rounded-lg font-semibold shadow hover:bg-primary/90 transition text-lg animate-pulse"
+                  onClick={() => setSellDialogOpen(true)}
+                >
+                  Create your first listing!
+                </button>
+              </div>
+            </SidebarHeader>
+            <SidebarContent id="sidebar-content" className="flex-1 overflow-y-auto pb-4">
+              <SidebarMenu>
+                {/* Minimal nav for users with no listings */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname === "/marketplace"}>
+                    <Link href="/marketplace" className="sidebar-link">
+                      <Search className="h-4 w-4" />
+                      <span>Browse Marketplace</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  {/* Sell Product: Opens dialog, visually highlighted */}
+                  <SidebarMenuButton isActive={false} onClick={() => setSellDialogOpen(true)}>
+                    <span className="flex items-center gap-2 text-white bg-green-600 px-4 py-2 rounded-lg shadow font-bold text-base animate-pulse">
+                      <Plus className="h-5 w-5" />
+                      Sell
+                    </span>
+                  </SidebarMenuButton>
+                  <Dialog open={sellDialogOpen} onOpenChange={setSellDialogOpen}>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <Plus className="h-5 w-5 text-primary" />
+                          What do you want to sell?
+                        </DialogTitle>
+                        <p className="text-muted-foreground text-sm mt-1 flex items-center gap-1">
+                          <Info className="h-4 w-4 text-muted-foreground" />
+                          Choose a category to get started. You can list products or accommodation for students.
+                        </p>
+                      </DialogHeader>
+                      {!showAccommodationForm ? (
+                        <div className="mt-6">
+                          <div className="grid grid-cols-1 gap-4">
+                            <button
+                              className="group w-full rounded-lg border border-primary/30 bg-background hover:bg-primary/5 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
+                              onClick={() => {
+                                setSellDialogOpen(false);
+                                router.push("/sell");
+                              }}
+                            >
+                              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mr-4">
+                                <ShoppingBag className="h-7 w-7 text-primary" />
+                              </div>
+                              <div className="flex-1 text-left">
+                                <div className="font-semibold text-base">Product</div>
+                                <div className="text-xs text-muted-foreground">Sell books, electronics, clothing, and more</div>
+                              </div>
+                              <ArrowRight className="h-5 w-5 ml-4 text-muted-foreground group-hover:text-primary" />
+                            </button>
+                            <button
+                              className="group w-full rounded-lg border border-accent bg-background hover:bg-accent/10 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
+                              onClick={() => setShowAccommodationForm(true)}
+                            >
+                              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mr-4">
+                                <Building className="h-4 w-4" />
+                              </div>
+                              <div className="flex-1 text-left">
+                                <div className="font-semibold text-base">Accommodation</div>
+                                <div className="text-xs text-muted-foreground">List a room, flat, or student housing</div>
+                              </div>
+                              <ArrowRight className="h-5 w-5 ml-4 text-muted-foreground group-hover:text-accent" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <AccommodationFormDialogContent onSuccess={() => { setSellDialogOpen(false); setShowAccommodationForm(false); }} />
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname === "/profile"}>
+                    <Link href="/profile" className="sidebar-link">
+                      <User className="h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Logout" onClick={handleSignOut}>
+                    <button className="sidebar-link transition-all hover:text-destructive w-full flex items-center gap-2">
+                      <LogOut className="h-4 w-4" />
+                      <span>Logout</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarContent>
+          </Sidebar>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+
+  // Main render: branch on hasListings
+  if (hasListings === false) {
+    // Always use MinimalSidebar for both mobile and desktop, including overlays
+    return <MinimalSidebar />;
+  }
 
   // Sidebar is always expanded
   const sidebarWidth = 'w-64';
@@ -411,57 +559,58 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                     <TooltipContent>Orders</TooltipContent>
                   </Tooltip>
                 </SidebarMenuItem>
-                {/* Only render the Accommodation group if pathname starts with '/accommodation' */}
-                {pathname.startsWith("/accommodation") && (
-                  <>
-                    <Separator className="my-2" />
-                    {/* 🏠 ACCOMMODATION GROUP */}
-                    <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase flex items-center gap-2">
-                      <Building className="h-4 w-4 text-primary" /> Accommodation
-                    </div>
-                    <SidebarMenuItem>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <SidebarMenuButton asChild isActive={pathname === "/accommodation" || pathname.startsWith("/accommodation")}> 
-                            <Link href="/accommodation" className="sidebar-link">
-                              <Building className="h-4 w-4" />
-                              <span>Accommodation</span>
-                            </Link>
+                {/* In the main sidebar render (not MinimalSidebar), always show Accommodation group */}
+                <>
+                  <Separator className="my-2" />
+                  {/* 🏠 ACCOMMODATION GROUP */}
+                  <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase flex items-center gap-2">
+                    <Building className="h-4 w-4 text-primary" /> Accommodation
+                  </div>
+                  <SidebarMenuItem>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild isActive={pathname === "/accommodation" || pathname.startsWith("/accommodation")}> 
+                          <Link href="/accommodation" className="sidebar-link">
+                            <Building className="h-4 w-4" />
+                            <span>Accommodation</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent>Accommodation</TooltipContent>
+                    </Tooltip>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    {/* Add Accommodation: Only opens dialog, no navigation */}
+                    <Tooltip>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <SidebarMenuButton>
+                            <Building className="h-4 w-4" />
+                            <span>Add Accommodation</span>
                           </SidebarMenuButton>
-                        </TooltipTrigger>
-                        <TooltipContent>Accommodation</TooltipContent>
-                      </Tooltip>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      {/* Add Accommodation: Only opens dialog, no navigation */}
-                      <Tooltip>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <SidebarMenuButton>
-                              <Building className="h-4 w-4" />
-                              <span>Add Accommodation</span>
-                            </SidebarMenuButton>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogTitle className="sr-only">Add Accommodation</DialogTitle>
-                            <AccommodationFormDialogContent />
-                          </DialogContent>
-                        </Dialog>
-                      </Tooltip>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <SidebarMenuButton asChild isActive={pathname === "/accommodation/my-bookings"}>
-                            <Link href="/accommodation/my-bookings" className="sidebar-link">
-                              <CheckCircle2 className="h-4 w-4" />
-                              <span>My Bookings</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </TooltipTrigger>
-                        <TooltipContent>My Bookings</TooltipContent>
-                      </Tooltip>
-                    </SidebarMenuItem>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogTitle className="sr-only">Add Accommodation</DialogTitle>
+                          <AccommodationFormDialogContent />
+                        </DialogContent>
+                      </Dialog>
+                    </Tooltip>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild isActive={pathname === "/accommodation/my-bookings"}>
+                          <Link href="/accommodation/my-bookings" className="sidebar-link">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>My Bookings</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent>My Bookings</TooltipContent>
+                    </Tooltip>
+                  </SidebarMenuItem>
+                  {/* Only show Manage Bookings if user has booking requests */}
+                  {hasBookingRequests && (
                     <SidebarMenuItem>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -469,14 +618,15 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                             <Link href="/accommodation/manage-bookings" className="sidebar-link">
                               <Users className="h-4 w-4" />
                               <span>Manage Bookings</span>
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-white animate-pulse">New</span>
                             </Link>
                           </SidebarMenuButton>
                         </TooltipTrigger>
                         <TooltipContent>Manage Bookings</TooltipContent>
                       </Tooltip>
                     </SidebarMenuItem>
-                  </>
-                )}
+                  )}
+                </>
                 <Separator className="my-2" />
                 {/* 👥 COMMUNITY GROUP */}
                 <div className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground tracking-wider uppercase flex items-center gap-2">
