@@ -654,6 +654,9 @@ const steps = [
   { label: "Review" },
 ];
 
+// Sell Product Page
+// This page allows users to list products for sale. All logic is modular and uses mock data where backend is required.
+// To swap in real data, replace the mock logic with API calls.
 export default function SellPage() {
   const router = useRouter()
   const { toast } = useToast()

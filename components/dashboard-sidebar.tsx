@@ -331,13 +331,14 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                   </Tooltip>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
+                  {/* Sell Product: Opens dialog with two options */}
                   <Tooltip>
-                    <SidebarMenuButton  isActive={pathname === "/marketplace/sell" || pathname.startsWith("/marketplace/sell")}
-                      onClick={() => setSellDialogOpen(true)}>
+                    <SidebarMenuButton isActive={pathname === "/sell"} onClick={() => setSellDialogOpen(true)}>
                       <Plus className="h-4 w-4" />
                       <span>Sell Product</span>
                     </SidebarMenuButton>
                   </Tooltip>
+                  {/* Sell/Accommodation Dialog */}
                   <Dialog open={sellDialogOpen} onOpenChange={setSellDialogOpen}>
                     <DialogContent className="max-w-2xl">
                       <DialogHeader>
@@ -350,6 +351,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                           Choose a category to get started. You can list products or accommodation for students.
                         </p>
                       </DialogHeader>
+                      {/* Show options or accommodation form based on state */}
                       {!showAccommodationForm ? (
                         <div className="mt-6">
                           <div className="grid grid-cols-1 gap-4">
@@ -358,7 +360,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                               className="group w-full rounded-lg border border-primary/30 bg-background hover:bg-primary/5 transition flex items-center px-4 py-3 shadow-sm hover:shadow-md focus:outline-none"
                               onClick={() => {
                                 setSellDialogOpen(false);
-                                router.push("/marketplace/sell");
+                                router.push("/sell"); // Route to /sell
                               }}
                             >
                               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mr-4">
@@ -376,7 +378,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                               onClick={() => setShowAccommodationForm(true)}
                             >
                               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mr-4">
-                              <Plus className="h-4 w-4" />
+                                <Building className="h-4 w-4" />
                               </div>
                               <div className="flex-1 text-left">
                                 <div className="font-semibold text-base">Accommodation</div>
@@ -387,6 +389,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                           </div>
                         </div>
                       ) : (
+                        // Accommodation form dialog content
                         <AccommodationFormDialogContent onSuccess={() => { setSellDialogOpen(false); setShowAccommodationForm(false); }} />
                       )}
                     </DialogContent>
@@ -419,7 +422,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                     <SidebarMenuItem>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <SidebarMenuButton asChild isActive={pathname === "/accommodation" || pathname.startsWith("/accommodation")}>
+                          <SidebarMenuButton asChild isActive={pathname === "/accommodation" || pathname.startsWith("/accommodation")}> 
                             <Link href="/accommodation" className="sidebar-link">
                               <Building className="h-4 w-4" />
                               <span>Accommodation</span>
@@ -430,8 +433,8 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                       </Tooltip>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
+                      {/* Add Accommodation: Only opens dialog, no navigation */}
                       <Tooltip>
-                        {/* Dialog for Add Accommodation */}
                         <Dialog>
                           <DialogTrigger asChild>
                             <SidebarMenuButton>

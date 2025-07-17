@@ -5,12 +5,12 @@ import { collection, query, where, orderBy, onSnapshot, updateDoc, doc } from "f
 import { db } from "@/lib/firebase";
 import confetti from "canvas-confetti"
 import { toast } from "sonner"
-import notificationSound from "../public/sounds/notification-sound.mp3"
 import { useRef } from "react"
 
 export default function NotificationsPanel({ userId }: { userId: string }) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const prevNotifications = useRef<any[]>([]);
+  const notificationSound = "/sounds/notification-sound.mp3";
 
   useEffect(() => {
     if (!userId) return;
