@@ -1,36 +1,55 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Facebook, Twitter, Instagram, Mail, Info, Shield, HelpCircle, Users, Send, MapPin } from "lucide-react";
+import { Facebook, Twitter, Instagram, Mail, Info, Shield, HelpCircle, Users, Send, MapPin, TrendingUp, List, Folder, FileText, BarChart3, MessageCircle, Star, Briefcase, Newspaper, Download, BookOpen, UserCheck, Lock, Globe, FileWarning, Plus, Linkedin, Youtube, Tiktok, Phone } from "lucide-react";
 
 // Footer links and social icons
 const aboutLinks = [
   { href: "/about", label: "About Us", icon: Info },
   { href: "/privacy", label: "Privacy Policy", icon: Shield },
 ];
-// Platform, Resources, and Company links for footer navigation
+// Platform, Resources, and Company links for footer navigation (including placeholders for future pages)
 const platformLinks = [
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/marketplace/sell", label: "Sell Item" },
-  { href: "/marketplace/favorites", label: "Favorites" },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/verification", label: "Get Verified" },
-  { href: "/messages", label: "Messages" },
+  { href: "/marketplace", label: "Marketplace", icon: Folder },
+  { href: "/marketplace/sell", label: "Sell Item", icon: Plus },
+  { href: "/marketplace/favorites", label: "Favorites", icon: Star },
+  { href: "/marketplace/my-listings", label: "My Listings", icon: List, disabled: false }, // Enable when page exists
+  { href: "/marketplace?tab=trending", label: "Trending", icon: TrendingUp, disabled: false }, // Enable when tab/page exists
+  { href: "/marketplace/categories", label: "Categories", icon: Folder, disabled: false }, // Enable when page exists
+  { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
+  { href: "/verification", label: "Get Verified", icon: UserCheck },
+  { href: "/messages", label: "Messages", icon: MessageCircle },
+  { href: "/download", label: "Download App", icon: Download, disabled: true }, // Enable when page exists
 ];
 const resourceLinks = [
-  { href: "/help", label: "Help Center" },
-  // { href: "/faq", label: "FAQs" }, // Uncomment if /faq exists
-  // { href: "/safety", label: "Safety Tips" }, // Uncomment if /safety exists
-  { href: "/contact", label: "Contact" },
+  { href: "/help", label: "Help Center", icon: HelpCircle },
+  { href: "/faq", label: "FAQs", icon: Info, disabled: false }, // Enable when page exists
+  { href: "/safety", label: "Safety Tips", icon: FileWarning, disabled: false }, // Enable when page exists
+  { href: "/contact", label: "Contact", icon: Mail },
+  { href: "/analytics", label: "Analytics", icon: BarChart3, disabled: true }, // Enable when page exists
+  { href: "/reports", label: "Reports", icon: FileText, disabled: true }, // Enable when page exists
+  { href: "/feedback", label: "Feedback", icon: MessageCircle, disabled: true }, // Enable when page exists
+  { href: "/blog", label: "Blog", icon: BookOpen, disabled: true }, // Enable when page exists
+  { href: "/news", label: "News", icon: Newspaper, disabled: true }, // Enable when page exists
+  { href: "/community-guidelines", label: "Community Guidelines", icon: Globe, disabled: true }, // Enable when page exists
 ];
 const companyLinks = [
-  { href: "/about", label: "About Us" },
-  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/about", label: "About Us", icon: Info },
+  { href: "/privacy", label: "Privacy Policy", icon: Lock },
+  { href: "/terms", label: "Terms of Service", icon: FileText, disabled: false }, // Enable when page exists
+  { href: "/careers", label: "Careers", icon: Briefcase, disabled: true }, // Enable when page exists
+  { href: "/marketing", label: "Marketing", icon: TrendingUp, disabled: false }, // Enable when page exists
 ];
+// Social links (add all major platforms)
 const socialLinks = [
   { href: "https://facebook.com", label: "Facebook", icon: Facebook },
   { href: "https://twitter.com", label: "Twitter", icon: Twitter },
   { href: "https://instagram.com", label: "Instagram", icon: Instagram },
+  { href: "https://linkedin.com", label: "LinkedIn", icon: Linkedin },
+  { href: "https://wa.me/", label: "WhatsApp", icon: Phone },
+  { href: "https://youtube.com", label: "YouTube", icon: Youtube },
+  { href: "https://tiktok.com", label: "TikTok", icon: Tiktok },
+  { href: "mailto:suport@campusmarket.co.zw", label: "Email", icon: Mail },
 ];
 
 // Newsletter signup mock
@@ -99,11 +118,17 @@ function DesktopFooter() {
         <div>
           <h3 className="font-semibold text-md mb-2 text-primary">Platform</h3>
           <ul className="flex flex-col gap-2">
-            {platformLinks.map(({ href, label }) => (
+            {platformLinks.map(({ href, label, icon: Icon, disabled }) => (
               <li key={href}>
-                <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                  {label}
-                </Link>
+                {disabled ? (
+                  <span className="flex items-center gap-2 text-muted-foreground/50 cursor-not-allowed" title="Coming soon">
+                    <Icon className="h-4 w-4" /> {label}
+                  </span>
+                ) : (
+                  <Link href={href} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm">
+                    <Icon className="h-4 w-4" /> {label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
@@ -112,26 +137,36 @@ function DesktopFooter() {
         <div>
           <h3 className="font-semibold text-md mb-2 text-primary">Resources</h3>
           <ul className="flex flex-col gap-2">
-            {resourceLinks.map(({ href, label }) => (
+            {resourceLinks.map(({ href, label, icon: Icon, disabled }) => (
               <li key={href}>
-                <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                  {label}
-                </Link>
+                {disabled ? (
+                  <span className="flex items-center gap-2 text-muted-foreground/50 cursor-not-allowed" title="Coming soon">
+                    <Icon className="h-4 w-4" /> {label}
+                  </span>
+                ) : (
+                  <Link href={href} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm">
+                    <Icon className="h-4 w-4" /> {label}
+                  </Link>
+                )}
               </li>
             ))}
-            {/* <li><Link href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">FAQs</Link></li> */}
-            {/* <li><Link href="/safety" className="text-muted-foreground hover:text-primary transition-colors text-sm">Safety Tips</Link></li> */}
           </ul>
         </div>
         {/* Company Links */}
         <div>
           <h3 className="font-semibold text-md mb-2 text-primary">Company</h3>
           <ul className="flex flex-col gap-2">
-            {companyLinks.map(({ href, label }) => (
+            {companyLinks.map(({ href, label, icon: Icon, disabled }) => (
               <li key={href}>
-                <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                  {label}
-                </Link>
+                {disabled ? (
+                  <span className="flex items-center gap-2 text-muted-foreground/50 cursor-not-allowed" title="Coming soon">
+                    <Icon className="h-4 w-4" /> {label}
+                  </span>
+                ) : (
+                  <Link href={href} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm">
+                    <Icon className="h-4 w-4" /> {label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
@@ -176,11 +211,17 @@ function MobileFooter() {
               <div>
                 <h4 className="font-semibold text-sm mb-2 text-primary">Platform</h4>
                 <ul className="flex flex-col gap-2">
-                  {platformLinks.map(({ href, label }) => (
+                  {platformLinks.map(({ href, label, icon: Icon, disabled }) => (
                     <li key={href}>
-                      <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-xs">
-                        {label}
-                      </Link>
+                      {disabled ? (
+                        <span className="flex items-center gap-2 text-muted-foreground/50 cursor-not-allowed" title="Coming soon">
+                          <Icon className="h-4 w-4" /> {label}
+                        </span>
+                      ) : (
+                        <Link href={href} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-xs">
+                          <Icon className="h-4 w-4" /> {label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -188,26 +229,36 @@ function MobileFooter() {
               <div>
                 <h4 className="font-semibold text-sm mb-2 text-primary">Resources</h4>
                 <ul className="flex flex-col gap-2">
-                  {resourceLinks.map(({ href, label }) => (
+                  {resourceLinks.map(({ href, label, icon: Icon, disabled }) => (
                     <li key={href}>
-                      <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-xs">
-                        {label}
-                      </Link>
+                      {disabled ? (
+                        <span className="flex items-center gap-2 text-muted-foreground/50 cursor-not-allowed" title="Coming soon">
+                          <Icon className="h-4 w-4" /> {label}
+                        </span>
+                      ) : (
+                        <Link href={href} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-xs">
+                          <Icon className="h-4 w-4" /> {label}
+                        </Link>
+                      )}
                     </li>
                   ))}
-                  {/* <li><Link href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-xs">FAQs</Link></li> */}
-                  {/* <li><Link href="/safety" className="text-muted-foreground hover:text-primary transition-colors text-xs">Safety Tips</Link></li> */}
                 </ul>
               </div>
             </div>
             <div className="grid grid-cols-1 gap-2 w-full max-w-xs">
               <h4 className="font-semibold text-sm mb-2 text-primary">Company</h4>
               <ul className="flex flex-col gap-2">
-                {companyLinks.map(({ href, label }) => (
+                {companyLinks.map(({ href, label, icon: Icon, disabled }) => (
                   <li key={href}>
-                    <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-xs">
-                      {label}
-                    </Link>
+                    {disabled ? (
+                      <span className="flex items-center gap-2 text-muted-foreground/50 cursor-not-allowed" title="Coming soon">
+                        <Icon className="h-4 w-4" /> {label}
+                      </span>
+                    ) : (
+                      <Link href={href} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-xs">
+                        <Icon className="h-4 w-4" /> {label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
