@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  metadataBase: new URL("https://www.campusmarket.co.zw/" || "http://localhost:3000"),
   openGraph: {
     title: "Campus Market - Student Marketplace",
     description: "Buy and sell items within your campus community",

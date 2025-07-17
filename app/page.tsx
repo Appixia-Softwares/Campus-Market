@@ -17,6 +17,8 @@ import { db } from "@/lib/firebase"
 import { collection, getDocs, query, where, orderBy, limit, getCountFromServer } from "firebase/firestore"
 import { useAuth } from "@/lib/auth-context"
 import { getUniversities } from "@/lib/get-universities";
+import AccommodationShowcase from "@/components/accommodation-showcase"
+import ProductShowcase from "@/components/ProductShowcase"
 
 interface Stats {
   totalProducts: number
@@ -358,6 +360,18 @@ export default function LandingPage() {
             </div>
           </section>
         )}
+
+        {/* Airbnb-like Products (Student Accommodation) Section */}
+        {/* This section showcases accommodation listings in an Airbnb style using mock data. */}
+        <section className="container py-12 md:py-16">
+          <AccommodationShowcase />
+        </section>
+
+        {/* Marketplace Products Section */}
+        {/* This section showcases trending products in a modern, modular grid using mock data. */}
+        <section className="container py-12 md:py-16">
+          <ProductShowcase />
+        </section>
 
         {/* Universities Section */}
         {universities.length > 0 && (
