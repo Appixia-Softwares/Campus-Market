@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { confirmPasswordReset } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { useToast } from "@/components/ui/use-toast"
+import { handleFirebaseError } from "@/lib/firebase-error"
 
 export default function ResetPasswordPage() {
   const [formData, setFormData] = useState({
@@ -25,6 +27,7 @@ export default function ResetPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { toast } = useToast()
 
   useEffect(() => {
     // Check if we have the required oobCode from Firebase
@@ -42,11 +45,11 @@ export default function ResetPasswordPage() {
 
   const validateForm = () => {
     if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long")
+      toast({ title: "Password must be at least 8 characters long", variant: "destructive" })
       return false
     }
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
+      toast({ title: "Passwords do not match", variant: "destructive" })
       return false
     }
     return true
@@ -64,14 +67,16 @@ export default function ResetPasswordPage() {
       // Use Firebase Auth confirmPasswordReset with oobCode from URL
       const oobCode = searchParams.get("oobCode");
       if (!oobCode) {
-        setError("Invalid or expired reset link. Please request a new password reset.");
+        toast({ title: "Invalid or expired reset link. Please request a new password reset.", variant: "destructive" })
         setIsLoading(false);
         return;
       }
       await confirmPasswordReset(auth, oobCode, formData.password);
       setSuccess(true);
+      toast({ title: "Password updated!", description: "You can now sign in with your new password.", variant: "default" })
     } catch (error: any) {
-      setError(error.message || "An unexpected error occurred. Please try again.");
+      const friendly = handleFirebaseError(error)
+      toast({ title: friendly.message, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -136,12 +141,7 @@ export default function ResetPasswordPage() {
               <CardDescription className="text-center">Enter your new password below</CardDescription>
             </CardHeader>
             <CardContent>
-              {error && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
+              {/* Show error as toast only */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="password">New Password</Label>

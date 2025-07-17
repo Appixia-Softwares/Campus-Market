@@ -1,5 +1,5 @@
 "use client"
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -25,32 +25,41 @@ import { ModeToggle } from "@/components/mode-toggle"
 import PropertyGallery from "@/components/property-gallery"
 import PropertyAmenities from "@/components/property-amenities"
 import BookingForm from "@/components/booking-form"
-import { useEffect, useState } from "react"
-import { doc, getDoc } from "firebase/firestore"
+import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
 import { toast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import ReviewsSection from '@/components/reviews/reviews-section'
 import { useRouter } from "next/navigation"
+import BookingsList from '@/components/bookings-list'
 
 export default function AccommodationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth()
   const router = useRouter();
-  const unwrappedParams = React.use(params);
-  const id = unwrappedParams.id;
   const [property, setProperty] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
+  const [paramId, setParamId] = useState<string | null>(null)
+  const [userBooking, setUserBooking] = useState<any | null>(null)
+  const [propertyBookings, setPropertyBookings] = useState<any[]>([])
+
+  // Unwrap params using React.use as per Next.js requirements
+  const paramsObj = React.use(params);
 
   useEffect(() => {
-    if (!id) return;
+    if (!paramsObj?.id) return;
+    setParamId(paramsObj.id);
+  }, [paramsObj]);
+
+  useEffect(() => {
+    if (!paramId) return
     async function fetchProperty() {
       setLoading(true)
       try {
-        const docRef = doc(db, "accommodations", id as string)
+        const docRef = doc(db, "accommodations", paramId as string)
         const docSnap = await getDoc(docRef)
         if (docSnap.exists()) {
-          setProperty({ id, ...docSnap.data() })
+          setProperty({ id: paramId, ...docSnap.data() })
         } else {
           setProperty(null)
         }
@@ -62,7 +71,31 @@ export default function AccommodationDetailPage({ params }: { params: Promise<{ 
       }
     }
     fetchProperty()
-  }, [id])
+  }, [paramId])
+
+  // Fetch current user's booking for this property
+  useEffect(() => {
+    if (!user || !paramId) return
+    async function fetchUserBooking() {
+      const bookingsRef = collection(db, 'accommodation_bookings')
+      const q = query(bookingsRef, where('propertyId', '==', paramId), where('customerId', '==', user?.id))
+      const snap = await getDocs(q)
+      setUserBooking(snap.docs.length > 0 ? { id: snap.docs[0].id, ...snap.docs[0].data() } : null)
+    }
+    fetchUserBooking()
+  }, [user, paramId])
+
+  // Fetch all bookings for this property if user is landlord
+  useEffect(() => {
+    if (!user || !paramId || !property || !property.seller || user.id !== property.seller.id) return
+    async function fetchPropertyBookings() {
+      const bookingsRef = collection(db, 'accommodation_bookings')
+      const q = query(bookingsRef, where('propertyId', '==', paramId))
+      const snap = await getDocs(q)
+      setPropertyBookings(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+    }
+    fetchPropertyBookings()
+  }, [user, paramId, property])
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
   if (!property) return <div className="p-8 text-center text-red-500">Accommodation not found.</div>
@@ -75,6 +108,51 @@ export default function AccommodationDetailPage({ params }: { params: Promise<{ 
       <main className="flex-1 w-full h-full p-6">
         <div>
           <div className="flex flex-col gap-6">
+            {/* Show user's booking status if exists */}
+            {userBooking && (
+              <div className="mb-4">
+                <Card className="border-primary border-2">
+                  <CardHeader>
+                    <CardTitle>Your Booking Status</CardTitle>
+                    <CardDescription>
+                      {userBooking.status === 'pending' && 'Your booking is pending approval.'}
+                      {userBooking.status === 'confirmed' && 'Your booking is confirmed!'}
+                      {userBooking.status === 'cancelled' && 'Your booking was cancelled.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col gap-2">
+                      <div><b>Check-in:</b> {userBooking.checkIn && new Date(userBooking.checkIn).toLocaleDateString()}</div>
+                      <div><b>Check-out:</b> {userBooking.checkOut && new Date(userBooking.checkOut).toLocaleDateString()}</div>
+                      <div><b>Lease Duration:</b> {userBooking.leaseDuration} months</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            {/* Show upcoming bookings for landlord */}
+            {user && property && property.seller && user.id === property.seller.id && propertyBookings.length > 0 && (
+              <div className="mb-4">
+                <Card className="border-accent border-2">
+                  <CardHeader>
+                    <CardTitle>Upcoming Bookings</CardTitle>
+                    <CardDescription>All bookings for this property</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {propertyBookings.map(booking => (
+                        <div key={booking.id} className="p-2 rounded border flex flex-col md:flex-row md:items-center gap-2">
+                          <div><b>Tenant:</b> {booking.customerId}</div>
+                          <div><b>Status:</b> {booking.status}</div>
+                          <div><b>Check-in:</b> {booking.checkIn && new Date(booking.checkIn).toLocaleDateString()}</div>
+                          <div><b>Check-out:</b> {booking.checkOut && new Date(booking.checkOut).toLocaleDateString()}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
             <div className="flex flex-col md:flex-row justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -286,5 +364,8 @@ export default function AccommodationDetailPage({ params }: { params: Promise<{ 
         </div>
       </footer>
     </div>
+  )
+}
+
   )
 }

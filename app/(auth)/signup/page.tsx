@@ -19,6 +19,7 @@ import { getUniversities } from "@/lib/get-universities"
 import { Textarea } from "@/components/ui/textarea"
 import confetti from "canvas-confetti"
 import { toast as sonnerToast } from "sonner"
+import { handleFirebaseError } from "@/lib/firebase-error"
 
 interface University {
   id: string
@@ -201,53 +202,47 @@ export default function SignupPage() {
     e.preventDefault()
     setIsLoading(true)
     setError("")
-
+    // Validation errors as toast
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
+      toast({ title: "Passwords do not match", variant: "destructive" })
       setIsLoading(false)
       return
     }
-
     if (!agreeToTerms) {
-      setError("You must agree to the terms and conditions")
+      toast({ title: "You must agree to the terms and conditions", variant: "destructive" })
       setIsLoading(false)
       return
     }
-
-    // Validate required fields based on user type
     if (formData.userType === 'student') {
       if (!formData.university) {
-        setError("Please select your university")
+        toast({ title: "Please select your university", variant: "destructive" })
         setIsLoading(false)
         return
       }
       if (!formData.studentId) {
-        setError("Please enter your student ID")
+        toast({ title: "Please enter your student ID", variant: "destructive" })
         setIsLoading(false)
         return
       }
     }
-    // Phone validation (required, numeric, exactly 9 digits)
     const phoneDigits = formData.phone.replace(/\D/g, "");
     if (!phoneDigits) {
-      setError("Phone number is required")
+      toast({ title: "Phone number is required", variant: "destructive" })
       setIsLoading(false)
       return
     }
     if (phoneDigits.length !== 9) {
-      setError("Phone number must be exactly 9 digits (e.g., 771234567)")
+      toast({ title: "Phone number must be exactly 9 digits (e.g., 771234567)", variant: "destructive" })
       setIsLoading(false)
       return
     }
-    // ... rest of validation for non-students
     if (formData.userType !== 'student') {
       if (!formData.occupation || !formData.organization || !formData.reason) {
-        setError("Please fill in all required fields for non-students")
+        toast({ title: "Please fill in all required fields for non-students", variant: "destructive" })
         setIsLoading(false)
         return
       }
     }
-
     try {
       // Ensure phone is always saved with +263 country code
       const cleanPhone = formData.phone.replace(/\s/g, "").replace(/^\+263|^263|^0/, "");
@@ -276,16 +271,13 @@ export default function SignupPage() {
         description: "Please check your email to confirm your account.",
         duration: 4000,
       });
-      toast({
-        title: "Account created!",
-        description: "Please check your email to confirm your account.",
-        variant: "default",
-      });
+      toast({ title: "Account created!", description: "Please check your email to confirm your account.", variant: "default" });
       setTimeout(() => {
         router.push("/login?message=Please check your email to confirm your account")
       }, 1200);
     } catch (err: any) {
-      setError(err.message || "Failed to create account. Please try again.")
+      const friendly = handleFirebaseError(err)
+      toast({ title: friendly.message, variant: "destructive" });
     } finally {
       setIsLoading(false)
     }
@@ -613,11 +605,7 @@ export default function SignupPage() {
               <Progress value={(currentStep / STEPS.length) * 100} className="mt-4" />
             </CardHeader>
             <CardContent>
-              {error && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+              {/* Show error as toast only */}
               <form onSubmit={handleSignup} className="space-y-4">
                 {renderStep()}
 

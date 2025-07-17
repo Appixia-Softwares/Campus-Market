@@ -8,8 +8,10 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { db } from '@/lib/firebase'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 
-type Booking = {
+export type Booking = {
   id: string;
   propertyId: string;
   propertyTitle: string;
@@ -54,8 +56,8 @@ const MOCK_BOOKINGS: Booking[] = [
     endDate: "2023-08-30",
     status: "completed",
     paymentStatus: "paid",
-    nextPaymentDate: "", // was null
-    nextPaymentAmount: 0, // was null
+    nextPaymentDate: "",
+    nextPaymentAmount: 0,
     image: "/placeholder.svg?height=200&width=300",
     beds: 1,
     baths: 1,
@@ -78,31 +80,58 @@ const MOCK_BOOKINGS: Booking[] = [
   },
 ]
 
-export default function BookingsList({ limit = 0, listings }: { limit?: number, listings?: Booking[] }) {
+interface BookingsListProps {
+  userId?: string
+  landlordId?: string
+  limit?: number
+  listings?: Booking[]
+}
+
+export default function BookingsList({ userId, landlordId, limit = 0, listings }: BookingsListProps) {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
+    // If listings are provided, use them (for demo/testing)
     if (listings) {
       setBookings(listings)
       setIsLoading(false)
       return
     }
-    const timer = setTimeout(() => {
+    // Otherwise, fetch from Firestore if userId/landlordId is provided
+    async function fetchBookings() {
+      setIsLoading(true)
+      let q
+      if (userId) {
+        q = query(collection(db, 'accommodation_bookings'), where('customerId', '==', userId))
+      } else if (landlordId) {
+        q = query(collection(db, 'accommodation_bookings'), where('landlordId', '==', landlordId))
+      } else {
+        // If no userId/landlordId, use mock data for demo
+        setBookings(limit > 0 ? MOCK_BOOKINGS.slice(0, limit) : MOCK_BOOKINGS)
+        setIsLoading(false)
+        return
+      }
+      const snapshot = await getDocs(q)
+      let bookingsData = snapshot.docs.map(doc => {
+        const data = doc.data() as Booking;
+        return { ...data, id: doc.id };
+      });
+      if (limit > 0) bookingsData = bookingsData.slice(0, limit)
+      setBookings(bookingsData)
       setIsLoading(false)
-      setBookings(limit > 0 ? (MOCK_BOOKINGS.slice(0, limit) as Booking[]) : MOCK_BOOKINGS)
-    }, 800)
-    return () => clearTimeout(timer)
-  }, [limit, listings])
+    }
+    fetchBookings()
+  }, [userId, landlordId, limit, listings])
 
   // Analytics summary
-  const analytics = listings && listings.length > 0 ? {
-    total: listings.length,
-    active: listings.filter(b => b.status === "active").length,
-    pending: listings.filter(b => b.status === "pending").length,
-    completed: listings.filter(b => b.status === "completed").length,
+  const analytics = bookings.length > 0 ? {
+    total: bookings.length,
+    active: bookings.filter(b => b.status === "active").length,
+    pending: bookings.filter(b => b.status === "pending").length,
+    completed: bookings.filter(b => b.status === "completed").length,
   } : null
 
   // Cancel booking (optimistic UI)

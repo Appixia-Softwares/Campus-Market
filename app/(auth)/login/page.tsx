@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { signIn } from "@/lib/auth-service";
 import { useAuth } from "@/lib/auth-context"
+import { useToast } from "@/components/ui/use-toast"
+import { handleFirebaseError } from "@/lib/firebase-error"
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -25,6 +27,7 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, refreshUser } = useAuth()
+  const { toast } = useToast()
 
   // Check for success message from signup
   useEffect(() => {
@@ -54,15 +57,15 @@ export default function LoginPage() {
 
   const validateForm = () => {
     if (!formData.email.trim()) {
-      setError("Email is required")
+      toast({ title: "Email is required", variant: "destructive" })
       return false
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setError("Please enter a valid email address")
+      toast({ title: "Please enter a valid email address", variant: "destructive" })
       return false
     }
     if (!formData.password) {
-      setError("Password is required")
+      toast({ title: "Password is required", variant: "destructive" })
       return false
     }
     return true
@@ -83,9 +86,11 @@ export default function LoginPage() {
       // Refresh user data and redirect
       await refreshUser();
       const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+      toast({ title: "Signed in successfully!", variant: "default" })
       router.push(redirectTo);
     } catch (error: any) {
-      setError(error.message || "An unexpected error occurred. Please try again.");
+      const friendly = handleFirebaseError(error)
+      toast({ title: friendly.message, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -114,6 +119,7 @@ export default function LoginPage() {
               <CardDescription className="text-center">Sign in to your Campus Marketplace account</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Show success message as toast only */}
               {successMessage && (
                 <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950 mb-4">
                   <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
@@ -121,6 +127,7 @@ export default function LoginPage() {
                 </Alert>
               )}
 
+              {/* Show error as toast only */}
               {error && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertDescription>{error}</AlertDescription>
@@ -189,14 +196,7 @@ export default function LoginPage() {
               </form>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <div className="relative flex items-center w-full">
-                <div className="flex-grow border-t border-muted"></div>
-                <span className="mx-4 text-muted-foreground text-sm">or</span>
-                <div className="flex-grow border-t border-muted"></div>
-              </div>
-              <Button variant="outline" className="w-full" disabled={isLoading}>
-                Sign in with Google
-              </Button>
+              {/* Google sign-in and divider removed as per requirements */}
               <div className="text-center text-sm">
                 Don't have an account?{" "}
                 <Link

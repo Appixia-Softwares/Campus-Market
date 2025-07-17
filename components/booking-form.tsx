@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,10 @@ import { format } from "date-fns"
 import { CalendarIcon, Check, CreditCard, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { db } from '@/lib/firebase'
-import { collection, addDoc } from 'firebase/firestore'
+import { addDoc, collection, getDocs, query, where } from 'firebase/firestore'
+import { addDays, isBefore, isAfter, isWithinInterval } from 'date-fns'
+import { createNotification } from '@/lib/api/notifications'
+import { DateRange } from 'react-day-picker'
 
 interface BookingFormProps {
   propertyId: string
@@ -21,31 +24,94 @@ interface BookingFormProps {
 }
 
 export default function BookingForm({ propertyId, landlordId, userId }: BookingFormProps) {
-  const [date, setDate] = useState<Date>()
+  // State for date range
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: undefined, to: undefined })
   const [duration, setDuration] = useState("")
   const [message, setMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [bookedRanges, setBookedRanges] = useState<Array<{ from: Date; to: Date }>>([])
+  const [error, setError] = useState<string | null>(null)
 
+  // Fetch existing bookings for this property to disable booked dates
+  React.useEffect(() => {
+    async function fetchBookings() {
+      const bookingsRef = collection(db, 'accommodation_bookings')
+      const q = query(bookingsRef, where('propertyId', '==', propertyId), where('status', 'in', ['pending', 'confirmed']))
+      const snapshot = await getDocs(q)
+      const ranges: Array<{ from: Date; to: Date }> = []
+      snapshot.forEach(doc => {
+        const data = doc.data()
+        if (data.checkIn && data.checkOut) {
+          ranges.push({ from: new Date(data.checkIn), to: new Date(data.checkOut) })
+        }
+      })
+      setBookedRanges(ranges)
+    }
+    fetchBookings()
+  }, [propertyId, isSuccess])
+
+  // Helper: check if selected range overlaps with any booked range
+  function isRangeAvailable(from?: Date, to?: Date) {
+    if (!from || !to) return false;
+    return !bookedRanges.some(range =>
+      isWithinInterval(from, { start: range.from, end: range.to }) ||
+      isWithinInterval(to, { start: range.from, end: range.to }) ||
+      (isBefore(from, range.from) && isAfter(to, range.to))
+    );
+  }
+
+  // Helper: disable booked dates in calendar
+  function isDateDisabled(date: Date) {
+    return bookedRanges.some(range => isWithinInterval(date, { start: range.from, end: range.to }))
+  }
+
+  // Handler for date range selection compatible with Calendar's onSelect
+  function handleDateRangeSelect(range: DateRange | undefined) {
+    setDateRange(range || { from: undefined, to: undefined })
+  }
+
+  // Handle booking submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!date || !duration || !userId || !landlordId) return
+    setError(null)
+    if (!dateRange || !dateRange.from || !dateRange.to || !userId || !landlordId) {
+      setError('Please select a valid date range.')
+      return
+    }
+    if (!isRangeAvailable(dateRange.from, dateRange.to)) {
+      setError('Selected dates are not available. Please choose another range.')
+      return
+    }
     setIsSubmitting(true)
     try {
       await addDoc(collection(db, 'accommodation_bookings'), {
         propertyId,
         customerId: userId,
         landlordId,
-        moveInDate: date.toISOString(),
+        checkIn: dateRange.from?.toISOString(),
+        checkOut: dateRange.to?.toISOString(),
         leaseDuration: duration,
         message,
         status: 'pending',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
+      // Send notification to landlord
+      await createNotification({
+        userId: landlordId,
+        type: 'accommodation',
+        title: 'New Booking Request',
+        body: `You have a new booking request for your property.`,
+        link: '/accommodation/manage-bookings',
+        read: false,
+      })
       setIsSuccess(true)
+      setDateRange({ from: undefined, to: undefined })
+      setDuration("")
+      setMessage("")
     } catch (error) {
-      alert('Failed to send booking request. Please try again.')
+      setError('Failed to send booking request. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -70,33 +136,36 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Date Range Picker */}
       <div className="space-y-2">
-        <label htmlFor="move-in-date" className="text-sm font-medium">
-          Move-in Date
+        <label htmlFor="date-range" className="text-sm font-medium">
+          Booking Dates
         </label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              id="move-in-date"
+              id="date-range"
               variant="outline"
-              className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
+              className={cn("w-full justify-start text-left font-normal", !dateRange || !dateRange.from && "text-muted-foreground")}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP") : "Select date"}
+              {dateRange && dateRange.from && dateRange.to
+                ? `${format(dateRange.from, "PPP")} - ${format(dateRange.to, "PPP")}`
+                : "Select date range"}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0">
             <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
+              mode="range"
+              selected={dateRange}
+              onSelect={handleDateRangeSelect}
               initialFocus
-              disabled={(date) => date < new Date()}
+              disabled={isDateDisabled}
             />
           </PopoverContent>
         </Popover>
       </div>
-
+      {/* Lease Duration */}
       <div className="space-y-2">
         <label htmlFor="duration" className="text-sm font-medium">
           Lease Duration
@@ -113,7 +182,7 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
           </SelectContent>
         </Select>
       </div>
-
+      {/* Message */}
       <div className="space-y-2">
         <label htmlFor="message" className="text-sm font-medium">
           Message to Landlord (Optional)
@@ -127,9 +196,11 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
           rows={3}
         />
       </div>
-
+      {/* Error Message */}
+      {error && <div className="text-sm text-red-500 text-center">{error}</div>}
+      {/* Submit Button */}
       <div className="pt-2">
-        <Button type="submit" className="w-full" disabled={!date || !duration || isSubmitting}>
+        <Button type="submit" className="w-full" disabled={!dateRange || !dateRange.from || !dateRange.to || !duration || isSubmitting}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -140,14 +211,13 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
           )}
         </Button>
       </div>
-
+      {/* Payment Button (future) */}
       <div className="pt-2">
-        <Button variant="outline" className="w-full">
+        <Button variant="outline" className="w-full" disabled>
           <CreditCard className="mr-2 h-4 w-4" />
           Pay Deposit Now
         </Button>
       </div>
-
       <div className="text-xs text-muted-foreground text-center">
         You won't be charged yet. The landlord needs to approve your request first.
       </div>

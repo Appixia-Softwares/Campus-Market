@@ -459,6 +459,32 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                         <TooltipContent>Booked</TooltipContent>
                       </Tooltip>
                     </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton asChild isActive={pathname === "/accommodation/my-bookings"}>
+                            <Link href="/accommodation/my-bookings" className="sidebar-link">
+                              <CheckCircle2 className="h-4 w-4" />
+                              <span>My Bookings</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        <TooltipContent>My Bookings</TooltipContent>
+                      </Tooltip>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton asChild isActive={pathname === "/accommodation/manage-bookings"}>
+                            <Link href="/accommodation/manage-bookings" className="sidebar-link">
+                              <Users className="h-4 w-4" />
+                              <span>Manage Bookings</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        <TooltipContent>Manage Bookings</TooltipContent>
+                      </Tooltip>
+                    </SidebarMenuItem>
                   </>
                 )}
                 <Separator className="my-2" />
