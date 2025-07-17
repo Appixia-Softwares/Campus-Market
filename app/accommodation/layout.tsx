@@ -4,6 +4,7 @@ import type { ReactNode } from "react"
 import DashboardSidebar from "@/components/dashboard-sidebar"
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { DashboardHeader } from "@/components/dashboard-header"
+import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import { Toaster } from "@/components/ui/toaster"
@@ -61,40 +62,40 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
       <AuthProvider>
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <div className="flex h-screen w-screen overflow-hidden flex-col md:flex-row">
-              {/* Desktop sidebar */}
-              {user && hasListings !== false && (
-                <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
-                  <DashboardSidebar />
-                </div>
-              )}
-              {/* Mobile sidebar overlay */}
-              {sidebarOpen && user && hasListings !== false && (
-                <div className="fixed inset-0 z-50 flex md:hidden">
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
-                  {/* Sidebar */}
-                  <div className="relative w-64 h-full bg-background border-r shadow-lg">
+            <div className="flex flex-col min-h-screen w-screen overflow-hidden">
+              <div className="flex flex-1 flex-col md:flex-row">
+                {/* Desktop sidebar */}
+                {user && hasListings !== false && (
+                  <div className={`hidden md:block transition-all duration-300 w-64 h-full flex-shrink-0 bg-background border-r`}>
                     <DashboardSidebar />
                   </div>
+                )}
+                {/* Mobile sidebar overlay */}
+                {sidebarOpen && user && hasListings !== false && (
+                  <div className="fixed inset-0 z-50 flex md:hidden">
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+                    {/* Sidebar */}
+                    <div className="relative w-64 h-full bg-background border-r shadow-lg">
+                      <DashboardSidebar />
+                    </div>
+                  </div>
+                )}
+                {/* Main Content Area - Responsive padding and spacing */}
+                <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+                  {/* Header - Sticky for mobile */}
+                  <div className="flex-shrink-0 bg-background border-b sticky top-0 z-30">
+                    <DashboardHeader />
+                  </div>
+                  {/* Main content - Responsive padding for mobile */}
+                  <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 bg-background mt-2 md:mt-4">
+                    {children}
+                  </main>
                 </div>
-              )}
-              {/* Main Content Area - Responsive padding and spacing */}
-              <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-                {/* Header - Sticky for mobile */}
-                <div className="flex-shrink-0 bg-background border-b sticky top-0 z-30">
-                  <DashboardHeader />
-                </div>
-                {/* Main content - Responsive padding for mobile */}
-                <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 bg-background mt-2 md:mt-4 pb-24 md:pb-0"> {/* pb-24 ensures content is not hidden behind bottom nav on mobile */}
-                  {children}
-                </main>
               </div>
             </div>
-            
             {/* Bottom Navigation for mobile */}
-            <BottomNavigation userId={user?.id} hasListings={hasListings === null ? undefined : !!hasListings} />
-            
+            <BottomNavigation userId={user?.id} hasListings={hasListings === null ? undefined : hasListings} />
             {/* Toast notifications */}
             <Toaster />
             <SonnerToaster />

@@ -3,7 +3,7 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Bell, User, Menu, X, Home, Settings, Users, BarChart3, ShoppingCart, ShoppingBag, Heart, Building, MessageSquare, CheckCircle2, LogOut } from "lucide-react"
+import { Search, Bell, User, Menu, X, Home, Settings, Users, BarChart3, ShoppingCart, ShoppingBag, Heart, Building, MessageSquare, CheckCircle2, LogOut, Loader2, Info } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
@@ -19,7 +19,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import NotificationsPanel from '@/components/notifications-panel';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
+import { useRef } from "react";
 
 interface DashboardHeaderProps {
   onMobileMenu?: () => void;
@@ -47,31 +49,63 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
+  const { toast } = useToast();
+  const { user: currentUser } = useAuth();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Mock search logic (replace with real API later)
-  const mockData = [
-    { title: "User Management", type: "Page", href: "/admin/settings" },
-    { title: "Marketplace", type: "Feature", href: "/marketplace" },
-    { title: "Accommodation", type: "Feature", href: "/accommodation" },
-    { title: "Orders", type: "Page", href: "/orders" },
-    { title: "Profile Settings", type: "Page", href: "/profile" },
-    { title: "Analytics Dashboard", type: "Page", href: "/analytics" },
-    { title: "Community", type: "Feature", href: "/community" },
-    { title: "Messages", type: "Page", href: "/messages" },
-  ];
+  // Load search history from localStorage
+  useEffect(() => {
+    const h = localStorage.getItem("searchHistory");
+    setHistory(h ? JSON.parse(h) : []);
+  }, []);
 
-  // Filter mock data as user types
+  // Save to history
+  const saveToHistory = (query: string) => {
+    if (!query) return;
+    let h = [query, ...history.filter(q => q !== query)].slice(0, 5);
+    setHistory(h);
+    localStorage.setItem("searchHistory", JSON.stringify(h));
+  };
+
+  // Real-time search with debounce
   useEffect(() => {
     if (!searchQuery) {
       setSearchResults([]);
+      setError(null);
+      setLoading(false);
       return;
     }
-    setSearchResults(
-      mockData.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  }, [searchQuery]);
+    setLoading(true);
+    setError(null);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const controller = new AbortController();
+      const fetchResults = async () => {
+        try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`, {
+            signal: controller.signal,
+            headers: { 'x-user-role': currentUser?.role || 'student' },
+          });
+          if (!res.ok) throw new Error("Failed to fetch search results");
+          const data = await res.json();
+          setSearchResults(data.results || []);
+        } catch (err: any) {
+          if (err.name !== "AbortError") {
+            setError("Error fetching search results");
+            toast({ title: "Search Error", description: err.message || "Unknown error", variant: "destructive" });
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchResults();
+      return () => controller.abort();
+    }, 300);
+    // eslint-disable-next-line
+  }, [searchQuery, toast, currentUser?.role]);
 
   // Keyboard shortcut: Ctrl+K or Cmd+K to open search
   useEffect(() => {
@@ -86,15 +120,15 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
   }, []);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!currentUser?.id) return;
     const q = query(
       collection(db, "notifications"),
-      where("userId", "==", user.id),
+      where("userId", "==", currentUser.id),
       where("read", "==", false)
     );
     const unsub = onSnapshot(q, (snap) => setUnreadCount(snap.size));
     return () => unsub();
-  }, [user?.id]);
+  }, [currentUser?.id]);
 
   const handleSignOut = async () => {
     try {
@@ -115,6 +149,25 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
   const handleNavigation = (href: string) => {
     router.push(href);
     setIsMobileMenuOpen(false);
+  };
+
+  // Helper: highlight matched text
+  const highlight = (text: string, query: string) => {
+    if (!query) return text;
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase() ? <span key={i} className="bg-yellow-200 dark:bg-yellow-700 rounded px-1">{part}</span> : part
+    );
+  };
+
+  // Icon for result type
+  const typeIcon = (type: string) => {
+    switch (type) {
+      case 'User': return <User className="h-4 w-4 mr-2 text-blue-500" />;
+      case 'Product': return <ShoppingBag className="h-4 w-4 mr-2 text-green-500" />;
+      case 'Order': return <ShoppingCart className="h-4 w-4 mr-2 text-purple-500" />;
+      default: return null;
+    }
   };
 
   return (
@@ -159,7 +212,7 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-96 p-0">
-              {user?.id && <NotificationsPanel userId={user.id} />}
+              {currentUser?.id && <NotificationsPanel userId={currentUser.id} />}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -167,9 +220,9 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.avatar_url} alt={user?.email} />
+                  <AvatarImage src={currentUser?.avatar_url} alt={currentUser?.email} />
                   <AvatarFallback>
-                    {user?.email?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
+                    {currentUser?.email?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -177,9 +230,9 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.email}</p>
+                  <p className="text-sm font-medium leading-none">{currentUser?.email}</p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user?.full_name || 'User'}
+                    {currentUser?.full_name || 'User'}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -201,8 +254,11 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
 
       {/* Search Modal (bottom sheet on mobile) */}
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent className="max-w-lg w-full p-0 rounded-t-2xl md:rounded-2xl md:bottom-auto md:top-1/4 md:translate-y-0 bottom-0 fixed md:relative animate-in fade-in slide-in-from-bottom-10 duration-200">
-          <div className="p-4 border-b flex items-center gap-2">
+        <DialogContent className="max-w-lg w-full p-0 rounded-t-2xl md:rounded-2xl md:bottom-auto md:top-1/4 md:translate-y-0 bottom-0 fixed md:relative animate-in fade-in slide-in-from-bottom-10 duration-200 glassmorphism border border-green-100 shadow-2xl">
+          {/* Visually hidden title for accessibility */}
+          <DialogTitle className="sr-only">Search</DialogTitle>
+          {/* Search input with animation */}
+          <div className="p-4 border-b flex items-center gap-2 animate-fadeIn">
             <Search className="h-5 w-5 text-muted-foreground" />
             <input
               autoFocus
@@ -210,35 +266,88 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Type to search..."
-              className="flex-1 bg-transparent outline-none text-base px-2"
+              className="flex-1 bg-background/70 outline-none text-base px-3 py-2 rounded-lg border border-green-100 focus:border-green-400 transition-all duration-200 shadow-sm"
             />
             <Button variant="ghost" size="icon" onClick={() => setSearchOpen(false)}>
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <div className="max-h-72 overflow-y-auto">
-            {searchQuery === "" && (
-              <div className="p-4 text-muted-foreground text-sm">Start typing to search pages, features, or users.</div>
+          <div className="max-h-72 overflow-y-auto px-1 animate-fadeIn">
+            {/* Search history */}
+            {history.length > 0 && searchQuery === "" && !loading && !error && (
+              <div className="mb-2">
+                <div className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Searches</div>
+                {history.map((h, idx) => (
+                  <Button
+                    key={h + idx}
+                    variant="ghost"
+                    className="w-full justify-start px-4 py-2 rounded-lg border-b text-left hover:bg-accent"
+                    onClick={() => setSearchQuery(h)}
+                  >
+                    <Search className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>{h}</span>
+                  </Button>
+                ))}
+                <div className="my-2 border-t border-dashed border-green-100" />
+              </div>
             )}
-            {searchQuery !== "" && searchResults.length === 0 && (
-              <div className="p-4 text-muted-foreground text-sm">No results found.</div>
+            {loading && (
+              <div className="flex items-center gap-2 p-4 text-muted-foreground text-sm animate-fadeIn">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Searching...
+              </div>
             )}
-            {searchResults.map((item, idx) => (
-              <Button
-                key={item.href + idx}
-                variant="ghost"
-                className="w-full justify-start px-4 py-3 rounded-none border-b text-left hover:bg-accent"
-                onClick={() => {
-                  setSearchOpen(false);
-                  router.push(item.href);
-                }}
-              >
-                <div className="flex flex-col">
-                  <span className="font-medium">{item.title}</span>
-                  <span className="text-xs text-muted-foreground">{item.type}</span>
-                </div>
-              </Button>
-            ))}
+            {error && (
+              <div className="p-4 text-destructive text-sm animate-fadeIn">{error}</div>
+            )}
+            {searchQuery === "" && !loading && !error && history.length === 0 && (
+              <div className="p-4 text-muted-foreground text-sm animate-fadeIn">Start typing to search pages, features, or users.</div>
+            )}
+            {searchQuery !== "" && !loading && !error && searchResults.length === 0 && (
+              <div className="p-4 text-muted-foreground text-sm animate-fadeIn">No results found.</div>
+            )}
+            {/* Group results by type */}
+            {searchResults.length > 0 && !loading && !error && (
+              <div>
+                {['User', 'Product', 'Accommodation', 'Order', 'Info'].map(type => {
+                  const group = searchResults.filter(r => r.type === type);
+                  if (group.length === 0) return null;
+                  return (
+                    <div key={type} className="mb-2 animate-slideInUp">
+                      <div className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2 tracking-wider">
+                        {typeIcon(type)}{type}s
+                      </div>
+                      {group.map((item, idx) => (
+                        <Button
+                          key={item.href + idx}
+                          variant="ghost"
+                          className="w-full justify-start px-4 py-3 rounded-lg border-b text-left hover:bg-accent transition-all duration-150 group"
+                          onClick={() => {
+                            setSearchOpen(false);
+                            saveToHistory(searchQuery);
+                            setSearchQuery("");
+                            setTimeout(() => setSearchResults([]), 500);
+                            router.push(item.href);
+                          }}
+                        >
+                          <div className="flex flex-col gap-1">
+                            <span className="font-medium flex items-center gap-2">
+                              {/* Icon for info/static results */}
+                              {item.type === 'Info' ? <Info className="h-4 w-4 text-cyan-500" /> : typeIcon(item.type)}
+                              {highlight(item.title, searchQuery)}
+                              <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 font-semibold group-hover:bg-green-200 transition">{item.type}</span>
+                            </span>
+                            {item.description && (
+                              <span className="text-xs text-muted-foreground mt-0.5">{highlight(item.description, searchQuery)}</span>
+                            )}
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -270,14 +379,14 @@ export function DashboardHeader({ onMobileMenu }: DashboardHeaderProps) {
         <div className="p-4 border-b">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={user?.avatar_url} alt={user?.email} />
+              <AvatarImage src={currentUser?.avatar_url} alt={currentUser?.email} />
               <AvatarFallback>
-                {user?.email?.charAt(0).toUpperCase() || <User className="h-5 w-5" />}
+                {currentUser?.email?.charAt(0).toUpperCase() || <User className="h-5 w-5" />}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <p className="text-sm font-medium">{user?.full_name || 'User'}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
+              <p className="text-sm font-medium">{currentUser?.full_name || 'User'}</p>
+              <p className="text-xs text-muted-foreground">{currentUser?.email}</p>
             </div>
           </div>
         </div>

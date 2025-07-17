@@ -675,6 +675,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                     </TooltipTrigger>
                     <TooltipContent>Verification</TooltipContent>
                   </Tooltip>
+<<<<<<< HEAD
                 </SidebarMenuItem>
                 <Separator className="my-2" />
                 {/* 👤 ACCOUNT GROUP */}
@@ -751,6 +752,9 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                     </SidebarMenuButton>
                   </Tooltip>
                 </SidebarMenuItem>
+=======
+                </SidebarMenuItem>             
+>>>>>>> 93fef7aec46e27270b22f88d72aef101be408a6c
               </SidebarMenu>
             </SidebarContent>
             <SidebarFooter className="border-t bg-muted/30 shadow-inner p-0">

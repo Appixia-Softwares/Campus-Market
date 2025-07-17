@@ -12,7 +12,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <AnnouncementBanner userId={userId} />
       {children}
       {/* Show bottom navigation only on mobile */}
-      <BottomNavigation userId={userId} />
+      {/* <BottomNavigation userId={userId} /> */}
     </>
   )
 }

@@ -20,6 +20,7 @@ import { useAuth } from "@/lib/auth-context"
 import { getUniversities } from "@/lib/get-universities";
 import AccommodationShowcase from "@/components/accommodation-showcase"
 import ProductShowcase from "@/components/ProductShowcase"
+import Footer from "@/components/Footer";
 
 interface Stats {
   totalProducts: number
@@ -278,10 +279,12 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <HeroSection stats={stats} />
+        <div className="animate-fadeIn">
+          <HeroSection stats={stats} />
+        </div>
 
         {/* Live Stats Section */}
-        <section className="container py-12 md:py-16">
+        <section className="container py-12 md:py-16 animate-slideUp">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20"></div>
@@ -323,7 +326,7 @@ export default function LandingPage() {
 
         {/* Featured Products */}
         {featuredProducts.length > 0 && (
-          <section className="container py-12 md:py-16">
+          <section className="container py-12 md:py-16 animate-slideUp">
             <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center mb-12">
               <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-4xl">
                 <span className="text-gradient">Featured Products</span>
@@ -335,7 +338,7 @@ export default function LandingPage() {
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {featuredProducts.map((product) => (
-                <Card key={product.id} className="group cursor-pointer hover:shadow-lg transition-all duration-300">
+                <Card key={product.id} className="group cursor-pointer hover:shadow-lg transition-all duration-300 animate-fadeIn">
                   <div className="aspect-square relative overflow-hidden rounded-t-lg">
                     <img
                       src={product.image_url || "/placeholder.svg"}
@@ -372,19 +375,19 @@ export default function LandingPage() {
 
         {/* Airbnb-like Products (Student Accommodation) Section */}
         {/* This section showcases accommodation listings in an Airbnb style using mock data. */}
-        <section className="container py-12 md:py-16">
+        <section className="container py-12 md:py-16 animate-slideUp">
           <AccommodationShowcase />
         </section>
 
         {/* Marketplace Products Section */}
         {/* This section showcases trending products in a modern, modular grid using mock data. */}
-        <section className="container py-12 md:py-16">
+        <section className="container py-12 md:py-16 animate-slideUp">
           <ProductShowcase />
         </section>
 
         {/* Universities Section */}
         {universities.length > 0 && (
-          <section className="bg-gradient-to-b from-green-50/50 to-white dark:from-green-950/10 dark:to-background py-16">
+          <section className="bg-gradient-to-b from-green-50/50 to-white dark:from-green-950/10 dark:to-background py-16 animate-slideUp">
             <div className="container">
               <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center mb-12">
                 <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-4xl">
@@ -397,7 +400,7 @@ export default function LandingPage() {
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {universities.map((university) => (
-                  <Card key={university.id} className="text-center p-6 hover:shadow-md transition-shadow">
+                  <Card key={university.id} className="text-center p-6 hover:shadow-md transition-shadow animate-fadeIn">
                     <h3 className="font-semibold text-lg mb-2">{university.short_name || university.name}</h3>
                     <p className="text-sm text-muted-foreground mb-2">{university.name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -412,7 +415,7 @@ export default function LandingPage() {
         )}
 
         {/* Features Section */}
-        <section className="container py-12 md:py-24">
+        <section className="container py-12 md:py-24 animate-slideUp">
           <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center">
             <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
               <span className="text-gradient">Platform Features</span>
@@ -457,19 +460,27 @@ export default function LandingPage() {
         </section>
 
         {/* How It Works */}
-        <HowItWorks />
+        <div className="animate-slideUp">
+          <HowItWorks />
+        </div>
 
         {/* Verification Section */}
-        <VerificationSection />
+        <div className="animate-slideUp">
+          <VerificationSection />
+        </div>
 
         {/* PWA Features */}
-        <PwaFeatures />
+        <div className="animate-slideUp">
+          <PwaFeatures />
+        </div>
 
         {/* Testimonials */}
-        <TestimonialCarousel />
+        <div className="animate-slideUp">
+          <TestimonialCarousel />
+        </div>
 
         {/* CTA Section */}
-        <section className="bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background py-16 relative overflow-hidden">
+        <section className="bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background py-16 relative overflow-hidden animate-fadeIn">
           {/* Background glow */}
           <div className="absolute inset-0 overflow-hidden">
             {Array.from({ length: 10 }).map((_, i) => (
@@ -508,6 +519,7 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
+<<<<<<< HEAD
       <footer className="border-t bg-background relative">
         <div className="absolute inset-0 bg-gradient-to-t from-green-50/30 to-transparent dark:from-green-950/10 dark:to-transparent"></div>
         <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12 relative z-10">
@@ -613,6 +625,9 @@ export default function LandingPage() {
           students.
         </div>
       </footer>
+=======
+      <Footer />
+>>>>>>> 93fef7aec46e27270b22f88d72aef101be408a6c
     </div>
   )
 }

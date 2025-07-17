@@ -266,7 +266,7 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
         </div>
       </main>
 
-      <footer className="border-t py-6 bg-card mt-12">
+      {/* <footer className="border-t py-6 bg-card mt-12">
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
@@ -278,7 +278,7 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
             </div>
           </div>
         </div>
-      </footer>
+      </footer> */}
     </div>
   )
 }
