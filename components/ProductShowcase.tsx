@@ -7,73 +7,26 @@ import { Button } from "@/components/ui/button"
 import { Heart, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
-
-// Mock data for products
-const MOCK_PRODUCTS = [
-  {
-    id: "1",
-    title: "Apple MacBook Pro 14”",
-    price: 1200,
-    condition: "New",
-    image: "/placeholder.svg?height=200&width=200",
-    seller: "Jane Doe",
-    likes: 23,
-  },
-  {
-    id: "2",
-    title: "Samsung Galaxy S22 Ultra",
-    price: 800,
-    condition: "Used",
-    image: "/placeholder.svg?height=200&width=200",
-    seller: "John Smith",
-    likes: 15,
-  },
-  {
-    id: "3",
-    title: "Textbooks Bundle (Engineering)",
-    price: 60,
-    condition: "Like New",
-    image: "/placeholder.svg?height=200&width=200",
-    seller: "Alice Brown",
-    likes: 8,
-  },
-  {
-    id: "4",
-    title: "Mini Fridge",
-    price: 100,
-    condition: "Used",
-    image: "/placeholder.svg?height=200&width=200",
-    seller: "Bob Lee",
-    likes: 12,
-  },
-  {
-    id: "5",
-    title: "Bluetooth Headphones",
-    price: 40,
-    condition: "New",
-    image: "/placeholder.svg?height=200&width=200",
-    seller: "Sarah Kim",
-    likes: 19,
-  },
-  {
-    id: "6",
-    title: "Office Chair",
-    price: 55,
-    condition: "Used",
-    image: "/placeholder.svg?height=200&width=200",
-    seller: "David Green",
-    likes: 7,
-  },
-]
+import { getProducts } from "@/lib/firebase-service"
 
 export default function ProductShowcase() {
-  const [products, setProducts] = useState(MOCK_PRODUCTS)
+  const [products, setProducts] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  // Simulate loading
+  // Fetch real product data from Firestore (6 most recent active products)
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000)
-    return () => clearTimeout(timer)
+    async function fetchProducts() {
+      setIsLoading(true)
+      try {
+        const { products } = await getProducts({ status: "active", pageSize: 6 })
+        setProducts(products)
+      } catch (error) {
+        setProducts([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchProducts()
   }, [])
 
   if (isLoading) {
@@ -110,7 +63,7 @@ export default function ProductShowcase() {
           <Card key={product.id} className="overflow-hidden group">
             <div className="relative aspect-square overflow-hidden">
               <img
-                src={product.image}
+                src={product.images && product.images.length > 0 ? product.images[0].url : "/placeholder.svg?height=200&width=200"}
                 alt={product.title}
                 className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
               />
@@ -122,16 +75,16 @@ export default function ProductShowcase() {
               <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.title}</h3>
               <div className="text-2xl font-bold text-green-600 mb-2">${product.price}</div>
               <div className="text-sm text-muted-foreground mb-2">
-                by {product.seller}
+                by {product.seller?.full_name || "Unknown Seller"}
               </div>
             </CardContent>
             <CardFooter className="p-4 pt-0 flex items-center justify-between">
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Heart className="h-4 w-4" />
-                <span>{product.likes}</span>
+                <span>{product.views ?? 0}</span>
               </div>
               <Button asChild variant="outline" size="sm">
-                <Link href="/marketplace">View</Link>
+                <Link href={`/marketplace/products/${product.id}`}>View</Link>
               </Button>
             </CardFooter>
           </Card>

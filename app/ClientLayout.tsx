@@ -12,30 +12,15 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/lib/auth-context";
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import VisitorLogger from "./VisitorLogger";
 
 // ClientLayout: wraps all client-side providers and effects
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
-  // Visitor logging effect
-  const { user } = useAuth();
-  useEffect(() => {
-    async function logVisit() {
-      try {
-        await addDoc(collection(db, "visitors"), {
-          userId: user?.id || null,
-          timestamp: serverTimestamp(),
-        });
-      } catch (e) {
-        // Optionally log error
-      }
-    }
-    logVisit();
-    // Only log once per mount
-    // eslint-disable-next-line
-  }, [user]);
-
   return (
     <SessionProvider>
       <AuthProvider>
+        {/* VisitorLogger must be inside AuthProvider */}
+        <VisitorLogger />
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             {children}
