@@ -1,5 +1,4 @@
 "use client"
-import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -25,6 +24,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 import PropertyGallery from "@/components/property-gallery"
 import PropertyAmenities from "@/components/property-amenities"
 import BookingForm from "@/components/booking-form"
+import { useEffect, useState } from "react"
 import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
@@ -32,9 +32,10 @@ import { toast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import ReviewsSection from '@/components/reviews/reviews-section'
 import { useRouter } from "next/navigation"
+import React from "react"
 import BookingsList from '@/components/bookings-list'
 
-export default function AccommodationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function AccommodationDetailPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
   const router = useRouter();
   const [property, setProperty] = useState<any | null>(null)
@@ -42,6 +43,7 @@ export default function AccommodationDetailPage({ params }: { params: Promise<{ 
   const [paramId, setParamId] = useState<string | null>(null)
   const [userBooking, setUserBooking] = useState<any | null>(null)
   const [propertyBookings, setPropertyBookings] = useState<any[]>([])
+  const [tenantNames, setTenantNames] = useState<{ [userId: string]: string }>({})
 
   // Unwrap params using React.use as per Next.js requirements
   const paramsObj = React.use(params);
@@ -56,6 +58,7 @@ export default function AccommodationDetailPage({ params }: { params: Promise<{ 
     async function fetchProperty() {
       setLoading(true)
       try {
+        if (!paramId) return // Guard for Firestore doc()
         const docRef = doc(db, "accommodations", paramId as string)
         const docSnap = await getDoc(docRef)
         if (docSnap.exists()) {
@@ -78,7 +81,7 @@ export default function AccommodationDetailPage({ params }: { params: Promise<{ 
     if (!user || !paramId) return
     async function fetchUserBooking() {
       const bookingsRef = collection(db, 'accommodation_bookings')
-      const q = query(bookingsRef, where('propertyId', '==', paramId), where('customerId', '==', user?.id))
+      const q = query(bookingsRef, where('propertyId', '==', paramId), where('customerId', '==', user.id))
       const snap = await getDocs(q)
       setUserBooking(snap.docs.length > 0 ? { id: snap.docs[0].id, ...snap.docs[0].data() } : null)
     }
@@ -92,7 +95,25 @@ export default function AccommodationDetailPage({ params }: { params: Promise<{ 
       const bookingsRef = collection(db, 'accommodation_bookings')
       const q = query(bookingsRef, where('propertyId', '==', paramId))
       const snap = await getDocs(q)
-      setPropertyBookings(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+      const bookings = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      setPropertyBookings(bookings)
+      // Fetch tenant names for each booking
+      const uniqueTenantIds = Array.from(new Set(bookings.map(b => b.customerId).filter(Boolean)))
+      const names: { [userId: string]: string } = {}
+      await Promise.all(uniqueTenantIds.map(async (uid) => {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', uid))
+          if (userDoc.exists()) {
+            const data = userDoc.data()
+            names[uid] = data.full_name || data.email || uid
+          } else {
+            names[uid] = uid
+          }
+        } catch {
+          names[uid] = uid
+        }
+      }))
+      setTenantNames(names)
     }
     fetchPropertyBookings()
   }, [user, paramId, property])
@@ -140,14 +161,17 @@ export default function AccommodationDetailPage({ params }: { params: Promise<{ 
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {propertyBookings.map(booking => (
-                        <div key={booking.id} className="p-2 rounded border flex flex-col md:flex-row md:items-center gap-2">
-                          <div><b>Tenant:</b> {booking.customerId}</div>
-                          <div><b>Status:</b> {booking.status}</div>
-                          <div><b>Check-in:</b> {booking.checkIn && new Date(booking.checkIn).toLocaleDateString()}</div>
-                          <div><b>Check-out:</b> {booking.checkOut && new Date(booking.checkOut).toLocaleDateString()}</div>
-                        </div>
-                      ))}
+                      {propertyBookings.map(booking => {
+                        const b: any = booking // Type guard for Firestore data
+                        return (
+                          <div key={b.id} className="p-2 rounded border flex flex-col md:flex-row md:items-center gap-2">
+                            <div><b>Tenant:</b> {tenantNames[b.customerId] || b.customerId}</div>
+                            <div><b>Status:</b> {b.status}</div>
+                            <div><b>Check-in:</b> {b.checkIn && new Date(b.checkIn).toLocaleDateString()}</div>
+                            <div><b>Check-out:</b> {b.checkOut && new Date(b.checkOut).toLocaleDateString()}</div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </CardContent>
                 </Card>

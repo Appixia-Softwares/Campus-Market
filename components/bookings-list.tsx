@@ -3,104 +3,27 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Bath, Bed, Building, Calendar, CheckCircle, Clock, CreditCard, MapPin, XCircle } from "lucide-react"
+import { ArrowRight, Bath, Bed, Building, Calendar, CheckCircle, Clock, CreditCard, MapPin } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { useToast } from "@/hooks/use-toast"
 import { db } from '@/lib/firebase'
-import { collection, getDocs, query, where } from 'firebase/firestore'
-
-export type Booking = {
-  id: string;
-  propertyId: string;
-  propertyTitle: string;
-  propertyAddress: string;
-  landlord: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  paymentStatus: string;
-  nextPaymentDate: string;
-  nextPaymentAmount: number;
-  image: string;
-  beds: number;
-  baths: number;
-};
-
-// Mock data for bookings
-const MOCK_BOOKINGS: Booking[] = [
-  {
-    id: "1",
-    propertyId: "1",
-    propertyTitle: "Modern Studio Apartment",
-    propertyAddress: "123 University Ave, Campus Town",
-    landlord: "John Smith",
-    startDate: "2023-09-01",
-    endDate: "2024-06-30",
-    status: "active",
-    paymentStatus: "paid",
-    nextPaymentDate: "2023-10-01",
-    nextPaymentAmount: 250,
-    image: "/placeholder.svg?height=200&width=300",
-    beds: 1,
-    baths: 1,
-  },
-  {
-    id: "2",
-    propertyId: "3",
-    propertyTitle: "Private Room in Student House",
-    propertyAddress: "789 Downtown Rd, City Center",
-    landlord: "Sarah Johnson",
-    startDate: "2023-08-15",
-    endDate: "2023-08-30",
-    status: "completed",
-    paymentStatus: "paid",
-    nextPaymentDate: "",
-    nextPaymentAmount: 0,
-    image: "/placeholder.svg?height=200&width=300",
-    beds: 1,
-    baths: 1,
-  },
-  {
-    id: "3",
-    propertyId: "4",
-    propertyTitle: "Luxury Student Apartment",
-    propertyAddress: "101 Campus Drive, South Campus",
-    landlord: "Michael Brown",
-    startDate: "2023-10-01",
-    endDate: "2024-07-31",
-    status: "pending",
-    paymentStatus: "awaiting_deposit",
-    nextPaymentDate: "2023-10-01",
-    nextPaymentAmount: 320,
-    image: "/placeholder.svg?height=200&width=300",
-    beds: 2,
-    baths: 2,
-  },
-]
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore'
+import { Collapsible } from "@/components/ui/collapsible"
 
 interface BookingsListProps {
   userId?: string
   landlordId?: string
   limit?: number
-  listings?: Booking[]
+  status?: string // Optional status filter
+  debug?: boolean // Debug flag
+  label?: string // Debug label
 }
 
-export default function BookingsList({ userId, landlordId, limit = 0, listings }: BookingsListProps) {
-  const [bookings, setBookings] = useState<Booking[]>([])
+export default function BookingsList({ userId, landlordId, limit = 0, status, debug, label }: BookingsListProps) {
+  const [bookings, setBookings] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
-    // If listings are provided, use them (for demo/testing)
-    if (listings) {
-      setBookings(listings)
-      setIsLoading(false)
-      return
-    }
-    // Otherwise, fetch from Firestore if userId/landlordId is provided
     async function fetchBookings() {
       setIsLoading(true)
       let q
@@ -109,55 +32,58 @@ export default function BookingsList({ userId, landlordId, limit = 0, listings }
       } else if (landlordId) {
         q = query(collection(db, 'accommodation_bookings'), where('landlordId', '==', landlordId))
       } else {
-        // If no userId/landlordId, use mock data for demo
-        setBookings(limit > 0 ? MOCK_BOOKINGS.slice(0, limit) : MOCK_BOOKINGS)
-        setIsLoading(false)
-        return
+        q = collection(db, 'accommodation_bookings')
+      }
+      if (status) {
+        q = query(q, where('status', '==', status))
       }
       const snapshot = await getDocs(q)
-      let bookingsData = snapshot.docs.map(doc => {
-        const data = doc.data() as Booking;
-        return { ...data, id: doc.id };
-      });
+      let bookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       if (limit > 0) bookingsData = bookingsData.slice(0, limit)
-      setBookings(bookingsData)
+
+      // Fetch property details for each booking, with debug logs
+      const bookingsWithProperty = await Promise.all(bookingsData.map(async (booking) => {
+        const b: any = booking // Type guard for Firestore data
+        if (!b.propertyId) {
+          if (debug) console.warn(`[BookingsList Debug] Booking missing propertyId`, b)
+          return { ...b, property: null, propertyDebug: 'No propertyId on booking' }
+        }
+        try {
+          if (debug) console.log(`[BookingsList Debug] Fetching property for booking`, b.id, 'propertyId:', b.propertyId)
+          const propDoc = await getDoc(doc(db, 'accommodations', b.propertyId))
+          if (!propDoc.exists()) {
+            if (debug) console.warn(`[BookingsList Debug] Property not found for propertyId`, b.propertyId)
+            return { ...b, property: null, propertyDebug: 'Property not found in Firestore' }
+          }
+          const property: any = { id: propDoc.id, ...propDoc.data() }
+          // Check for required fields
+          if (!property.title || !property.address) {
+            if (debug) console.warn(`[BookingsList Debug] Property missing required fields`, property)
+            return { ...b, property, propertyDebug: 'Property missing required fields' }
+          }
+          return { ...b, property, propertyDebug: null }
+        } catch (err) {
+          if (debug) console.error(`[BookingsList Debug] Error fetching property`, b.propertyId, err)
+          return { ...b, property: null, propertyDebug: 'Error fetching property' }
+        }
+      }))
+      setBookings(bookingsWithProperty)
       setIsLoading(false)
+      if (debug) {
+        console.log(`[BookingsList Debug] ${label || ''}`, bookingsWithProperty)
+      }
     }
     fetchBookings()
-  }, [userId, landlordId, limit, listings])
+  }, [userId, landlordId, limit, status])
 
-  // Analytics summary
-  const analytics = bookings.length > 0 ? {
-    total: bookings.length,
-    active: bookings.filter(b => b.status === "active").length,
-    pending: bookings.filter(b => b.status === "pending").length,
-    completed: bookings.filter(b => b.status === "completed").length,
-  } : null
-
-  // Cancel booking (optimistic UI)
-  const handleCancel = (id: string) => {
-    setBookings(prev => prev.filter(b => b.id !== id))
-    toast({ title: "Booking Cancelled", description: "Your booking has been cancelled." })
-    // TODO: Add backend cancellation logic here
-  }
-
-  // Pay Rent/Deposit (stub)
-  const handlePay = (booking: Booking, type: "rent" | "deposit") => {
-    toast({ title: `Pay ${type === "rent" ? "Rent" : "Deposit"}`,
-      description: `Payment flow for ${booking.propertyTitle} would start here.` })
-    // TODO: Integrate payment flow
-  }
+  useEffect(() => {
+    if (debug) {
+      console.log(`[BookingsList Debug Render] ${label || ''}`, bookings)
+    }
+  }, [bookings, debug, label])
 
   return (
     <Card className="hover-card-animation">
-      {analytics && (
-        <div className="flex flex-wrap gap-4 p-4 border-b bg-muted/30">
-          <div className="font-semibold">Bookings: <span className="text-primary">{analytics.total}</span></div>
-          <div className="text-green-700">Active: {analytics.active}</div>
-          <div className="text-yellow-700">Pending: {analytics.pending}</div>
-          <div className="text-gray-500">Completed: {analytics.completed}</div>
-        </div>
-      )}
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -196,128 +122,125 @@ export default function BookingsList({ userId, landlordId, limit = 0, listings }
                 </Card>
               ))
           ) : bookings.length > 0 ? (
-            bookings.map((booking, index) => (
-              <Card
-                key={booking.id}
-                className="overflow-hidden group hover:border-primary/50 transition-all animate-slide-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="flex flex-col md:flex-row">
-                  <div className="relative md:w-1/4">
-                    <img
-                      src={booking.image || "/placeholder.svg"}
-                      alt={booking.propertyTitle}
-                      className="w-full h-32 md:h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <Badge
-                      variant={
-                        booking.status === "active" ? "default" : booking.status === "pending" ? "secondary" : "outline"
-                      }
-                      className="absolute top-2 right-2"
-                    >
-                      {booking.status === "active" && <CheckCircle className="h-3 w-3 mr-1" />}
-                      {booking.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
-                      {booking.status === "active" ? "Active" : booking.status === "pending" ? "Pending" : "Completed"}
-                    </Badge>
-                  </div>
-
-                  <div className="p-4 md:w-3/4">
-                    <div className="flex flex-col md:flex-row justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                          {booking.propertyTitle}
-                        </h3>
-                        <div className="flex items-center text-sm text-muted-foreground mt-1">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          <span>{booking.propertyAddress}</span>
-                        </div>
-                      </div>
+            ((() => {
+              // Check if all bookings are missing property data
+              const allMissing = bookings.every(
+                b => !b.property || !b.property.title || !b.property.address
+              )
+              if (allMissing) {
+                return (
+                  <div className="text-center py-8">
+                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                      <Building className="h-6 w-6 text-muted-foreground" />
                     </div>
-
-                    <div className="flex flex-wrap gap-4 my-2">
+                    <h3 className="font-medium mb-1 text-destructive">No valid accommodation data found for your bookings.</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      This may be due to missing or incomplete property info. Please contact support or try booking another accommodation.
+                    </p>
+                    <Link href="/accommodation">
+                      <Button>Find Accommodation</Button>
+                    </Link>
+                    {debug && (
+                      <div className="mt-6 text-left max-w-xl mx-auto">
+                        <b>Debug Info:</b>
+                        <pre className="overflow-x-auto mt-1 text-xs bg-muted p-2 rounded">{JSON.stringify(bookings, null, 2)}</pre>
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+              // Otherwise, render the bookings as cards
+              return bookings.map((booking, index) => (
+                <Card
+                  key={booking.id}
+                  className="overflow-hidden group hover:border-primary/50 transition-all animate-slide-up"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="flex flex-col md:flex-row">
+                    <div className="relative md:w-1/4">
+                      <img
+                        src={booking.property?.image || booking.property?.images?.[0] || "/placeholder.svg"}
+                        alt={booking.property?.title || 'Accommodation'}
+                        className="w-full h-32 md:h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <Badge
+                        variant={
+                          booking.status === "active" ? "default" : booking.status === "pending" ? "secondary" : "outline"
+                        }
+                        className="absolute top-2 right-2"
+                      >
+                        {booking.status === "active" && <CheckCircle className="h-3 w-3 mr-1" />}
+                        {booking.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
+                        {booking.status === "active" ? "Active" : booking.status === "pending" ? "Pending" : "Completed"}
+                      </Badge>
+                    </div>
+                    <div className="flex-1 p-4 flex flex-col gap-2">
+                      <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                        {booking.property?.title
+                          ? booking.property.title
+                          : booking.propertyDebug
+                            ? `Not found`
+                            : 'Not found'}
+                      </h3>
+                      <div className="flex items-center text-sm text-muted-foreground mt-1">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        <span>{booking.property?.address || (booking.propertyDebug ? 'Missing address' : 'No address available')}</span>
+                      </div>
+                      {/* Debug: Show raw property data if missing fields */}
+                      {debug && booking.propertyDebug && (
+                        <Collapsible>
+                          <div className="mt-2 p-2 bg-muted rounded text-xs text-muted-foreground">
+                            <b>Debug Info:</b> {booking.propertyDebug}
+                            <pre className="overflow-x-auto mt-1">{JSON.stringify(booking.property, null, 2)}</pre>
+                          </div>
+                        </Collapsible>
+                      )}
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
                         <span className="text-sm">
-                          {new Date(booking.startDate).toLocaleDateString()} -{" "}
-                          {new Date(booking.endDate).toLocaleDateString()}
+                          {booking.checkIn ? new Date(booking.checkIn).toLocaleDateString() : '-'} - {booking.checkOut ? new Date(booking.checkOut).toLocaleDateString() : '-'}
                         </span>
                       </div>
-
                       <div className="flex items-center gap-3">
                         <div className="flex items-center">
                           <Bed className="h-4 w-4 mr-1 text-muted-foreground" />
-                          <span className="text-sm">{booking.beds}</span>
+                          <span className="text-sm">{booking.property?.beds ?? '-'}</span>
                         </div>
                         <div className="flex items-center">
                           <Bath className="h-4 w-4 mr-1 text-muted-foreground" />
-                          <span className="text-sm">{booking.baths}</span>
+                          <span className="text-sm">{booking.property?.baths ?? '-'}</span>
                         </div>
                       </div>
-
                       {booking.nextPaymentDate && (
                         <div className="flex items-center">
                           <CreditCard className="h-4 w-4 mr-1 text-muted-foreground" />
                           <span className="text-sm">
-                            Next payment: ${booking.nextPaymentAmount} on{" "}
-                            {new Date(booking.nextPaymentDate).toLocaleDateString()}
+                            Next payment: ${booking.nextPaymentAmount} on {new Date(booking.nextPaymentDate).toLocaleDateString()}
                           </span>
                         </div>
                       )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      <Dialog open={selectedBooking?.id === booking.id} onOpenChange={open => setSelectedBooking(open ? booking : null)}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="group-hover:border-primary/50 transition-colors">
-                            View Details
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>{booking.propertyTitle}</DialogTitle>
-                            <DialogDescription>{booking.propertyAddress}</DialogDescription>
-                          </DialogHeader>
-                          <div className="flex flex-col gap-2">
-                            <div><b>Landlord:</b> {booking.landlord}</div>
-                            <div><b>Stay:</b> {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}</div>
-                            <div><b>Status:</b> {booking.status}</div>
-                            <div><b>Payment Status:</b> {booking.paymentStatus}</div>
-                            <div><b>Beds:</b> {booking.beds} | <b>Baths:</b> {booking.baths}</div>
-                            {/* Add more property details here as needed */}
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Link href={`/accommodation/${booking.propertyId}`}>
+                      <Link href={booking.property ? `/accommodation/${booking.property.id}` : '#'}>
                         <Button variant="outline" size="sm" className="group-hover:border-primary/50 transition-colors">
                           View Property
                         </Button>
                       </Link>
-
                       {booking.status === "active" && (
-                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors" onClick={() => handlePay(booking, "rent") }>
+                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors">
                           <CreditCard className="h-4 w-4 mr-1" />
                           Pay Rent
                         </Button>
                       )}
-
                       {booking.status === "pending" && (
-                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors" onClick={() => handlePay(booking, "deposit") }>
+                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors">
                           <CreditCard className="h-4 w-4 mr-1" />
                           Pay Deposit
                         </Button>
                       )}
-
-                      {(booking.status === "pending" || booking.status === "active") && (
-                        <Button size="sm" variant="destructive" onClick={() => handleCancel(booking.id)}>
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Cancel Booking
-                        </Button>
-                      )}
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))
+                </Card>
+              ))
+            })())
           ) : (
             <div className="text-center py-8">
               <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
