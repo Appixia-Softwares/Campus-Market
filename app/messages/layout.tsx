@@ -19,20 +19,9 @@ import { db } from "@/lib/firebase"
 
 export default function MessagesLayout({ children }: { children: React.ReactNode }) {
   const { featureFlags, loading: flagsLoading } = useFeatureFlags();
-  if (flagsLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading feature flags...</div>;
-  }
-  if (!featureFlags.messaging) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center">
-        <h2 className="text-2xl font-bold mb-2">Messaging Disabled</h2>
-        <p className="text-muted-foreground">The messaging feature is currently unavailable. Please check back later.</p>
-      </div>
-    );
-  }
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
-  const [hasListings, setHasListings] = useState<boolean | null>(null)
+  const [hasListings, setHasListings] = useState<boolean | null>(null);
 
   // Check for user listings (products or accommodations)
   useEffect(() => {
@@ -54,6 +43,18 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
     checkListings()
     return () => { cancelled = true }
   }, [user])
+
+  if (flagsLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading feature flags...</div>;
+  }
+  if (!featureFlags.messaging) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center">
+        <h2 className="text-2xl font-bold mb-2">Messaging Disabled</h2>
+        <p className="text-muted-foreground">The messaging feature is currently unavailable. Please check back later.</p>
+      </div>
+    );
+  }
 
   return (
     <ProtectedRoute>
