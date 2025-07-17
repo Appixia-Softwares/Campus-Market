@@ -88,7 +88,7 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
                     <DashboardHeader />
                   </div>
                   {/* Main content - Responsive padding for mobile */}
-                  <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 bg-background mt-2 md:mt-4 pb-24 md:pb-0"> {/* pb-24 ensures content is not hidden behind bottom nav on mobile */}
+                  <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 bg-background mt-2 md:mt-4 pb-24"> {/* pb-24 ensures content is not hidden behind bottom nav on mobile */}
                     {children}
                   </main>
                 </div>
