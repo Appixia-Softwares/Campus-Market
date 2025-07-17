@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils"
 import { db } from '@/lib/firebase'
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore'
 import { addDays, isBefore, isAfter, isWithinInterval } from 'date-fns'
+import { createNotification } from '@/lib/api/notifications'
+import { DateRange } from 'react-day-picker'
 
 interface BookingFormProps {
   propertyId: string
@@ -23,7 +25,7 @@ interface BookingFormProps {
 
 export default function BookingForm({ propertyId, landlordId, userId }: BookingFormProps) {
   // State for date range
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined })
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: undefined, to: undefined })
   const [duration, setDuration] = useState("")
   const [message, setMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -50,12 +52,13 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
   }, [propertyId, isSuccess])
 
   // Helper: check if selected range overlaps with any booked range
-  function isRangeAvailable(from: Date, to: Date) {
+  function isRangeAvailable(from?: Date, to?: Date) {
+    if (!from || !to) return false;
     return !bookedRanges.some(range =>
       isWithinInterval(from, { start: range.from, end: range.to }) ||
       isWithinInterval(to, { start: range.from, end: range.to }) ||
       (isBefore(from, range.from) && isAfter(to, range.to))
-    )
+    );
   }
 
   // Helper: disable booked dates in calendar
@@ -63,11 +66,16 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
     return bookedRanges.some(range => isWithinInterval(date, { start: range.from, end: range.to }))
   }
 
+  // Handler for date range selection compatible with Calendar's onSelect
+  function handleDateRangeSelect(range: DateRange | undefined) {
+    setDateRange(range || { from: undefined, to: undefined })
+  }
+
   // Handle booking submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    if (!dateRange.from || !dateRange.to || !userId || !landlordId) {
+    if (!dateRange || !dateRange.from || !dateRange.to || !userId || !landlordId) {
       setError('Please select a valid date range.')
       return
     }
@@ -81,13 +89,22 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
         propertyId,
         customerId: userId,
         landlordId,
-        checkIn: dateRange.from.toISOString(),
-        checkOut: dateRange.to.toISOString(),
+        checkIn: dateRange.from?.toISOString(),
+        checkOut: dateRange.to?.toISOString(),
         leaseDuration: duration,
         message,
         status: 'pending',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+      })
+      // Send notification to landlord
+      await createNotification({
+        userId: landlordId,
+        type: 'accommodation',
+        title: 'New Booking Request',
+        body: `You have a new booking request for your property.`,
+        link: '/accommodation/manage-bookings',
+        read: false,
       })
       setIsSuccess(true)
       setDateRange({ from: undefined, to: undefined })
@@ -129,10 +146,10 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
             <Button
               id="date-range"
               variant="outline"
-              className={cn("w-full justify-start text-left font-normal", !dateRange.from && "text-muted-foreground")}
+              className={cn("w-full justify-start text-left font-normal", !dateRange || !dateRange.from && "text-muted-foreground")}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange.from && dateRange.to
+              {dateRange && dateRange.from && dateRange.to
                 ? `${format(dateRange.from, "PPP")} - ${format(dateRange.to, "PPP")}`
                 : "Select date range"}
             </Button>
@@ -141,7 +158,7 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
             <Calendar
               mode="range"
               selected={dateRange}
-              onSelect={setDateRange}
+              onSelect={handleDateRangeSelect}
               initialFocus
               disabled={isDateDisabled}
             />
@@ -183,7 +200,7 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
       {error && <div className="text-sm text-red-500 text-center">{error}</div>}
       {/* Submit Button */}
       <div className="pt-2">
-        <Button type="submit" className="w-full" disabled={!dateRange.from || !dateRange.to || !duration || isSubmitting}>
+        <Button type="submit" className="w-full" disabled={!dateRange || !dateRange.from || !dateRange.to || !duration || isSubmitting}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
