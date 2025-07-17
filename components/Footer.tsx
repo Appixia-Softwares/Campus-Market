@@ -8,9 +8,24 @@ const aboutLinks = [
   { href: "/about", label: "About Us", icon: Info },
   { href: "/privacy", label: "Privacy Policy", icon: Shield },
 ];
+// Platform, Resources, and Company links for footer navigation
+const platformLinks = [
+  { href: "/marketplace", label: "Marketplace" },
+  { href: "/marketplace/sell", label: "Sell Item" },
+  { href: "/marketplace/favorites", label: "Favorites" },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/verification", label: "Get Verified" },
+  { href: "/messages", label: "Messages" },
+];
 const resourceLinks = [
-  { href: "/help", label: "Help Center", icon: HelpCircle },
-  { href: "/contact", label: "Contact", icon: Mail },
+  { href: "/help", label: "Help Center" },
+  // { href: "/faq", label: "FAQs" }, // Uncomment if /faq exists
+  // { href: "/safety", label: "Safety Tips" }, // Uncomment if /safety exists
+  { href: "/contact", label: "Contact" },
+];
+const companyLinks = [
+  { href: "/about", label: "About Us" },
+  { href: "/privacy", label: "Privacy Policy" },
 ];
 const socialLinks = [
   { href: "https://facebook.com", label: "Facebook", icon: Facebook },
@@ -70,7 +85,7 @@ function DesktopFooter() {
   const year = new Date().getFullYear();
   return (
     <footer className="hidden md:block w-full border-t z-40 bg-gradient-to-tr from-green-50/80 via-white/80 to-green-100/80 dark:from-green-950/60 dark:via-background/80 dark:to-green-900/60 backdrop-blur-xl shadow-2xl">
-      <div className="container mx-auto py-10 px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="container mx-auto py-10 px-6 grid grid-cols-1 md:grid-cols-5 gap-8">
         {/* About Section */}
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -80,14 +95,14 @@ function DesktopFooter() {
           <p className="text-sm text-muted-foreground mb-4">The ultimate marketplace for Zimbabwean university students.</p>
           <NewsletterSignup />
         </div>
-        {/* About Links */}
+        {/* Platform Links */}
         <div>
-          <h3 className="font-semibold text-md mb-2 text-primary">About</h3>
+          <h3 className="font-semibold text-md mb-2 text-primary">Platform</h3>
           <ul className="flex flex-col gap-2">
-            {aboutLinks.map(({ href, label, icon: Icon }) => (
+            {platformLinks.map(({ href, label }) => (
               <li key={href}>
-                <Link href={href} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm">
-                  <Icon className="h-4 w-4" /> {label}
+                <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                  {label}
                 </Link>
               </li>
             ))}
@@ -97,10 +112,25 @@ function DesktopFooter() {
         <div>
           <h3 className="font-semibold text-md mb-2 text-primary">Resources</h3>
           <ul className="flex flex-col gap-2">
-            {resourceLinks.map(({ href, label, icon: Icon }) => (
+            {resourceLinks.map(({ href, label }) => (
               <li key={href}>
-                <Link href={href} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm">
-                  <Icon className="h-4 w-4" /> {label}
+                <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                  {label}
+                </Link>
+              </li>
+            ))}
+            {/* <li><Link href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">FAQs</Link></li> */}
+            {/* <li><Link href="/safety" className="text-muted-foreground hover:text-primary transition-colors text-sm">Safety Tips</Link></li> */}
+          </ul>
+        </div>
+        {/* Company Links */}
+        <div>
+          <h3 className="font-semibold text-md mb-2 text-primary">Company</h3>
+          <ul className="flex flex-col gap-2">
+            {companyLinks.map(({ href, label }) => (
+              <li key={href}>
+                <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                  {label}
                 </Link>
               </li>
             ))}
@@ -142,19 +172,51 @@ function MobileFooter() {
         </SheetTrigger>
         <SheetContent side="bottom" className="rounded-t-2xl p-6">
           <div className="flex flex-col gap-6 items-center">
+            <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
+              <div>
+                <h4 className="font-semibold text-sm mb-2 text-primary">Platform</h4>
+                <ul className="flex flex-col gap-2">
+                  {platformLinks.map(({ href, label }) => (
+                    <li key={href}>
+                      <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-xs">
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-sm mb-2 text-primary">Resources</h4>
+                <ul className="flex flex-col gap-2">
+                  {resourceLinks.map(({ href, label }) => (
+                    <li key={href}>
+                      <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-xs">
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
+                  {/* <li><Link href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-xs">FAQs</Link></li> */}
+                  {/* <li><Link href="/safety" className="text-muted-foreground hover:text-primary transition-colors text-xs">Safety Tips</Link></li> */}
+                </ul>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-2 w-full max-w-xs">
+              <h4 className="font-semibold text-sm mb-2 text-primary">Company</h4>
+              <ul className="flex flex-col gap-2">
+                {companyLinks.map(({ href, label }) => (
+                  <li key={href}>
+                    <Link href={href} className="text-muted-foreground hover:text-primary transition-colors text-xs">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
             <div className="flex gap-6">
               {socialLinks.map(({ href, label, icon: Icon }) => (
                 <a key={href} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="hover:text-primary text-muted-foreground transition-colors">
                   <Icon className="h-7 w-7" />
                 </a>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
-              {[...aboutLinks, ...resourceLinks].map(({ href, label, icon: Icon }) => (
-                <Link key={href} href={href} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors text-xs font-medium">
-                  <Icon className="h-5 w-5" />
-                  {label}
-                </Link>
               ))}
             </div>
             <NewsletterSignup />
