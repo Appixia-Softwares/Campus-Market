@@ -16,6 +16,8 @@ import { addDoc, collection, getDocs, query, where } from 'firebase/firestore'
 import { addDays, isBefore, isAfter, isWithinInterval } from 'date-fns'
 import { createNotification } from '@/lib/api/notifications'
 import { DateRange } from 'react-day-picker'
+import confetti from "canvas-confetti"
+import { toast } from "sonner"
 
 interface BookingFormProps {
   propertyId: string
@@ -105,6 +107,16 @@ export default function BookingForm({ propertyId, landlordId, userId }: BookingF
         body: `You have a new booking request for your property.`,
         link: '/accommodation/manage-bookings',
         read: false,
+      })
+      // --- Animated feedback for booking success ---
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.7 },
+      })
+      toast.success("Booking request sent! 🎉", {
+        description: "The landlord will review your request and get back to you soon.",
+        duration: 4000,
       })
       setIsSuccess(true)
       setDateRange({ from: undefined, to: undefined })

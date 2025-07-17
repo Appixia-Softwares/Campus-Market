@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, orderBy, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import confetti from "canvas-confetti"
+import { toast } from "sonner"
+import notificationSound from "../public/sounds/notification-sound.mp3"
+import { useRef } from "react"
 
 export default function NotificationsPanel({ userId }: { userId: string }) {
   const [notifications, setNotifications] = useState<any[]>([]);
+  const prevNotifications = useRef<any[]>([]);
 
   useEffect(() => {
     if (!userId) return;
@@ -15,7 +20,27 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
       orderBy("createdAt", "desc")
     );
     const unsub = onSnapshot(q, (snap) => {
-      setNotifications(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const newNotifications = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // --- Animated feedback for new booking notification ---
+      if (prevNotifications.current.length > 0 && newNotifications.length > prevNotifications.current.length) {
+        const latest = newNotifications[0];
+        if (latest.type === 'accommodation') {
+          confetti({
+            particleCount: 80,
+            spread: 60,
+            origin: { y: 0.7 },
+          });
+          toast.success("New booking notification!", {
+            description: latest.title + ': ' + latest.body,
+            duration: 4000,
+          });
+          // Play notification sound
+          const audio = new Audio(notificationSound);
+          audio.play();
+        }
+      }
+      prevNotifications.current = newNotifications;
+      setNotifications(newNotifications);
     });
     return () => unsub();
   }, [userId]);
