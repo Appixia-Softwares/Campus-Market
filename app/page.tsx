@@ -20,6 +20,7 @@ import { useAuth } from "@/lib/auth-context"
 import { getUniversities } from "@/lib/get-universities";
 import AccommodationShowcase from "@/components/accommodation-showcase"
 import ProductShowcase from "@/components/ProductShowcase"
+import Footer from "@/components/Footer";
 
 interface Stats {
   totalProducts: number
@@ -278,10 +279,12 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <HeroSection stats={stats} />
+        <div className="animate-fadeIn">
+          <HeroSection stats={stats} />
+        </div>
 
         {/* Live Stats Section */}
-        <section className="container py-12 md:py-16">
+        <section className="container py-12 md:py-16 animate-slideUp">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20"></div>
@@ -323,7 +326,7 @@ export default function LandingPage() {
 
         {/* Featured Products */}
         {featuredProducts.length > 0 && (
-          <section className="container py-12 md:py-16">
+          <section className="container py-12 md:py-16 animate-slideUp">
             <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center mb-12">
               <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-4xl">
                 <span className="text-gradient">Featured Products</span>
@@ -335,7 +338,7 @@ export default function LandingPage() {
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {featuredProducts.map((product) => (
-                <Card key={product.id} className="group cursor-pointer hover:shadow-lg transition-all duration-300">
+                <Card key={product.id} className="group cursor-pointer hover:shadow-lg transition-all duration-300 animate-fadeIn">
                   <div className="aspect-square relative overflow-hidden rounded-t-lg">
                     <img
                       src={product.image_url || "/placeholder.svg"}
@@ -372,19 +375,19 @@ export default function LandingPage() {
 
         {/* Airbnb-like Products (Student Accommodation) Section */}
         {/* This section showcases accommodation listings in an Airbnb style using mock data. */}
-        <section className="container py-12 md:py-16">
+        <section className="container py-12 md:py-16 animate-slideUp">
           <AccommodationShowcase />
         </section>
 
         {/* Marketplace Products Section */}
         {/* This section showcases trending products in a modern, modular grid using mock data. */}
-        <section className="container py-12 md:py-16">
+        <section className="container py-12 md:py-16 animate-slideUp">
           <ProductShowcase />
         </section>
 
         {/* Universities Section */}
         {universities.length > 0 && (
-          <section className="bg-gradient-to-b from-green-50/50 to-white dark:from-green-950/10 dark:to-background py-16">
+          <section className="bg-gradient-to-b from-green-50/50 to-white dark:from-green-950/10 dark:to-background py-16 animate-slideUp">
             <div className="container">
               <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center mb-12">
                 <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-4xl">
@@ -397,7 +400,7 @@ export default function LandingPage() {
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {universities.map((university) => (
-                  <Card key={university.id} className="text-center p-6 hover:shadow-md transition-shadow">
+                  <Card key={university.id} className="text-center p-6 hover:shadow-md transition-shadow animate-fadeIn">
                     <h3 className="font-semibold text-lg mb-2">{university.short_name || university.name}</h3>
                     <p className="text-sm text-muted-foreground mb-2">{university.name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -412,7 +415,7 @@ export default function LandingPage() {
         )}
 
         {/* Features Section */}
-        <section className="container py-12 md:py-24">
+        <section className="container py-12 md:py-24 animate-slideUp">
           <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center">
             <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
               <span className="text-gradient">Platform Features</span>
@@ -457,19 +460,27 @@ export default function LandingPage() {
         </section>
 
         {/* How It Works */}
-        <HowItWorks />
+        <div className="animate-slideUp">
+          <HowItWorks />
+        </div>
 
         {/* Verification Section */}
-        <VerificationSection />
+        <div className="animate-slideUp">
+          <VerificationSection />
+        </div>
 
         {/* PWA Features */}
-        <PwaFeatures />
+        <div className="animate-slideUp">
+          <PwaFeatures />
+        </div>
 
         {/* Testimonials */}
-        <TestimonialCarousel />
+        <div className="animate-slideUp">
+          <TestimonialCarousel />
+        </div>
 
         {/* CTA Section */}
-        <section className="bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background py-16 relative overflow-hidden">
+        <section className="bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background py-16 relative overflow-hidden animate-fadeIn">
           {/* Background glow */}
           <div className="absolute inset-0 overflow-hidden">
             {Array.from({ length: 10 }).map((_, i) => (
@@ -508,111 +519,7 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      {/* <footer className="border-t bg-background relative">
-        <div className="absolute inset-0 bg-gradient-to-t from-green-50/30 to-transparent dark:from-green-950/10 dark:to-transparent"></div>
-        <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12 relative z-10">
-          <div className="flex flex-1 flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <span className="text-lg font-semibold">Campus Marketplace</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              The ultimate marketplace for Zimbabwean university students.
-            </p>
-            <div className="flex items-center gap-4 mt-2">
-              <Badge variant="secondary" className="text-xs">
-                {stats.totalProducts.toLocaleString()} Products
-              </Badge>
-              <Badge variant="secondary" className="text-xs">
-                {stats.totalUsers.toLocaleString()} Students
-              </Badge>
-              <Badge variant="secondary" className="text-xs">
-                {allUniversitiesCount} Universities
-              </Badge>
-            </div>
-            {/* Best Universities List */}
-            {/* <div className="flex flex-wrap gap-2 mt-4">
-              {universities.map((u) => (
-                <Badge key={u.id} variant="outline" className="text-xs">
-                  {u.short_name || u.name}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          <div className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-3">
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm font-medium text-gradient">Platform</h3>
-              <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
-                <li>
-                  <Link
-                    href="/marketplace"
-                    className="hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                  >
-                    Marketplace
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/verification"
-                    className="hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                  >
-                    Get Verified
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/dashboard" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    Dashboard
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm font-medium text-gradient">Resources</h3>
-              <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/help" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    Help Center
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/faq" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    FAQs
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/safety" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    Safety Tips
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm font-medium text-gradient">Company</h3>
-              <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/about" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    Privacy Policy
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div className="container border-t py-6 text-center text-sm text-muted-foreground relative z-10">
-          &copy; {new Date().getFullYear()} Campus Marketplace. All rights reserved. Made with ❤️ for Zimbabwean
-          students.
-        </div>
-      </footer> */}
+      <Footer />
     </div>
   )
 }
