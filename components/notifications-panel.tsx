@@ -22,10 +22,10 @@ interface Notification {
 }
 
 const typeMeta = {
-  message: { icon: MessageSquare, color: "text-blue-500", label: "Message" },
-  accommodation: { icon: Home, color: "text-green-600", label: "Booking" },
-  admin: { icon: Info, color: "text-purple-600", label: "System" },
-  default: { icon: Bell, color: "text-gray-400", label: "Other" },
+  message: { icon: MessageSquare, color: "text-blue-600", bg: "bg-blue-50", label: "Message" },
+  accommodation: { icon: Home, color: "text-green-600", bg: "bg-green-50", label: "Booking" },
+  admin: { icon: Info, color: "text-purple-600", bg: "bg-purple-50", label: "System" },
+  default: { icon: Bell, color: "text-gray-400", bg: "bg-muted", label: "Other" },
 };
 
 export default function NotificationsPanel({ userId }: { userId: string }) {
@@ -44,7 +44,7 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
       orderBy("createdAt", "desc")
     );
     const unsub = onSnapshot(q, (snap) => {
-      const newNotifications = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const newNotifications = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
       // Animated feedback for new booking notification
       if (prevNotifications.current.length > 0 && newNotifications.length > prevNotifications.current.length) {
         const latest = newNotifications[0];
@@ -74,25 +74,25 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
   };
 
   // Group notifications by type
-  const grouped = notifications.reduce((acc, n) => {
+  const grouped: Record<string, Notification[]> = notifications.reduce((acc: Record<string, Notification[]>, n: Notification) => {
     const type = n.type || 'default';
     if (!acc[type]) acc[type] = [];
     acc[type].push(n);
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {});
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow p-4" aria-label="Notifications Panel" role="region">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Bell className="h-5 w-5" /> Notifications
-          {unreadCount > 0 && <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{unreadCount}</span>}
+          <Bell className="h-5 w-5 text-primary" /> Notifications
+          {unreadCount > 0 && <span className="ml-2 bg-primary text-white text-xs rounded-full px-2 py-0.5">{unreadCount}</span>}
         </h3>
         <div className="flex gap-2">
-          <button onClick={markAllAsRead} className="text-xs text-blue-600 hover:underline" aria-label="Mark all as read" title="Mark all as read">Mark all as read</button>
-          <button onClick={clearAll} className="text-xs text-destructive hover:underline flex items-center gap-1" aria-label="Clear all notifications" title="Clear all" disabled={clearing}><Trash2 className="h-4 w-4" />Clear all</button>
-          <a href="/settings" className="text-xs text-muted-foreground hover:underline flex items-center gap-1" aria-label="Notification settings" title="Notification settings"><Settings className="h-4 w-4" />Settings</a>
+          <button onClick={markAllAsRead} className="text-xs text-primary hover:underline focus:underline" aria-label="Mark all as read" title="Mark all as read">Mark all as read</button>
+          <button onClick={clearAll} className="text-xs text-destructive hover:underline focus:underline flex items-center gap-1" aria-label="Clear all notifications" title="Clear all" disabled={clearing}><Trash2 className="h-4 w-4" />Clear all</button>
+          <a href="/settings" className="text-xs text-muted-foreground hover:underline focus:underline flex items-center gap-1" aria-label="Notification settings" title="Notification settings"><Settings className="h-4 w-4" />Settings</a>
         </div>
       </div>
       {loading ? (
@@ -107,6 +107,7 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
         <div className="space-y-6">
           {Object.entries(grouped).map(([type, group]) => {
             const meta = typeMeta[type as keyof typeof typeMeta] || typeMeta.default;
+            const typedGroup = group as Notification[];
             return (
               <div key={type}>
                 <div className="flex items-center gap-2 mb-1">
@@ -115,28 +116,28 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
                 </div>
                 <ul className="divide-y divide-gray-200">
                   <AnimatePresence>
-                    {group.map((n: Notification) => (
+                    {typedGroup.map((n: Notification) => (
                       <motion.li
                         key={n.id}
                         initial={{ opacity: 0, x: 40 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -40 }}
                         transition={{ duration: 0.2 }}
-                        className={`py-3 flex items-start gap-2 ${n.read ? 'opacity-60' : 'bg-blue-50'} rounded-lg px-2`}
+                        className={`py-3 flex items-start gap-2 rounded-lg px-2 ${n.read ? 'bg-muted text-foreground opacity-60' : `${meta.bg} text-foreground`}`}
                         aria-live={n.read ? undefined : "polite"}
                       >
                         <div className="flex-1">
                           <div className="font-medium flex items-center gap-2">
                             {n.title}
-                            {!n.read && <span className="inline-block w-2 h-2 bg-blue-500 rounded-full" title="Unread" />}
+                            {!n.read && <span className="inline-block w-2 h-2 bg-primary rounded-full" title="Unread" />}
                           </div>
-                          <div className="text-sm text-gray-600">{n.body}</div>
-                          {n.link && <a href={n.link} className="text-blue-500 text-xs underline" aria-label="View notification details">View</a>}
+                          <div className="text-sm text-muted-foreground">{n.body}</div>
+                          {n.link && <a href={n.link} className="text-primary text-xs underline hover:text-primary/80 focus:text-primary/80" aria-label="View notification details">View</a>}
                           <div className="text-xs text-gray-400 mt-1">{n.createdAt?.toDate ? n.createdAt.toDate().toLocaleString() : ''}</div>
                         </div>
                         {!n.read && (
                           <button
-                            className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                            className="ml-2 px-2 py-1 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 focus:bg-primary/20 transition"
                             onClick={() => markAsRead(n.id)}
                             aria-label="Mark as read"
                             title="Mark as read"
