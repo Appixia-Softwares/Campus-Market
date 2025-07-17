@@ -90,6 +90,7 @@ export default function CommunityLayout({
             {/* Toast notifications */}
             <Toaster />
             <SonnerToaster />
+            </div>
           </ThemeProvider>
         </QueryProvider>
       </AuthProvider>
