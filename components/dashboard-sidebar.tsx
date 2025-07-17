@@ -449,19 +449,6 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                     <SidebarMenuItem>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <SidebarMenuButton asChild isActive={pathname === "/accommodation/booked" || pathname.startsWith("/accommodation/booked")}>
-                            <Link href="/accommodation/booked" className="sidebar-link">
-                              <CheckCircle2 className="h-4 w-4" />
-                              <span>Booked</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </TooltipTrigger>
-                        <TooltipContent>Booked</TooltipContent>
-                      </Tooltip>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
                           <SidebarMenuButton asChild isActive={pathname === "/accommodation/my-bookings"}>
                             <Link href="/accommodation/my-bookings" className="sidebar-link">
                               <CheckCircle2 className="h-4 w-4" />
