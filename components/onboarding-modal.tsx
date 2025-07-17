@@ -15,6 +15,8 @@ import { User, GraduationCap, Phone, FileText, Camera } from "lucide-react"
 import { toast } from "sonner"
 import { getUniversities } from "@/lib/api/auth"
 import { supabase } from "@/supabase"
+import { useMediaQuery } from "@/hooks/use-mobile";
+import confetti from "canvas-confetti";
 
 interface University {
   id: string
@@ -39,6 +41,10 @@ export function OnboardingModal() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string>("")
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+
+  const isMobile = useMediaQuery('(max-width: 640px)');
+  const [showWhatsNext, setShowWhatsNext] = useState(false);
+  const [skipWarning, setSkipWarning] = useState(false);
 
   // Load universities from database
   useEffect(() => {
@@ -216,7 +222,9 @@ export function OnboardingModal() {
       })
 
       toast.success("Profile completed successfully! Welcome to CampusMarket Zimbabwe!")
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 } })
       setOpen(false)
+      setShowWhatsNext(true)
     } catch (error: any) {
       console.error("Error completing onboarding:", error)
       toast.error(error.message || "Failed to complete profile. Please try again.")
@@ -243,178 +251,168 @@ export function OnboardingModal() {
   const progress = (step / 4) * 100
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="text-2xl">🇿🇼</span>
-            Complete Your Profile
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            Welcome to CampusMarket Zimbabwe - connecting students across the country
-          </p>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Step {step} of 4</span>
-              <span>{Math.round(progress)}% complete</span>
+    <>
+      <Dialog open={open} onOpenChange={() => {}} modal aria-label="Onboarding Modal">
+        <DialogContent className={isMobile ? "sm:max-w-full max-w-full p-0 rounded-t-2xl" : "sm:max-w-md"} style={isMobile ? { bottom: 0, position: 'fixed', left: 0, right: 0 } : {}}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-2xl">🇿🇼</span>
+              Complete Your Profile
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Welcome to CampusMarket Zimbabwe - connecting students across the country
+            </p>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Step {step} of 4</span>
+                <span>{Math.round(progress)}% complete</span>
+              </div>
+              <Progress value={progress} className="h-2" />
             </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-
-          {step === 1 && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="relative mx-auto w-24 h-24 mb-4">
-                  <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-                    {avatarPreview ? (
-                      <img
-                        src={avatarPreview || "/placeholder.svg"}
-                        alt="Avatar preview"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="h-12 w-12 text-muted-foreground" />
-                    )}
+            {/* Step illustrations/icons and tooltips */}
+            {step === 1 && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="relative mx-auto w-24 h-24 mb-4">
+                    <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                      {avatarPreview ? (
+                        <img src={avatarPreview || "/placeholder.svg"} alt="Avatar preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="h-12 w-12 text-muted-foreground" />
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" id="avatar-upload" />
+                    <label htmlFor="avatar-upload" className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:bg-primary/90 transition-colors shadow-lg" title="Upload your photo">
+                      <Camera className="h-4 w-4" />
+                    </label>
                   </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                    id="avatar-upload"
-                  />
-                  <label
-                    htmlFor="avatar-upload"
-                    className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:bg-primary/90 transition-colors shadow-lg"
-                  >
-                    <Camera className="h-4 w-4" />
-                  </label>
+                  <h3 className="text-lg font-semibold">Upload your photo</h3>
+                  <p className="text-sm text-muted-foreground">Help other students recognize you</p>
                 </div>
-                <h3 className="text-lg font-semibold">Upload your photo</h3>
-                <p className="text-sm text-muted-foreground">Help other students recognize you</p>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Enter your full name" autoFocus aria-label="Full Name" title="Enter your full name as it appears on your student ID" />
+                  <span className="text-xs text-muted-foreground">Use your real name for trust and verification.</span>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your full name"
-                  autoFocus
-                />
+            )}
+            {step === 2 && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <GraduationCap className="mx-auto h-12 w-12 text-blue-600 mb-4" />
+                  <h3 className="text-lg font-semibold">Which university do you attend?</h3>
+                  <p className="text-sm text-muted-foreground">Connect with students from your campus</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="university">University</Label>
+                  <Select value={universityId} onValueChange={setUniversityId} aria-label="University">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your university" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingUniversities ? (
+                        <SelectItem value="loading" disabled>Loading universities...</SelectItem>
+                      ) : (
+                        universities.map((uni) => (
+                          <SelectItem key={uni.id} value={uni.id} title={uni.location}>
+                            <div>
+                              <div className="font-medium">{uni.name}</div>
+                              <div className="text-sm text-muted-foreground">{uni.location}</div>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-xs text-muted-foreground">This helps us connect you with your campus community.</span>
+                </div>
               </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <GraduationCap className="mx-auto h-12 w-12 text-blue-600 mb-4" />
-                <h3 className="text-lg font-semibold">Which university do you attend?</h3>
-                <p className="text-sm text-muted-foreground">Connect with students from your campus</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="university">University</Label>
-                <Select value={universityId} onValueChange={setUniversityId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your university" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isLoadingUniversities ? (
-                      <SelectItem value="loading" disabled>
-                        Loading universities...
-                      </SelectItem>
-                    ) : (
-                      universities.map((uni) => (
-                        <SelectItem key={uni.id} value={uni.id}>
-                          <div>
-                            <div className="font-medium">{uni.name}</div>
-                            <div className="text-sm text-muted-foreground">{uni.location}</div>
-                          </div>
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <Phone className="mx-auto h-12 w-12 text-blue-600 mb-4" />
-                <h3 className="text-lg font-semibold">What's your phone number?</h3>
-                <p className="text-sm text-muted-foreground">For account security and communication</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Mobile Number</Label>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 px-3 py-2 border rounded-md bg-muted">
-                    <span className="text-lg">🇿🇼</span>
-                    <span className="font-medium">+263</span>
+            )}
+            {step === 3 && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <Phone className="mx-auto h-12 w-12 text-blue-600 mb-4" />
+                  <h3 className="text-lg font-semibold">What's your phone number?</h3>
+                  <p className="text-sm text-muted-foreground">For account security and communication</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Mobile Number</Label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 px-3 py-2 border rounded-md bg-muted">
+                      <span className="text-lg">🇿🇼</span>
+                      <span className="font-medium">+263</span>
+                    </div>
+                    <Input id="phone" type="tel" placeholder="77 123 4567" value={phoneNumber} onChange={(e) => handlePhoneChange(e.target.value)} className="flex-1" maxLength={11} aria-label="Mobile Number" title="Enter your Zimbabwean mobile number" />
                   </div>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="77 123 4567"
-                    value={phoneNumber}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
-                    className="flex-1"
-                    maxLength={11} // 9 digits + 2 spaces
-                  />
+                  <span className="text-xs text-muted-foreground">Enter your mobile number without the country code (e.g., 77 123 4567).</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Full number: +263 {phoneNumber}</p>
-                <p className="text-xs text-muted-foreground">
-                  Enter your mobile number without the country code (e.g., 77 123 4567)
-                </p>
+              </div>
+            )}
+            {step === 4 && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <FileText className="mx-auto h-12 w-12 text-blue-600 mb-4" />
+                  <h3 className="text-lg font-semibold">Tell us about yourself</h3>
+                  <p className="text-sm text-muted-foreground">Share your interests, what you're studying, or what you're looking for</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bio">About You</Label>
+                  <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="I'm a Computer Science student at UZ, interested in technology and looking for affordable accommodation near campus..." rows={4} maxLength={500} aria-label="About You" title="Tell us about yourself" />
+                  <span className="text-xs text-muted-foreground">{bio.length}/500 characters</span>
+                </div>
+              </div>
+            )}
+            {/* Skip for now option */}
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handlePrevious} disabled={step === 1}>Previous</Button>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => setSkipWarning(true)} aria-label="Skip onboarding" title="Skip onboarding">Skip for now</Button>
+                {step < 4 ? (
+                  <Button onClick={handleNext} disabled={!canProceed()}>Next</Button>
+                ) : (
+                  <Button onClick={handleComplete} disabled={!canProceed() || loading}>{loading ? "Completing..." : "Complete Profile"}</Button>
+                )}
               </div>
             </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <FileText className="mx-auto h-12 w-12 text-blue-600 mb-4" />
-                <h3 className="text-lg font-semibold">Tell us about yourself</h3>
-                <p className="text-sm text-muted-foreground">
-                  Share your interests, what you're studying, or what you're looking for
-                </p>
+            {/* Skip warning dialog */}
+            {skipWarning && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm mx-auto">
+                  <h4 className="font-bold mb-2">Are you sure you want to skip?</h4>
+                  <p className="text-sm text-muted-foreground mb-4">You can complete your profile later, but some features may be limited until you do.</p>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setSkipWarning(false)}>Cancel</Button>
+                    <Button variant="destructive" onClick={() => { setOpen(false); setSkipWarning(false); }}>Skip</Button>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="bio">About You</Label>
-                <Textarea
-                  id="bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="I'm a Computer Science student at UZ, interested in technology and looking for affordable accommodation near campus..."
-                  rows={4}
-                  maxLength={500}
-                />
-                <p className="text-xs text-muted-foreground">{bio.length}/500 characters</p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={handlePrevious} disabled={step === 1}>
-              Previous
-            </Button>
-            {step < 4 ? (
-              <Button onClick={handleNext} disabled={!canProceed()}>
-                Next
-              </Button>
-            ) : (
-              <Button onClick={handleComplete} disabled={!canProceed() || loading}>
-                {loading ? "Completing..." : "Complete Profile"}
-              </Button>
             )}
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      {/* What's next screen after completion */}
+      {showWhatsNext && (
+        <Dialog open={showWhatsNext} onOpenChange={() => setShowWhatsNext(false)} modal aria-label="Onboarding Complete">
+          <DialogContent className="sm:max-w-md text-center">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 justify-center">
+                <span className="text-2xl">🎉</span> Welcome to CampusMarket!
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-lg font-semibold mb-2">Your profile is complete.</p>
+              <p className="text-muted-foreground mb-4">You can now explore the marketplace, list your first item, or update your settings.</p>
+              <div className="flex flex-col gap-2">
+                <Button asChild variant="default"><a href="/marketplace">Go to Marketplace</a></Button>
+                <Button asChild variant="secondary"><a href="/marketplace/sell">List Your First Item</a></Button>
+                <Button asChild variant="outline"><a href="/settings">Update Settings</a></Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   )
 }
