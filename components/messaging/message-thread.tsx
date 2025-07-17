@@ -16,6 +16,8 @@ import { db } from '@/lib/firebase'
 import { collection, doc, getDoc, updateDoc, addDoc, onSnapshot, query, where, orderBy } from 'firebase/firestore'
 import { formatDistanceToNow } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import EmojiPicker from "emoji-picker-react"; // Assume emoji-picker-react is installed
 
 interface Message {
   id: string
@@ -29,6 +31,8 @@ interface Message {
     full_name: string
     avatar_url: string | null
   }
+  fileUrl?: string | null;
+  fileType?: string | null;
 }
 
 export function MessageThread() {
@@ -44,6 +48,11 @@ export function MessageThread() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isOtherTyping, setIsOtherTyping] = useState(false)
   const [lastReadMessageId, setLastReadMessageId] = useState<string | null>(null)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [fileToSend, setFileToSend] = useState<File | null>(null);
 
   // Typing indicator logic
   useEffect(() => {
@@ -143,6 +152,67 @@ export function MessageThread() {
   // Clear typing status on blur
   const handleBlur = () => setTyping(false)
 
+  // Handle file selection
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileToSend(file);
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setFilePreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  // Handle file upload and send
+  const handleSendFile = async () => {
+    if (!fileToSend || !user || !id) return;
+    setUploadingFile(true);
+    try {
+      const storage = getStorage();
+      const filePath = `messages/${id}/${Date.now()}-${fileToSend.name}`;
+      const fileRef = storageRef(storage, filePath);
+      const uploadTask = uploadBytes(fileRef, fileToSend);
+      await uploadTask;
+      const url = await getDownloadURL(fileRef);
+      await addDoc(collection(db, 'messages'), {
+        conversation_id: id,
+        sender_id: user.id,
+        content: fileToSend.type.startsWith("image/") ? "[image]" : fileToSend.name,
+        fileUrl: url,
+        fileType: fileToSend.type,
+        read: false,
+        created_at: new Date().toISOString(),
+      });
+      setFileToSend(null);
+      setFilePreview(null);
+      setUploadProgress(null);
+    } catch (error) {
+      toast({ title: "Upload failed", description: "Could not upload file.", variant: "destructive" });
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  // Handle emoji picker
+  const handleEmojiClick = (emojiData: any) => {
+    const emoji = emojiData.emoji;
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    setMessageText(
+      messageText.slice(0, start) + emoji + messageText.slice(end)
+    );
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+    }, 0);
+    setShowEmojiPicker(false);
+  };
+
   // Update lastReadMessageId when messages are read
   useEffect(() => {
     if (!id || !user || messages.length === 0) return
@@ -200,9 +270,7 @@ export function MessageThread() {
                 transition={{ duration: 0.2 }}
                 className={`flex ${message.sender_id === user?.id ? "justify-end" : "justify-start"}`}
               >
-                <div
-                  className={`flex items-end gap-2 max-w-[80%] ${message.sender_id === user?.id ? "flex-row-reverse" : ""}`}
-                >
+                <div className={`flex items-end gap-2 max-w-[80%] ${message.sender_id === user?.id ? "flex-row-reverse" : ""}`}>
                   {message.sender_id !== user?.id && (
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={message.users?.avatar_url || ""} />
@@ -215,7 +283,14 @@ export function MessageThread() {
                         message.sender_id === user?.id ? "bg-primary text-primary-foreground" : "bg-muted"
                       }`}
                     >
-                      <p className="text-sm">{message.content}</p>
+                      {/* Render image inline if fileUrl and fileType is image */}
+                      {message.fileUrl && message.fileType?.startsWith("image/") ? (
+                        <img src={message.fileUrl} alt="sent image" className="max-w-xs rounded mb-1" />
+                      ) : message.fileUrl ? (
+                        <a href={message.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">{message.content}</a>
+                      ) : (
+                        <p className="text-sm">{message.content}</p>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
@@ -244,23 +319,37 @@ export function MessageThread() {
               onKeyDown={handleKeyPress}
               onBlur={handleBlur}
               className="min-h-[60px] resize-none pr-20"
-              disabled={sending}
+              disabled={sending || uploadingFile}
             />
-            <div className="absolute bottom-2 right-2 flex gap-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+            {/* Emoji picker button */}
+            <div className="absolute bottom-2 right-16 flex gap-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setShowEmojiPicker((v) => !v)} aria-label="Add emoji">
                 <Smile className="h-5 w-5 text-muted-foreground" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+              {/* File upload button */}
+              <label className="h-8 w-8 rounded-full flex items-center justify-center cursor-pointer bg-muted hover:bg-muted/70">
                 <Paperclip className="h-5 w-5 text-muted-foreground" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                <ImageIcon className="h-5 w-5 text-muted-foreground" />
-              </Button>
+                <input type="file" className="hidden" onChange={handleFileChange} />
+              </label>
             </div>
+            {/* Emoji picker dropdown */}
+            {showEmojiPicker && (
+              <div className="absolute bottom-12 right-0 z-50">
+                <EmojiPicker onEmojiClick={handleEmojiClick} theme="light" />
+              </div>
+            )}
+            {/* File preview and upload progress */}
+            {fileToSend && (
+              <div className="absolute bottom-16 left-0 right-0 bg-white border rounded shadow p-2 flex items-center gap-2 z-40">
+                {filePreview ? <img src={filePreview} alt="preview" className="h-12 w-12 object-cover rounded" /> : <span>{fileToSend.name}</span>}
+                <Button size="sm" onClick={handleSendFile} disabled={uploadingFile}>Send</Button>
+                <Button size="sm" variant="outline" onClick={() => { setFileToSend(null); setFilePreview(null); }}>Cancel</Button>
+              </div>
+            )}
           </div>
           <Button
             onClick={handleSendMessage}
-            disabled={!messageText.trim() || sending}
+            disabled={!messageText.trim() || sending || uploadingFile}
             className="h-10 w-10 rounded-full p-0"
           >
             <Send className="h-5 w-5" />
