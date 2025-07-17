@@ -36,7 +36,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/lib/auth-context"
 import { db } from "@/lib/firebase"
-import { doc, getDoc, collection, query, where, onSnapshot, getDocs } from "firebase/firestore"
+import { doc, getDoc, collection, query, where, onSnapshot, getDocs, deleteDoc } from "firebase/firestore"
 import { useEffect, useState } from "react"
 import { User as UserType } from "@/lib/auth-service"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -44,6 +44,7 @@ import { useRouter } from "next/navigation"
 import AccommodationFormDialogContent from "./AccommodationFormDialogContent"
 import { TooltipTrigger } from "@/components/ui/tooltip"
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip"
+import { toast } from "@/hooks/use-toast"
 
 interface DashboardSidebarProps {
   isMobile?: boolean
