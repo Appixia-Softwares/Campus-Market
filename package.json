@@ -53,6 +53,7 @@
     "date-fns": "latest",
     "embla-carousel-react": "latest",
     "emoji-mart": "^5.6.0",
+    "emoji-picker-react": "^4.13.2",
     "firebase": "^11.8.1",
     "firebase-admin": "^13.4.0",
     "firebase-functions": "^6.3.2",
