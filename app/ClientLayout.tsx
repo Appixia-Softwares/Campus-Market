@@ -7,6 +7,7 @@ import { Toaster as SonnerToaster } from "sonner";
 import { SessionProvider } from '@/providers/session-provider'
 import QueryProvider from "@/providers/query-provider"
 import BottomNavigation from "@/components/BottomNavigation"
+import Footer from "@/components/Footer";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/lib/auth-context";
@@ -24,6 +25,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             {children}
             {/* Show bottom navigation only on mobile */}
             <BottomNavigation />
+            <Footer />
             <Toaster />
             <SonnerToaster />
           </ThemeProvider>

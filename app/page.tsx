@@ -508,7 +508,7 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-background relative">
+      {/* <footer className="border-t bg-background relative">
         <div className="absolute inset-0 bg-gradient-to-t from-green-50/30 to-transparent dark:from-green-950/10 dark:to-transparent"></div>
         <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12 relative z-10">
           <div className="flex flex-1 flex-col gap-2">
@@ -531,7 +531,7 @@ export default function LandingPage() {
               </Badge>
             </div>
             {/* Best Universities List */}
-            <div className="flex flex-wrap gap-2 mt-4">
+            {/* <div className="flex flex-wrap gap-2 mt-4">
               {universities.map((u) => (
                 <Badge key={u.id} variant="outline" className="text-xs">
                   {u.short_name || u.name}
@@ -612,7 +612,7 @@ export default function LandingPage() {
           &copy; {new Date().getFullYear()} Campus Marketplace. All rights reserved. Made with ❤️ for Zimbabwean
           students.
         </div>
-      </footer>
+      </footer> */}
     </div>
   )
 }
