@@ -90,6 +90,7 @@ export default function AnalyticsLayout({
             {/* Toast notifications */}
             <Toaster />
             <SonnerToaster />
+            </div>
           </ThemeProvider>
         </QueryProvider>
       </AuthProvider>
