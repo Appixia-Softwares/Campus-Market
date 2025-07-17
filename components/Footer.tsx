@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Facebook, Twitter, Instagram, Mail, Info, Shield, HelpCircle, Users, Send, MapPin, TrendingUp, List, Folder, FileText, BarChart3, MessageCircle, Star, Briefcase, Newspaper, Download, BookOpen, UserCheck, Lock, Globe, FileWarning, Plus, Linkedin, Youtube, Tiktok, Phone } from "lucide-react";
+import { Facebook, Twitter, Instagram, Mail, Info, Shield, HelpCircle, Users, Send, MapPin, TrendingUp, List, Folder, FileText, BarChart3, MessageCircle, Star, Briefcase, Newspaper, Download, BookOpen, UserCheck, Lock, Globe, FileWarning, Plus, Phone, PlayCircle, Music } from "lucide-react";
 
 // Footer links and social icons
 const aboutLinks = [
@@ -42,62 +42,13 @@ const companyLinks = [
 ];
 // Social links (add all major platforms)
 const socialLinks = [
-  { href: "https://facebook.com", label: "Facebook", icon: Facebook },
-  { href: "https://twitter.com", label: "Twitter", icon: Twitter },
-  { href: "https://instagram.com", label: "Instagram", icon: Instagram },
-  { href: "https://linkedin.com", label: "LinkedIn", icon: Linkedin },
-  { href: "https://wa.me/", label: "WhatsApp", icon: Phone },
-  { href: "https://youtube.com", label: "YouTube", icon: Youtube },
-  { href: "https://tiktok.com", label: "TikTok", icon: Tiktok },
+  { href: "https://www.facebook.com/profile.php?id=61575622615505", label: "Facebook", icon: Facebook },
+  { href: "https://www.instagram.com/campusmarketzw", label: "Instagram", icon: Instagram },
+  { href: "https://www.linkedin.com/company/campus-marketzw", label: "LinkedIn", icon: Briefcase },
+  { href: "https://wa.me/+263786223289", label: "WhatsApp", icon: Phone },
+
   { href: "mailto:suport@campusmarket.co.zw", label: "Email", icon: Mail },
 ];
-
-// Newsletter signup mock
-function NewsletterSignup() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<null | "success" | "error">(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      if (email.includes("@")) {
-        setStatus("success");
-      } else {
-        setStatus("error");
-      }
-      setLoading(false);
-    }, 1000);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full max-w-xs">
-      <label htmlFor="newsletter" className="text-xs font-semibold text-muted-foreground">Subscribe to our newsletter</label>
-      <div className="flex gap-2">
-        <input
-          id="newsletter"
-          type="email"
-          value={email}
-          onChange={e => { setEmail(e.target.value); setStatus(null); }}
-          placeholder="Your email"
-          className="flex-1 rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none bg-background/80"
-          required
-        />
-        <button
-          type="submit"
-          className="rounded-lg bg-primary text-white px-3 py-2 flex items-center gap-1 font-semibold hover:bg-primary/90 transition"
-          disabled={loading}
-        >
-          <Send className="h-4 w-4" />
-          {loading ? "..." : "Join"}
-        </button>
-      </div>
-      {status === "success" && <span className="text-green-600 text-xs">Thank you for subscribing!</span>}
-      {status === "error" && <span className="text-red-600 text-xs">Please enter a valid email.</span>}
-    </form>
-  );
-}
 
 // Desktop Footer
 function DesktopFooter() {
@@ -112,7 +63,6 @@ function DesktopFooter() {
             <span className="font-bold text-lg">Campus Marketplace</span>
           </div>
           <p className="text-sm text-muted-foreground mb-4">The ultimate marketplace for Zimbabwean university students.</p>
-          <NewsletterSignup />
         </div>
         {/* Platform Links */}
         <div>
@@ -270,7 +220,6 @@ function MobileFooter() {
                 </a>
               ))}
             </div>
-            <NewsletterSignup />
             <div className="text-xs text-muted-foreground text-center">Made with <span className="text-red-500">♥</span> in Zimbabwe<br />&copy; {year} Campus Marketplace.</div>
           </div>
         </SheetContent>
