@@ -1184,6 +1184,37 @@ export default function SellPage() {
 
 // Polish CategoryStep with green accent
 function CategoryStep({ categories, onSelect }: { categories: any[]; onSelect: (category: any) => void }) {
+  // Map string icon names to Lucide icon components
+  const iconMap: Record<string, React.ElementType> = {
+    Laptop,
+    Shirt,
+    Home,
+    Book,
+    Dumbbell,
+    Car,
+    Baby,
+    Apple,
+    Watch,
+    Camera,
+    Gamepad2,
+    PawPrint,
+    Sparkles,
+    Briefcase,
+    Globe,
+    Gift,
+    Music,
+    FlaskConical,
+    Wrench,
+    Gem,
+    BedDouble,
+    Bike,
+    Tv,
+    Phone,
+    Wallet,
+    ShoppingBag,
+    Package,
+    Cake,
+  };
   return (
     <div className="flex flex-col items-center justify-center min-h-[40vh] animate-fade-in">
       <div className="overflow-y-auto w-full max-h-[60vh] scrollbar-thin scrollbar-thumb-green-300 scrollbar-track-transparent smooth-scroll">
@@ -1192,7 +1223,13 @@ function CategoryStep({ categories, onSelect }: { categories: any[]; onSelect: (
             <div className="col-span-full text-center text-muted-foreground">No categories available</div>
           ) : (
             categories.map((cat: any) => {
-              const Icon = cat.icon || Package;
+              // If icon is a string, map to component; if already a component, use directly
+              let Icon: React.ElementType = Package;
+              if (typeof cat.icon === 'string' && iconMap[cat.icon]) {
+                Icon = iconMap[cat.icon];
+              } else if (typeof cat.icon === 'function') {
+                Icon = cat.icon;
+              }
               return (
                 <button
                   key={cat.name}
@@ -1208,9 +1245,9 @@ function CategoryStep({ categories, onSelect }: { categories: any[]; onSelect: (
                 </button>
               );
             })
-                )}
-              </div>
-    </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
