@@ -258,7 +258,11 @@ function MyListingsPage() {
               </div>
               <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{product.description}</p>
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{formatDistanceToNow(new Date(product.created_at))} ago</span>
+                <span>{
+  product.created_at && !isNaN(new Date(product.created_at).getTime())
+    ? formatDistanceToNow(new Date(product.created_at)) + ' ago'
+    : '-'
+}</span>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
                     <Eye className="h-3 w-3" />
