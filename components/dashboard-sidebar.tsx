@@ -376,7 +376,7 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                               onClick={() => setShowAccommodationForm(true)}
                             >
                               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mr-4">
-                                <Building className="h-7 w-7 text-accent" />
+                              <Plus className="h-4 w-4" />
                               </div>
                               <div className="flex-1 text-left">
                                 <div className="font-semibold text-base">Accommodation</div>
