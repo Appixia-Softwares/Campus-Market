@@ -186,22 +186,6 @@ export default function NotificationsPanel({ userId }: { userId: string }) {
           })}
         </div>
       )}
-      {/* Enhanced Footer */}
-      <div className="mt-6 pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs bg-muted/40 rounded-b-lg">
-        <div className="flex gap-4 items-center">
-          <a href="/settings" className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors" aria-label="Notification Preferences">
-            <Settings className="h-4 w-4" /> Preferences
-          </a>
-          <a href="/help" className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors" aria-label="Help">
-            <Info className="h-4 w-4" /> Help
-          </a>
-        </div>
-        <div className="flex gap-2 items-center text-muted-foreground">
-          <span>Last updated:</span>
-          <span suppressHydrationWarning>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-        </div>
-        <div className="hidden sm:block text-muted-foreground opacity-60 text-[10px] ml-auto">Powered by Campus Market</div>
-      </div>
     </motion.div>
   );
 }
