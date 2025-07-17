@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAllUsersRealtime } from "@/lib/api/users";
 import { getAllOrdersRealtime } from "@/lib/api/orders";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Loader2 } from "lucide-react";
 import { UserGrowthChart } from "@/components/analytics/UserGrowthChart";
@@ -35,6 +35,8 @@ export default function AdminAnalyticsPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visitorCount, setVisitorCount] = useState(0);
+  const [leaverCount, setLeaverCount] = useState(0);
 
   // Real-time users
   useEffect(() => {
@@ -53,6 +55,30 @@ export default function AdminAnalyticsPage() {
     const q = query(collection(db, "products"));
     const unsub = onSnapshot(q, (snap) => {
       setProducts(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Product)));
+    });
+    return () => unsub();
+  }, []);
+
+  // Real-time visitors
+  useEffect(() => {
+    const q = query(collection(db, "visitors")); // or "site_visits"
+    const unsub = onSnapshot(q, (snap) => {
+      setVisitorCount(snap.size);
+    });
+    return () => unsub();
+  }, []);
+
+  // Real-time leavers (users who haven't logged in for 30+ days)
+  useEffect(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    // Firestore expects a Timestamp, but Date works for comparison
+    const q = query(
+      collection(db, "users"),
+      where("last_login", "<", thirtyDaysAgo)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setLeaverCount(snap.size);
     });
     return () => unsub();
   }, []);
@@ -92,7 +118,7 @@ export default function AdminAnalyticsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-10">
           <Card>
             <CardHeader>
               <CardTitle>Total Users</CardTitle>
@@ -125,6 +151,23 @@ export default function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">${totalRevenue.toLocaleString()}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Visitors</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{visitorCount}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Leavers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{leaverCount}</div>
+              <div className="text-xs text-muted-foreground">Inactive 30+ days</div>
             </CardContent>
           </Card>
         </div>
