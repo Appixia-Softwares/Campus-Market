@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -42,6 +42,29 @@ export function MessageThread() {
   const [messageText, setMessageText] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [isOtherTyping, setIsOtherTyping] = useState(false)
+  const [lastReadMessageId, setLastReadMessageId] = useState<string | null>(null)
+
+  // Typing indicator logic
+  useEffect(() => {
+    if (!id || !user) return
+    const convoRef = doc(db, 'conversations', id)
+    // Listen for typing field
+    const unsub = onSnapshot(convoRef, (snap) => {
+      const data = snap.data()
+      if (!data) return
+      setIsOtherTyping(data.typing && data.typing !== user.id)
+      setLastReadMessageId(data.lastReadMessageId || null)
+    })
+    return () => unsub()
+  }, [id, user])
+
+  // Update typing status
+  const setTyping = useCallback((typing: boolean) => {
+    if (!id || !user) return
+    const convoRef = doc(db, 'conversations', id)
+    updateDoc(convoRef, { typing: typing ? user.id : null })
+  }, [id, user])
 
   // Fetch messages and subscribe to updates
   useEffect(() => {
@@ -111,8 +134,24 @@ export function MessageThread() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
+      setTyping(false)
+    } else {
+      setTyping(true)
     }
   }
+
+  // Clear typing status on blur
+  const handleBlur = () => setTyping(false)
+
+  // Update lastReadMessageId when messages are read
+  useEffect(() => {
+    if (!id || !user || messages.length === 0) return
+    const lastMsg = messages[messages.length - 1]
+    if (lastMsg.sender_id !== user.id && !lastMsg.read) {
+      const convoRef = doc(db, 'conversations', id)
+      updateDoc(convoRef, { lastReadMessageId: lastMsg.id })
+    }
+  }, [id, user, messages])
 
   return (
     <Card className="flex flex-col h-[calc(100vh-8rem)]">
@@ -137,7 +176,11 @@ export function MessageThread() {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+      <CardContent className="flex-1 overflow-y-auto px-4 py-2">
+        {/* Typing indicator */}
+        {isOtherTyping && (
+          <div className="text-xs text-blue-500 mb-2 animate-pulse">User is typing…</div>
+        )}
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className={`flex ${i % 2 === 0 ? "justify-end" : "justify-start"}`}>
@@ -148,7 +191,7 @@ export function MessageThread() {
           ))
         ) : (
           <AnimatePresence initial={false}>
-            {messages.map((message) => (
+            {messages.map((message, idx) => (
               <motion.div
                 key={message.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -177,6 +220,10 @@ export function MessageThread() {
                     <p className="text-xs text-muted-foreground mt-1">
                       {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
                     </p>
+                    {/* Read receipt for last message sent by user */}
+                    {message.sender_id === user?.id && idx === messages.length - 1 && lastReadMessageId === message.id && (
+                      <span className="text-xs text-green-500 flex items-center gap-1 mt-1">Seen <CheckmarkIcon className="h-3 w-3" /></span>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -186,7 +233,7 @@ export function MessageThread() {
         <div ref={messagesEndRef} />
       </CardContent>
 
-      <CardFooter className="border-t p-4">
+      <CardFooter className="border-t px-4 py-3">
         <div className="flex items-end w-full gap-2">
           <div className="flex-1 relative">
             <Textarea
@@ -195,6 +242,7 @@ export function MessageThread() {
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               onKeyDown={handleKeyPress}
+              onBlur={handleBlur}
               className="min-h-[60px] resize-none pr-20"
               disabled={sending}
             />
@@ -220,5 +268,13 @@ export function MessageThread() {
         </div>
       </CardFooter>
     </Card>
+  )
+}
+
+function CheckmarkIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" {...props}>
+      <path d="M4 8.5l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
