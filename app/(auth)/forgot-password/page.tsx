@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { sendPasswordResetEmail } from '@/lib/auth-service';
+import { useToast } from "@/components/ui/use-toast"
+import { handleFirebaseError } from "@/lib/firebase-error"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -18,6 +20,7 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,13 +28,13 @@ export default function ForgotPasswordPage() {
     setError("")
 
     if (!email.trim()) {
-      setError("Email is required")
+      toast({ title: "Email is required", variant: "destructive" })
       setIsLoading(false)
       return
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address")
+      toast({ title: "Please enter a valid email address", variant: "destructive" })
       setIsLoading(false)
       return
     }
@@ -40,8 +43,10 @@ export default function ForgotPasswordPage() {
       // Use modular Firebase helper for password reset
       await sendPasswordResetEmail(email);
       setSuccess(true);
+      toast({ title: "Password reset email sent!", description: `Check your inbox for a reset link.`, variant: "default" })
     } catch (error: any) {
-      setError(error.message || "An unexpected error occurred. Please try again.");
+      const friendly = handleFirebaseError(error)
+      toast({ title: friendly.message, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -116,12 +121,7 @@ export default function ForgotPasswordPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {error && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
+              {/* Show error as toast only */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
