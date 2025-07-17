@@ -1,3 +1,4 @@
+
 "use client"
 import { useEffect, useState } from "react"
 import { ArrowRight, BookOpen, MessageCircle, ShoppingBag, Users, TrendingUp, Shield, Star } from "lucide-react"
@@ -172,21 +173,29 @@ export default function LandingPage() {
 
         // Fetch universities
         const BEST_UNI_IDS = [
-          "uz", // University of Zimbabwe
-          "nust", // National University of Science and Technology
-          "msu", // Midlands State University
-          "cuz", // Catholic University of Zimbabwe
-          "hit", // Harare Institute of Technology
-          "zou", // Zimbabwe Open University
-          "lsu", // Lupane State University
-          "gzu" , // Great Zimbabwe University
+          "uz", 
+          "nust", 
+          "cut", 
+          "msu",
+          "cuz", 
+          "hit", 
+          "zou", 
+          "lsu", 
+          "gzu" , 
           "chu"
         ];
-        const universitiesList = await getUniversities();
-        setAllUniversitiesCount(universitiesList.filter((u: University) => u.type === "university").length);
+        const universitiesList = (await getUniversities()).map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          short_name: u.short_name,
+          student_count: u.student_count,
+          location: u.location,
+          type: u.type,
+        }));
+        setAllUniversitiesCount(universitiesList.filter((u) => u.type === "university").length);
         const filteredUnis = universitiesList
-          .filter((u: University) => u.type === "university" && BEST_UNI_IDS.includes(u.id))
-          .sort((a: University, b: University) => (b.student_count || 0) - (a.student_count || 0));
+          .filter((u) => u.type === "university" && BEST_UNI_IDS.includes(u.id))
+          .sort((a, b) => (b.student_count || 0) - (a.student_count || 0));
         setUniversities(filteredUnis);
       } catch (error) {
         console.error("Error fetching data:", error)

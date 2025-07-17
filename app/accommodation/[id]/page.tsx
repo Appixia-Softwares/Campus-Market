@@ -1,4 +1,5 @@
 "use client"
+import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -24,7 +25,6 @@ import { ModeToggle } from "@/components/mode-toggle"
 import PropertyGallery from "@/components/property-gallery"
 import PropertyAmenities from "@/components/property-amenities"
 import BookingForm from "@/components/booking-form"
-import { useEffect, useState } from "react"
 import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import ZIM_UNIVERSITIES from "@/utils/schools_data"
@@ -32,10 +32,9 @@ import { toast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import ReviewsSection from '@/components/reviews/reviews-section'
 import { useRouter } from "next/navigation"
-import React from "react"
 import BookingsList from '@/components/bookings-list'
 
-export default function AccommodationDetailPage({ params }: { params: { id: string } }) {
+export default function AccommodationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth()
   const router = useRouter();
   const [property, setProperty] = useState<any | null>(null)
@@ -58,7 +57,6 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
     async function fetchProperty() {
       setLoading(true)
       try {
-        if (!paramId) return // Guard for Firestore doc()
         const docRef = doc(db, "accommodations", paramId as string)
         const docSnap = await getDoc(docRef)
         if (docSnap.exists()) {
@@ -81,7 +79,7 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
     if (!user || !paramId) return
     async function fetchUserBooking() {
       const bookingsRef = collection(db, 'accommodation_bookings')
-      const q = query(bookingsRef, where('propertyId', '==', paramId), where('customerId', '==', user.id))
+      const q = query(bookingsRef, where('propertyId', '==', paramId), where('customerId', '==', user?.id))
       const snap = await getDocs(q)
       setUserBooking(snap.docs.length > 0 ? { id: snap.docs[0].id, ...snap.docs[0].data() } : null)
     }
@@ -388,5 +386,8 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
         </div>
       </footer>
     </div>
+  )
+}
+
   )
 }

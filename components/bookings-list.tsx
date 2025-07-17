@@ -3,27 +3,34 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Bath, Bed, Building, Calendar, CheckCircle, Clock, CreditCard, MapPin } from "lucide-react"
+import { ArrowRight, Bath, Bed, Building, Calendar, CheckCircle, Clock, CreditCard, MapPin, XCircle } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 import { db } from '@/lib/firebase'
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore'
-import { Collapsible } from "@/components/ui/collapsible"
+import { collection, getDocs, query, where } from 'firebase/firestore'
 
 interface BookingsListProps {
   userId?: string
   landlordId?: string
   limit?: number
-  status?: string // Optional status filter
-  debug?: boolean // Debug flag
-  label?: string // Debug label
 }
 
-export default function BookingsList({ userId, landlordId, limit = 0, status, debug, label }: BookingsListProps) {
+export default function BookingsList({ userId, landlordId, limit = 0 }: BookingsListProps) {
   const [bookings, setBookings] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
+    // If listings are provided, use them (for demo/testing)
+    if (listings) {
+      setBookings(listings)
+      setIsLoading(false)
+      return
+    }
+    // Otherwise, fetch from Firestore if userId/landlordId is provided
     async function fetchBookings() {
       setIsLoading(true)
       let q
@@ -32,13 +39,19 @@ export default function BookingsList({ userId, landlordId, limit = 0, status, de
       } else if (landlordId) {
         q = query(collection(db, 'accommodation_bookings'), where('landlordId', '==', landlordId))
       } else {
-        q = collection(db, 'accommodation_bookings')
+        // If no userId/landlordId, use mock data for demo
+        setBookings(limit > 0 ? MOCK_BOOKINGS.slice(0, limit) : MOCK_BOOKINGS)
+        setIsLoading(false)
+        return
       }
       if (status) {
         q = query(q, where('status', '==', status))
       }
       const snapshot = await getDocs(q)
-      let bookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      let bookingsData = snapshot.docs.map(doc => {
+        const data = doc.data() as Booking;
+        return { ...data, id: doc.id };
+      });
       if (limit > 0) bookingsData = bookingsData.slice(0, limit)
 
       // Fetch property details for each booking, with debug logs
@@ -74,16 +87,18 @@ export default function BookingsList({ userId, landlordId, limit = 0, status, de
       }
     }
     fetchBookings()
-  }, [userId, landlordId, limit, status])
-
-  useEffect(() => {
-    if (debug) {
-      console.log(`[BookingsList Debug Render] ${label || ''}`, bookings)
-    }
-  }, [bookings, debug, label])
+  }, [userId, landlordId, limit])
 
   return (
     <Card className="hover-card-animation">
+      {analytics && (
+        <div className="flex flex-wrap gap-4 p-4 border-b bg-muted/30">
+          <div className="font-semibold">Bookings: <span className="text-primary">{analytics.total}</span></div>
+          <div className="text-green-700">Active: {analytics.active}</div>
+          <div className="text-yellow-700">Pending: {analytics.pending}</div>
+          <div className="text-gray-500">Completed: {analytics.completed}</div>
+        </div>
+      )}
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -219,28 +234,31 @@ export default function BookingsList({ userId, landlordId, limit = 0, status, de
                           </span>
                         </div>
                       )}
-                      <Link href={booking.property ? `/accommodation/${booking.property.id}` : '#'}>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      <Link href={`/accommodation/${booking.propertyId}`}>
                         <Button variant="outline" size="sm" className="group-hover:border-primary/50 transition-colors">
                           View Property
                         </Button>
                       </Link>
                       {booking.status === "active" && (
-                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors">
+                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors" onClick={() => handlePay(booking, "rent") }>
                           <CreditCard className="h-4 w-4 mr-1" />
                           Pay Rent
                         </Button>
                       )}
                       {booking.status === "pending" && (
-                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors">
+                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors" onClick={() => handlePay(booking, "deposit") }>
                           <CreditCard className="h-4 w-4 mr-1" />
                           Pay Deposit
                         </Button>
                       )}
                     </div>
                   </div>
-                </Card>
-              ))
-            })())
+                </div>
+              </Card>
+            ))
           ) : (
             <div className="text-center py-8">
               <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">

@@ -431,10 +431,19 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                       <Tooltip>
-                        <SidebarMenuButton onClick={() => setShowAccommodationForm(true)}>
-                          <Building className="h-4 w-4" />
-                          <span>Add Accommodation</span>
-                        </SidebarMenuButton>
+                        {/* Dialog for Add Accommodation */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <SidebarMenuButton>
+                              <Building className="h-4 w-4" />
+                              <span>Add Accommodation</span>
+                            </SidebarMenuButton>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogTitle className="sr-only">Add Accommodation</DialogTitle>
+                            <AccommodationFormDialogContent />
+                          </DialogContent>
+                        </Dialog>
                       </Tooltip>
                     </SidebarMenuItem>
                     <SidebarMenuItem>

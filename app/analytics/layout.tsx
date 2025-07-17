@@ -35,6 +35,7 @@ export default function AnalyticsLayout({
     let cancelled = false
     async function checkListings() {
       // Check products
+      if (!user) return;
       const productsSnap = await getDocs(query(collection(db, "products"), where("seller_id", "==", user.id)))
       // Check accommodations
       const accomSnap = await getDocs(query(collection(db, "accommodations"), where("seller.id", "==", user.id)))
