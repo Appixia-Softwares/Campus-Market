@@ -67,7 +67,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
               <div className="flex flex-1">
                 {/* Desktop sidebar */}
                 {user && hasListings !== false && (
-                  <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
+                  <div className={`hidden md:block transition-all duration-300 w-64 h-full flex-shrink-0 bg-background border-r`}>
                     <DashboardSidebar />
                   </div>
                 )}

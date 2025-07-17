@@ -69,7 +69,7 @@ export default function DashboardLayout({
             <div className="flex flex-col min-h-screen w-screen overflow-hidden">
               <div className="flex flex-1">
                 {/* Desktop sidebar */}
-                <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
+                <div className={`hidden md:block transition-all duration-300 w-64 h-full flex-shrink-0 bg-background border-r`}>
                   {user && hasListings !== false && <DashboardSidebar />}
                 </div>
                 {/* Mobile sidebar overlay */}

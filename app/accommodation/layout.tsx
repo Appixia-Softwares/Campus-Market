@@ -66,7 +66,7 @@ export default function AccommodationLayout({ children }: { children: ReactNode 
               <div className="flex flex-1 flex-col md:flex-row">
                 {/* Desktop sidebar */}
                 {user && hasListings !== false && (
-                  <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
+                  <div className={`hidden md:block transition-all duration-300 w-64 h-full flex-shrink-0 bg-background border-r`}>
                     <DashboardSidebar />
                   </div>
                 )}
