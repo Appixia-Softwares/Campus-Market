@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth-context"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { useEffect } from "react"
 import { db } from "@/lib/firebase"
+import Footer from "@/components/Footer";
 
 export default function AnalyticsLayout({
   children,
@@ -53,43 +54,41 @@ export default function AnalyticsLayout({
     <AuthProvider>
       <QueryProvider>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="flex h-screen w-screen overflow-hidden">
-            {/* Desktop sidebar */}
-            {user && hasListings !== false && (
-              <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
-                <DashboardSidebar />
-              </div>
-            )}
-            
-            {/* Mobile sidebar overlay */}
-            {sidebarOpen && user && hasListings !== false && (
-              <div className="fixed inset-0 z-50 flex md:hidden">
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
-                {/* Sidebar */}
-                <div className="relative w-64 h-full bg-background border-r shadow-lg">
+          <div className="flex flex-col min-h-screen w-screen overflow-hidden">
+            <div className="flex flex-1 h-full">
+              {/* Desktop sidebar */}
+              {user && hasListings !== false && (
+                <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
                   <DashboardSidebar />
                 </div>
+              )}
+              {/* Mobile sidebar overlay */}
+              {sidebarOpen && user && hasListings !== false && (
+                <div className="fixed inset-0 z-50 flex md:hidden">
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+                  {/* Sidebar */}
+                  <div className="relative w-64 h-full bg-background border-r shadow-lg">
+                    <DashboardSidebar />
+                  </div>
+                </div>
+              )}
+              {/* Main Content Area */}
+              <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Header - Static in layout flow */}
+                <div className="flex-shrink-0 bg-background border-b">
+                  <DashboardHeader />
+                </div>
+                {/* Main content - Takes remaining space with top margin for fixed header */}
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background mt-16">
+                  {children}
+                </main>
               </div>
-            )}
-            
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Header - Static in layout flow */}
-              <div className="flex-shrink-0 bg-background border-b">
-                <DashboardHeader />
-              </div>
-              
-              {/* Main content - Takes remaining space with top margin for fixed header */}
-              <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background mt-16">
-                {children}
-              </main>
             </div>
+            <Footer />
           </div>
-          
           {/* Bottom Navigation for mobile */}
           <BottomNavigation userId={user?.id} hasListings={hasListings === null ? undefined : hasListings} />
-          
           {/* Toast notifications */}
           <Toaster />
           <SonnerToaster />
