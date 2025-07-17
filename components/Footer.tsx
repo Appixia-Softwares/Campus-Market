@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Facebook, Twitter, Instagram, Mail, Info, Shield, HelpCircle, Users, Send, MapPin, TrendingUp, List, Folder, FileText, BarChart3, MessageCircle, Star, Briefcase, Newspaper, Download, BookOpen, UserCheck, Lock, Globe, FileWarning, Plus, Phone, PlayCircle, Music } from "lucide-react";
+import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp, FaEnvelope } from "react-icons/fa";
 
 // Footer links and social icons
 const aboutLinks = [
@@ -24,7 +25,7 @@ const platformLinks = [
 const resourceLinks = [
   { href: "/help", label: "Help Center", icon: HelpCircle },
   { href: "/faq", label: "FAQs", icon: Info, disabled: false }, // Enable when page exists
-  { href: "/safety", label: "Safety Tips", icon: FileWarning, disabled: false }, // Enable when page exists
+  { href: "/safety", label: "Safety Tips", icon: FileWarning, disabled: true }, // Enable when page exists
   { href: "/contact", label: "Contact", icon: Mail },
   { href: "/analytics", label: "Analytics", icon: BarChart3, disabled: true }, // Enable when page exists
   { href: "/reports", label: "Reports", icon: FileText, disabled: true }, // Enable when page exists
@@ -36,18 +37,17 @@ const resourceLinks = [
 const companyLinks = [
   { href: "/about", label: "About Us", icon: Info },
   { href: "/privacy", label: "Privacy Policy", icon: Lock },
-  { href: "/terms", label: "Terms of Service", icon: FileText, disabled: false }, // Enable when page exists
+  { href: "/terms", label: "Terms of Service", icon: FileText, disabled: true }, // Enable when page exists
   { href: "/careers", label: "Careers", icon: Briefcase, disabled: true }, // Enable when page exists
-  { href: "/marketing", label: "Marketing", icon: TrendingUp, disabled: false }, // Enable when page exists
+  { href: "/marketing", label: "Marketing", icon: TrendingUp, disabled: true}, // Enable when page exists
 ];
-// Social links (add all major platforms)
+// Social links (use official brand icons)
 const socialLinks = [
-  { href: "https://www.facebook.com/profile.php?id=61575622615505", label: "Facebook", icon: Facebook },
-  { href: "https://www.instagram.com/campusmarketzw", label: "Instagram", icon: Instagram },
-  { href: "https://www.linkedin.com/company/campus-marketzw", label: "LinkedIn", icon: Briefcase },
-  { href: "https://wa.me/+263786223289", label: "WhatsApp", icon: Phone },
-
-  { href: "mailto:suport@campusmarket.co.zw", label: "Email", icon: Mail },
+  { href: "https://www.facebook.com/profile.php?id=61575622615505", label: "Facebook", icon: FaFacebook },
+  { href: "https://www.instagram.com/campusmarketzw", label: "Instagram", icon: FaInstagram },
+  { href: "https://www.linkedin.com/company/campus-marketzw", label: "LinkedIn", icon: FaLinkedin },
+  { href: "https://wa.me/+263786223289", label: "WhatsApp", icon: FaWhatsapp },
+  { href: "mailto:suport@campusmarket.co.zw", label: "Email", icon: FaEnvelope },
 ];
 
 // Desktop Footer
