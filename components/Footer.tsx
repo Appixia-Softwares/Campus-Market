@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Facebook, Twitter, Instagram, Mail, Info, Shield, HelpCircle, Users, Send, MapPin, TrendingUp, List, Folder, FileText, BarChart3, MessageCircle, Star, Briefcase, Newspaper, Download, BookOpen, UserCheck, Lock, Globe, FileWarning, Plus, Phone, PlayCircle, Music } from "lucide-react";
+import { Mail, Info, Shield, HelpCircle, Users, MapPin, TrendingUp, List, Folder, FileText, BarChart3, MessageCircle, Star, Briefcase, Newspaper, Download, BookOpen, UserCheck, Lock, Globe, FileWarning, Plus } from "lucide-react";
 import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp, FaEnvelope } from "react-icons/fa";
 
 // Footer links and social icons
