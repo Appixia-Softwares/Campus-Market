@@ -3,12 +3,31 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Bath, Bed, Building, Calendar, CheckCircle, Clock, CreditCard, MapPin } from "lucide-react"
+import { ArrowRight, Bath, Bed, Building, Calendar, CheckCircle, Clock, CreditCard, MapPin, XCircle } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
+
+type Booking = {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  propertyAddress: string;
+  landlord: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  paymentStatus: string;
+  nextPaymentDate: string;
+  nextPaymentAmount: number;
+  image: string;
+  beds: number;
+  baths: number;
+};
 
 // Mock data for bookings
-const MOCK_BOOKINGS = [
+const MOCK_BOOKINGS: Booking[] = [
   {
     id: "1",
     propertyId: "1",
@@ -35,8 +54,8 @@ const MOCK_BOOKINGS = [
     endDate: "2023-08-30",
     status: "completed",
     paymentStatus: "paid",
-    nextPaymentDate: null,
-    nextPaymentAmount: null,
+    nextPaymentDate: "", // was null
+    nextPaymentAmount: 0, // was null
     image: "/placeholder.svg?height=200&width=300",
     beds: 1,
     baths: 1,
@@ -59,21 +78,57 @@ const MOCK_BOOKINGS = [
   },
 ]
 
-export default function BookingsList({ limit = 0 }) {
-  const [bookings, setBookings] = useState([])
+export default function BookingsList({ limit = 0, listings }: { limit?: number, listings?: Booking[] }) {
+  const [bookings, setBookings] = useState<Booking[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
+    if (listings) {
+      setBookings(listings)
+      setIsLoading(false)
+      return
+    }
     const timer = setTimeout(() => {
       setIsLoading(false)
-      setBookings(limit > 0 ? MOCK_BOOKINGS.slice(0, limit) : MOCK_BOOKINGS)
+      setBookings(limit > 0 ? (MOCK_BOOKINGS.slice(0, limit) as Booking[]) : MOCK_BOOKINGS)
     }, 800)
-
     return () => clearTimeout(timer)
-  }, [limit])
+  }, [limit, listings])
+
+  // Analytics summary
+  const analytics = listings && listings.length > 0 ? {
+    total: listings.length,
+    active: listings.filter(b => b.status === "active").length,
+    pending: listings.filter(b => b.status === "pending").length,
+    completed: listings.filter(b => b.status === "completed").length,
+  } : null
+
+  // Cancel booking (optimistic UI)
+  const handleCancel = (id: string) => {
+    setBookings(prev => prev.filter(b => b.id !== id))
+    toast({ title: "Booking Cancelled", description: "Your booking has been cancelled." })
+    // TODO: Add backend cancellation logic here
+  }
+
+  // Pay Rent/Deposit (stub)
+  const handlePay = (booking: Booking, type: "rent" | "deposit") => {
+    toast({ title: `Pay ${type === "rent" ? "Rent" : "Deposit"}`,
+      description: `Payment flow for ${booking.propertyTitle} would start here.` })
+    // TODO: Integrate payment flow
+  }
 
   return (
     <Card className="hover-card-animation">
+      {analytics && (
+        <div className="flex flex-wrap gap-4 p-4 border-b bg-muted/30">
+          <div className="font-semibold">Bookings: <span className="text-primary">{analytics.total}</span></div>
+          <div className="text-green-700">Active: {analytics.active}</div>
+          <div className="text-yellow-700">Pending: {analytics.pending}</div>
+          <div className="text-gray-500">Completed: {analytics.completed}</div>
+        </div>
+      )}
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -182,6 +237,27 @@ export default function BookingsList({ limit = 0 }) {
                     </div>
 
                     <div className="flex flex-wrap gap-2 mt-4">
+                      <Dialog open={selectedBooking?.id === booking.id} onOpenChange={open => setSelectedBooking(open ? booking : null)}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="group-hover:border-primary/50 transition-colors">
+                            View Details
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>{booking.propertyTitle}</DialogTitle>
+                            <DialogDescription>{booking.propertyAddress}</DialogDescription>
+                          </DialogHeader>
+                          <div className="flex flex-col gap-2">
+                            <div><b>Landlord:</b> {booking.landlord}</div>
+                            <div><b>Stay:</b> {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}</div>
+                            <div><b>Status:</b> {booking.status}</div>
+                            <div><b>Payment Status:</b> {booking.paymentStatus}</div>
+                            <div><b>Beds:</b> {booking.beds} | <b>Baths:</b> {booking.baths}</div>
+                            {/* Add more property details here as needed */}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                       <Link href={`/accommodation/${booking.propertyId}`}>
                         <Button variant="outline" size="sm" className="group-hover:border-primary/50 transition-colors">
                           View Property
@@ -189,16 +265,23 @@ export default function BookingsList({ limit = 0 }) {
                       </Link>
 
                       {booking.status === "active" && (
-                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors">
+                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors" onClick={() => handlePay(booking, "rent") }>
                           <CreditCard className="h-4 w-4 mr-1" />
                           Pay Rent
                         </Button>
                       )}
 
                       {booking.status === "pending" && (
-                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors">
+                        <Button size="sm" className="group-hover:bg-primary/90 transition-colors" onClick={() => handlePay(booking, "deposit") }>
                           <CreditCard className="h-4 w-4 mr-1" />
                           Pay Deposit
+                        </Button>
+                      )}
+
+                      {(booking.status === "pending" || booking.status === "active") && (
+                        <Button size="sm" variant="destructive" onClick={() => handleCancel(booking.id)}>
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Cancel Booking
                         </Button>
                       )}
                     </div>

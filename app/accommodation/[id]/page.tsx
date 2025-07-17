@@ -1,4 +1,5 @@
 "use client"
+import React from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -33,32 +34,23 @@ import { useAuth } from "@/lib/auth-context"
 import ReviewsSection from '@/components/reviews/reviews-section'
 import { useRouter } from "next/navigation"
 
-export default function AccommodationDetailPage({ params }: { params: { id: string } }) {
+export default function AccommodationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth()
   const router = useRouter();
+  const unwrappedParams = React.use(params);
+  const id = unwrappedParams.id;
   const [property, setProperty] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
-  const [paramId, setParamId] = useState<string | null>(null)
 
   useEffect(() => {
-    async function getParams() {
-      // Await params if needed (for Next.js dynamic route)
-      if (typeof params?.id === 'undefined') return
-      setParamId(params.id)
-    }
-    getParams()
-  }, [params])
-
-  useEffect(() => {
-    if (!paramId) return
+    if (!id) return;
     async function fetchProperty() {
       setLoading(true)
       try {
-        if (!paramId) return // Guard for Firestore doc()
-        const docRef = doc(db, "accommodations", paramId as string)
+        const docRef = doc(db, "accommodations", id as string)
         const docSnap = await getDoc(docRef)
         if (docSnap.exists()) {
-          setProperty({ id: paramId, ...docSnap.data() })
+          setProperty({ id, ...docSnap.data() })
         } else {
           setProperty(null)
         }
@@ -70,7 +62,7 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
       }
     }
     fetchProperty()
-  }, [paramId])
+  }, [id])
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
   if (!property) return <div className="p-8 text-center text-red-500">Accommodation not found.</div>
