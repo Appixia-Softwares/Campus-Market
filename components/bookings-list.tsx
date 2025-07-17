@@ -6,71 +6,38 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowRight, Bath, Bed, Building, Calendar, CheckCircle, Clock, CreditCard, MapPin } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { db } from '@/lib/firebase'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 
-// Mock data for bookings
-const MOCK_BOOKINGS = [
-  {
-    id: "1",
-    propertyId: "1",
-    propertyTitle: "Modern Studio Apartment",
-    propertyAddress: "123 University Ave, Campus Town",
-    landlord: "John Smith",
-    startDate: "2023-09-01",
-    endDate: "2024-06-30",
-    status: "active",
-    paymentStatus: "paid",
-    nextPaymentDate: "2023-10-01",
-    nextPaymentAmount: 250,
-    image: "/placeholder.svg?height=200&width=300",
-    beds: 1,
-    baths: 1,
-  },
-  {
-    id: "2",
-    propertyId: "3",
-    propertyTitle: "Private Room in Student House",
-    propertyAddress: "789 Downtown Rd, City Center",
-    landlord: "Sarah Johnson",
-    startDate: "2023-08-15",
-    endDate: "2023-08-30",
-    status: "completed",
-    paymentStatus: "paid",
-    nextPaymentDate: null,
-    nextPaymentAmount: null,
-    image: "/placeholder.svg?height=200&width=300",
-    beds: 1,
-    baths: 1,
-  },
-  {
-    id: "3",
-    propertyId: "4",
-    propertyTitle: "Luxury Student Apartment",
-    propertyAddress: "101 Campus Drive, South Campus",
-    landlord: "Michael Brown",
-    startDate: "2023-10-01",
-    endDate: "2024-07-31",
-    status: "pending",
-    paymentStatus: "awaiting_deposit",
-    nextPaymentDate: "2023-10-01",
-    nextPaymentAmount: 320,
-    image: "/placeholder.svg?height=200&width=300",
-    beds: 2,
-    baths: 2,
-  },
-]
+interface BookingsListProps {
+  userId?: string
+  landlordId?: string
+  limit?: number
+}
 
-export default function BookingsList({ limit = 0 }) {
-  const [bookings, setBookings] = useState([])
+export default function BookingsList({ userId, landlordId, limit = 0 }: BookingsListProps) {
+  const [bookings, setBookings] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    async function fetchBookings() {
+      setIsLoading(true)
+      let q
+      if (userId) {
+        q = query(collection(db, 'accommodation_bookings'), where('customerId', '==', userId))
+      } else if (landlordId) {
+        q = query(collection(db, 'accommodation_bookings'), where('landlordId', '==', landlordId))
+      } else {
+        q = collection(db, 'accommodation_bookings')
+      }
+      const snapshot = await getDocs(q)
+      let bookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      if (limit > 0) bookingsData = bookingsData.slice(0, limit)
+      setBookings(bookingsData)
       setIsLoading(false)
-      setBookings(limit > 0 ? MOCK_BOOKINGS.slice(0, limit) : MOCK_BOOKINGS)
-    }, 800)
-
-    return () => clearTimeout(timer)
-  }, [limit])
+    }
+    fetchBookings()
+  }, [userId, landlordId, limit])
 
   return (
     <Card className="hover-card-animation">
