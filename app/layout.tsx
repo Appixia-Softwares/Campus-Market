@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import ClientLayout from "./ClientLayout"
+import Footer from "@/components/Footer";
 
 // Font setup
 const inter = Inter({ subsets: ["latin"] })
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         {/* All client-side providers and effects are in ClientLayout */}
         <ClientLayout>{children}</ClientLayout>
+        <Footer />
       </body>
     </html>
   )

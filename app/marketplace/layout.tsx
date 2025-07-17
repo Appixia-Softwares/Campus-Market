@@ -76,7 +76,7 @@ export default function MarketplaceLayout({
       <QueryProvider>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <div className="flex flex-col min-h-screen w-screen overflow-hidden">
-            <div className="flex flex-1 h-full flex-col md:flex-row">
+            <div className="flex flex-1 flex-col md:flex-row">
               {/* Desktop sidebar */}
               {user && hasListings !== false && (
                 <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
@@ -106,13 +106,12 @@ export default function MarketplaceLayout({
                 </main>
               </div>
             </div>
-            <Footer />
+            {/* Bottom Navigation for mobile */}
+            <BottomNavigation userId={user?.id} hasListings={hasListings === null ? undefined : !!hasListings} />
+            {/* Toast notifications */}
+            <Toaster />
+            <SonnerToaster />
           </div>
-          {/* Bottom Navigation for mobile */}
-          <BottomNavigation userId={user?.id} hasListings={hasListings === null ? undefined : !!hasListings} />
-          {/* Toast notifications */}
-          <Toaster />
-          <SonnerToaster />
         </ThemeProvider>
       </QueryProvider>
     </AuthProvider>

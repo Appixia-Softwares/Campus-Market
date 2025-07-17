@@ -54,7 +54,8 @@ const socialLinks = [
 function DesktopFooter() {
   const year = new Date().getFullYear();
   return (
-    <footer className="hidden md:block w-full border-t z-40 bg-gradient-to-tr from-green-50/80 via-white/80 to-green-100/80 dark:from-green-950/60 dark:via-background/80 dark:to-green-900/60 backdrop-blur-xl shadow-2xl">
+    // Fixed footer for desktop
+    <footer className="hidden md:block fixed bottom-0 left-0 w-full border-t z-40 bg-gradient-to-tr from-green-50/80 via-white/80 to-green-100/80 dark:from-green-950/60 dark:via-background/80 dark:to-green-900/60 backdrop-blur-xl shadow-2xl">
       <div className="container mx-auto py-10 px-6 grid grid-cols-1 md:grid-cols-5 gap-8">
         {/* About Section */}
         <div>
@@ -144,7 +145,8 @@ function MobileFooter() {
   const [open, setOpen] = useState(false);
   const year = new Date().getFullYear();
   return (
-    <div className="md:hidden w-full flex items-center justify-center py-2 border-t bg-gradient-to-tr from-green-50/80 via-white/80 to-green-100/80 dark:from-green-950/60 dark:via-background/80 dark:to-green-900/60 backdrop-blur-xl shadow-2xl z-40">
+    // Fixed footer for mobile
+    <div className="md:hidden fixed bottom-0 left-0 w-full flex items-center justify-center py-2 border-t bg-gradient-to-tr from-green-50/80 via-white/80 to-green-100/80 dark:from-green-950/60 dark:via-background/80 dark:to-green-900/60 backdrop-blur-xl shadow-2xl z-40">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <button

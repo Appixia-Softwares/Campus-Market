@@ -67,7 +67,7 @@ export default function DashboardLayout({
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <div className="flex flex-col min-h-screen w-screen overflow-hidden">
-              <div className="flex flex-1 h-full">
+              <div className="flex flex-1">
                 {/* Desktop sidebar */}
                 <div className={`hidden md:block transition-all duration-300 h-full w-64 flex-shrink-0 bg-background border-r`}>
                   {user && hasListings !== false && <DashboardSidebar />}
@@ -90,12 +90,11 @@ export default function DashboardLayout({
                     <DashboardHeader />
                   </div>
                   {/* Main content - Takes remaining space with top margin for fixed header */}
-                  <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background mt-16">
+                  <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background mt-16 pb-24">
                     {children}
                   </main>
                 </div>
               </div>
-              <Footer />
             </div>
             {/* Bottom Navigation for mobile */}
             <BottomNavigation userId={user?.id} hasListings={hasListings === null ? undefined : !!hasListings} />
