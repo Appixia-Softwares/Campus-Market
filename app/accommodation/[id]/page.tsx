@@ -45,13 +45,11 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
   const [propertyBookings, setPropertyBookings] = useState<any[]>([])
   const [tenantNames, setTenantNames] = useState<{ [userId: string]: string }>({})
 
-  // Unwrap params using React.use as per Next.js requirements
-  const paramsObj = React.use(params);
-
+  // Use params directly as provided by Next.js
   useEffect(() => {
-    if (!paramsObj?.id) return;
-    setParamId(paramsObj.id);
-  }, [paramsObj]);
+    if (!params?.id) return;
+    setParamId(params.id);
+  }, [params]);
 
   useEffect(() => {
     if (!paramId) return
@@ -80,6 +78,7 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
   useEffect(() => {
     if (!user || !paramId) return
     async function fetchUserBooking() {
+      if (!user) return; // extra guard for linter
       const bookingsRef = collection(db, 'accommodation_bookings')
       const q = query(bookingsRef, where('propertyId', '==', paramId), where('customerId', '==', user.id))
       const snap = await getDocs(q)
@@ -95,10 +94,11 @@ export default function AccommodationDetailPage({ params }: { params: { id: stri
       const bookingsRef = collection(db, 'accommodation_bookings')
       const q = query(bookingsRef, where('propertyId', '==', paramId))
       const snap = await getDocs(q)
-      const bookings = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      // Type assertion to any to ensure customerId exists
+      const bookings = snap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }))
       setPropertyBookings(bookings)
       // Fetch tenant names for each booking
-      const uniqueTenantIds = Array.from(new Set(bookings.map(b => b.customerId).filter(Boolean)))
+      const uniqueTenantIds = Array.from(new Set(bookings.map((b: any) => b.customerId).filter(Boolean)))
       const names: { [userId: string]: string } = {}
       await Promise.all(uniqueTenantIds.map(async (uid) => {
         try {
