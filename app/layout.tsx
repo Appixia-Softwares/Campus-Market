@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata } from "next/types"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import ClientLayout from "./ClientLayout"
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   creator: "Campus Market",
   publisher: "Campus Market",
   formatDetection: {
-    email: false, // must be boolean
+    email: false, 
     address: false,
     telephone: false,
   },

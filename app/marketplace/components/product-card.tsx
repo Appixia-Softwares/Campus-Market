@@ -24,6 +24,7 @@ interface ProductCardProps {
     }
     favorites_count: number
     messages_count: number
+    product_categories?: { name: string }
   }
   onFavorite?: () => void
 }
@@ -88,6 +89,9 @@ export function ProductCard({ product, onFavorite }: ProductCardProps) {
         </div>
       </Link>
       <CardContent className="p-4">
+        <p className="text-xs mb-1 text-muted-foreground">
+          {product.product_categories?.name || "Uncategorized"}
+        </p>
         <Link href={`/marketplace/products/${product.id}`}>
           <h3 className="font-semibold line-clamp-1">{product.title}</h3>
         </Link>
