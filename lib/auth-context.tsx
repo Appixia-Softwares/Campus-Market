@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { User, signIn, signUp, signOut, getCurrentUser, onAuthStateChanged, updateProfile } from "./auth-service"
 import { useToast } from "@/components/ui/use-toast"
+import { onSnapshot, doc as firestoreDoc } from 'firebase/firestore';
+import { db } from './firebase';
 
 interface AuthContextType {
   user: User | null
@@ -57,11 +59,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
+    // Real-time listener for user status (banned/suspended)
+    let userStatusUnsub: (() => void) | null = null;
+    if (user && user.id) {
+      const userDocRef = firestoreDoc(db, 'users', user.id);
+      userStatusUnsub = onSnapshot(userDocRef, (snap) => {
+        const data = snap.data();
+        if (data && (data.status === 'banned' || data.status === 'suspended')) {
+          setUser(null);
+          signOut();
+          toast({
+            title: 'Access Restricted',
+            description: data.status === 'banned' ? 'Your account has been banned.' : 'Your account is suspended.',
+            variant: 'destructive',
+          });
+        }
+      });
+    }
+
     return () => {
       mounted = false
       subscription.unsubscribe()
+      if (userStatusUnsub) userStatusUnsub();
     }
-  }, [])
+  }, [user])
 
   const refreshUser = async () => {
     try {
