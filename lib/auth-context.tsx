@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
-  // Check for existing session and subscribe to auth changes
+  // Initial auth setup and subscription
   useEffect(() => {
     let mounted = true
 
@@ -59,30 +59,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
-    // Real-time listener for user status (banned/suspended)
-    let userStatusUnsub: (() => void) | null = null;
-    if (user && user.id) {
-      const userDocRef = firestoreDoc(db, 'users', user.id);
-      userStatusUnsub = onSnapshot(userDocRef, (snap) => {
-        const data = snap.data();
-        if (data && (data.status === 'banned' || data.status === 'suspended')) {
-          setUser(null);
-          signOut();
-          toast({
-            title: 'Access Restricted',
-            description: data.status === 'banned' ? 'Your account has been banned.' : 'Your account is suspended.',
-            variant: 'destructive',
-          });
-        }
-      });
-    }
-
     return () => {
       mounted = false
       subscription.unsubscribe()
-      if (userStatusUnsub) userStatusUnsub();
     }
-  }, [user])
+  }, [])
+
+  // Real-time listener for user status (banned/suspended)
+  useEffect(() => {
+    if (!user || !user.id) return;
+    const userDocRef = firestoreDoc(db, 'users', user.id);
+    const unsub = onSnapshot(userDocRef, (snap) => {
+      const data = snap.data();
+      if (data && (data.status === 'banned' || data.status === 'suspended')) {
+        setUser(null);
+        signOut();
+        toast({
+          title: 'Access Restricted',
+          description: data.status === 'banned' ? 'Your account has been banned.' : 'Your account is suspended.',
+          variant: 'destructive',
+        });
+      }
+    });
+    return () => unsub();
+  }, [user]);
 
   const refreshUser = async () => {
     try {
