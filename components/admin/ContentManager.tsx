@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Pencil, X, Check } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface ContentItem {
   id: string;
@@ -27,6 +29,11 @@ export default function ContentManager({ collectionName, label }: { collectionNa
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTitle, setDeleteTitle] = useState<string>("");
 
   useEffect(() => {
     const q = query(collection(db, collectionName), orderBy("order", "asc"));
@@ -84,22 +91,82 @@ export default function ContentManager({ collectionName, label }: { collectionNa
       <ul>
         {items.map((item) => (
           <li key={item.id} className="mb-4 border p-3 rounded">
-            <Input
-              value={item.title}
-              onChange={(e) => updateItem(item.id, "title", e.target.value)}
-              className="mb-2"
-            />
-            <Textarea
-              value={item.content}
-              onChange={(e) => updateItem(item.id, "content", e.target.value)}
-              className="mb-2"
-            />
-            <Button variant="destructive" onClick={() => deleteItem(item.id)}>
-              Delete
-            </Button>
+            {editingId === item.id ? (
+              <>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="mb-2"
+                />
+                <Textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="mb-2"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="default"
+                    onClick={async () => {
+                      await updateItem(item.id, "title", editTitle);
+                      await updateItem(item.id, "content", editContent);
+                      setEditingId(null);
+                    }}
+                  >
+                    <Check className="h-4 w-4 mr-1" /> Save
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditingId(null)}
+                  >
+                    <X className="h-4 w-4 mr-1" /> Cancel
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Input
+                  value={item.title}
+                  readOnly
+                  className="mb-2 bg-muted"
+                />
+                <Textarea
+                  value={item.content}
+                  readOnly
+                  className="mb-2 bg-muted"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setEditingId(item.id);
+                      setEditTitle(item.title);
+                      setEditContent(item.content);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 mr-1" /> Edit
+                  </Button>
+                  <Button variant="destructive" onClick={() => { setDeleteId(item.id); setDeleteTitle(item.title); }}>
+                    Delete
+                  </Button>
+                </div>
+              </>
+            )}
           </li>
         ))}
       </ul>
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteId} onOpenChange={open => { if (!open) setDeleteId(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Section</DialogTitle>
+          </DialogHeader>
+          <div>Are you sure you want to delete the section <b>{deleteTitle}</b>? This action cannot be undone.</div>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={async () => { if (deleteId) { await deleteItem(deleteId); setDeleteId(null); } }}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

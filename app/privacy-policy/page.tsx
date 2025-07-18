@@ -5,9 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 
 export default function PrivacyPolicyPage() {
   const [sections, setSections] = useState<{ id: string, title: string, content: string }[]>([]);
+  const router = useRouter();
+  // TODO: Replace with real admin check
+  const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
 
   useEffect(() => {
     const q = query(collection(db, "privacyPolicySections"), orderBy("order", "asc"));
@@ -32,7 +36,17 @@ export default function PrivacyPolicyPage() {
           ) : (
             sections.map(section => (
               <div key={section.id} className="mb-6">
-                <h2 className="text-lg font-semibold mb-2">{section.title}</h2>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-lg font-semibold">{section.title}</h2>
+                  {isAdmin && (
+                    <button
+                      className="text-xs text-primary underline ml-2"
+                      onClick={() => router.push(`/admin/privacy-policy?edit=${section.id}`)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
                 <p className="mb-4">{section.content}</p>
               </div>
             ))
