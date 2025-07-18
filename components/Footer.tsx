@@ -24,10 +24,10 @@ const platformLinks = [
   { href: "/download", label: "Download App", icon: Download, disabled: true }, // Enable when page exists
 ];
 const resourceLinks = [
-  { href: "/help", label: "Help Center", icon: HelpCircle },
-  { href: "/faq", label: "FAQs", icon: Info, disabled: false }, // Enable when page exists
+  { href: "/help-center", label: "Help Center", icon: HelpCircle },
+  { href: "/faqs", label: "FAQs", icon: Info, disabled: false }, // Enable when page exists
   { href: "/safety", label: "Safety Tips", icon: FileWarning, disabled: true }, // Enable when page exists
-  { href: "/contact", label: "Contact", icon: Mail },
+  { href: "/contact-us", label: "Contact", icon: Mail },
   { href: "/analytics", label: "Analytics", icon: BarChart3, disabled: true }, // Enable when page exists
   { href: "/reports", label: "Reports", icon: FileText, disabled: true }, // Enable when page exists
   { href: "/feedback", label: "Feedback", icon: MessageCircle, disabled: true }, // Enable when page exists
@@ -37,7 +37,7 @@ const resourceLinks = [
 ];
 const companyLinks = [
   { href: "/about", label: "About Us", icon: Info },
-  { href: "/privacy", label: "Privacy Policy", icon: Lock },
+  { href: "/privacy-policy", label: "Privacy Policy", icon: Lock },
   { href: "/terms", label: "Terms of Service", icon: FileText, disabled: true }, // Enable when page exists
   { href: "/careers", label: "Careers", icon: Briefcase, disabled: true }, // Enable when page exists
   { href: "/marketing", label: "Marketing", icon: TrendingUp, disabled: true}, // Enable when page exists

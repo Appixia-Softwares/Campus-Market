@@ -37,6 +37,12 @@ export default function PrivacyPolicyPage() {
               </div>
             ))
           )}
+          <h2 className="text-xl font-semibold mt-6 mb-2">Contact Us</h2>
+          <p>
+            If you have questions or concerns about your privacy, please contact us at:<br />
+            <b>Email:</b> support@campusmarket.co.zw<br />
+            <b>Help Center:</b> <a href="/help-center" className="text-primary underline">https://www.campusmarket.co.zw/help-center</a>
+          </p>
         </CardContent>
       </Card>
     </div>
