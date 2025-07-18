@@ -62,7 +62,7 @@ export default function AboutPage() {
             <li>Agripa Karuru – Chief Technology Officer</li>
             <li>John A Daka – Chief Operations Officer</li>
             <li>Lorraine Tsinya – Chief Marketing Officer</li>
-            <li>Tafadzwa  – Chief Admin & Legal Officer</li>
+            <li>Tafadzwa Machingauta – Chief Admin & Legal Officer</li>
           </ul>
           <h2 className="text-xl font-semibold mt-6 mb-2">Contact Us</h2>
           <p>
