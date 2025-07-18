@@ -518,7 +518,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-     
+      {/* Footer */}
       <Footer />
     </div>
   )
