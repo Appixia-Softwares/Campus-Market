@@ -58,11 +58,11 @@ export default function AboutPage() {
           </p>
           <h2 className="text-xl font-semibold mt-6 mb-2">Our Team</h2>
           <ul className="list-disc ml-6 mb-4">
-            <li>Jane Doe – CEO & Co-Founder</li>
-            <li>John Smith – CTO & Co-Founder</li>
-            <li>Mary Johnson – Lead Designer</li>
-            <li>Samuel Chikore – Head of Engineering</li>
-            <li>Chipo Moyo – Community Manager</li>
+            <li>Praise Masunga – Chief Executive Officer</li>
+            <li>Agripa Karuru – Chief Technology Officer</li>
+            <li>John A Daka – Chief Operations Officer</li>
+            <li>Lorraine Tsinya – Chief Marketing Officer</li>
+            <li>Tafadzwa  – Chief Admin & Legal Officer</li>
           </ul>
           <h2 className="text-xl font-semibold mt-6 mb-2">Contact Us</h2>
           <p>

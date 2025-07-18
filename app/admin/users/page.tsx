@@ -6,27 +6,96 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2 } from "lucide-react"
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, Timestamp, addDoc, collection, onSnapshot } from 'firebase/firestore';
+import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionDialog, setActionDialog] = useState<{ type: 'ban' | 'suspend' | 'unban'; user: any } | null>(null);
+  const [suspendUntil, setSuspendUntil] = useState<string>("");
+  const [processing, setProcessing] = useState(false);
+  const { user: currentAdmin } = useAuth();
 
+  // Real-time fetch all users
   useEffect(() => {
-    async function fetchUsers() {
-      setLoading(true);
-      const data = await getAllUsers();
-      setUsers(data);
-      setLoading(false);
-    }
-    fetchUsers();
+    setLoading(true);
+    const unsub = onSnapshot(
+      collection(db, 'users'),
+      (snap) => {
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setUsers(data);
+        setLoading(false);
+      },
+      () => setLoading(false)
+    );
+    return () => unsub();
   }, []);
 
   const filteredUsers = users.filter(u =>
     u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Audit log helper
+  async function logAuditAction(targetId: string, action: string, details: string) {
+    await addDoc(collection(db, 'auditLogs'), {
+      userId: targetId,
+      action,
+      timestamp: Timestamp.now(),
+      details,
+      performedBy: currentAdmin?.id || currentAdmin?.email || 'unknown',
+    });
+  }
+
+  // Send notification to user (in-app only)
+  async function sendUserNotification(userId: string, title: string, body: string) {
+    await addDoc(collection(db, 'notifications'), {
+      userId,
+      title,
+      body,
+      createdAt: Timestamp.now(),
+      read: false,
+      type: 'admin',
+    });
+  }
+
+  // Ban user
+  async function handleBan(user: any) {
+    setProcessing(true);
+    await updateDoc(doc(db, 'users', user.id), { status: 'banned', suspendedUntil: null });
+    await sendUserNotification(user.id, 'Account Banned', 'Your account has been banned by an admin. Contact support for more info.');
+    await logAuditAction(user.id, 'ban', `User ${user.full_name || user.email} was banned.`);
+    setProcessing(false);
+    setActionDialog(null);
+  }
+
+  // Suspend user
+  async function handleSuspend(user: any, until: string) {
+    setProcessing(true);
+    const untilTimestamp = Timestamp.fromDate(new Date(until));
+    await updateDoc(doc(db, 'users', user.id), { status: 'suspended', suspendedUntil: untilTimestamp });
+    await sendUserNotification(user.id, 'Account Suspended', `Your account has been suspended until ${format(new Date(until), 'PPPpp')}. Contact support for more info.`);
+    await logAuditAction(user.id, 'suspend', `User ${user.full_name || user.email} was suspended until ${format(new Date(until), 'PPPpp')}.`);
+    setProcessing(false);
+    setActionDialog(null);
+    setSuspendUntil("");
+  }
+
+  // Unban/Unsuspend user
+  async function handleUnban(user: any) {
+    setProcessing(true);
+    await updateDoc(doc(db, 'users', user.id), { status: 'active', suspendedUntil: null });
+    await sendUserNotification(user.id, 'Account Restored', 'Your account has been restored. You may now use the platform.');
+    await logAuditAction(user.id, 'unban', `User ${user.full_name || user.email} was unbanned/unsuspended.`);
+    setProcessing(false);
+    setActionDialog(null);
+  }
 
   return (
     <div className="flex-1 w-full h-full p-6">
@@ -72,12 +141,19 @@ export default function AdminUsersPage() {
               <div className="flex gap-2 mt-auto">
                 <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setSelectedUser(user); }}>View</Button>
                 <Button size="sm" variant="default" onClick={e => { e.stopPropagation(); /* implement edit */ }}>Edit</Button>
-                <Button size="sm" variant="destructive" onClick={e => { e.stopPropagation(); /* implement ban */ }}>Ban</Button>
+                {user.status === 'banned' || user.status === 'suspended' ? (
+                  <Button size="sm" variant="secondary" onClick={e => { e.stopPropagation(); setActionDialog({ type: 'unban', user }); }}>Unban</Button>
+                ) : (
+                  <>
+                    <Button size="sm" variant="destructive" onClick={e => { e.stopPropagation(); setActionDialog({ type: 'ban', user }); }}>Ban</Button>
+                    <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setActionDialog({ type: 'suspend', user }); }}>Suspend</Button>
+                  </>
+                )}
               </div>
             </div>
           ))
         )}
-            </div>
+      </div>
       {/* User Detail Modal */}
       <Dialog open={!!selectedUser} onOpenChange={open => !open && setSelectedUser(null)}>
         <DialogContent className="max-w-md">
@@ -114,6 +190,55 @@ export default function AdminUsersPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      {/* Action Confirmation Dialogs */}
+      <Dialog open={!!actionDialog} onOpenChange={open => !open && setActionDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {actionDialog?.type === 'ban' && 'Confirm Ban'}
+              {actionDialog?.type === 'suspend' && 'Suspend User'}
+              {actionDialog?.type === 'unban' && (actionDialog.user.status === 'banned' ? 'Unban User' : 'Unsuspend User')}
+            </DialogTitle>
+          </DialogHeader>
+          {actionDialog?.type === 'ban' && (
+            <div>Are you sure you want to <b>ban</b> <span className="font-semibold">{actionDialog.user.full_name || actionDialog.user.email}</span>? This will immediately log them out and prevent access until unbanned.</div>
+          )}
+          {actionDialog?.type === 'suspend' && (
+            <div>
+              <div>Enter suspension end date/time for <span className="font-semibold">{actionDialog.user.full_name || actionDialog.user.email}</span>:</div>
+              <input
+                type="datetime-local"
+                value={suspendUntil}
+                onChange={e => setSuspendUntil(e.target.value)}
+                className="border rounded px-2 py-1 mt-2 w-full"
+                min={new Date().toISOString().slice(0, 16)}
+              />
+            </div>
+          )}
+          {actionDialog?.type === 'unban' && (
+            <div>Are you sure you want to restore <span className="font-semibold">{actionDialog.user.full_name || actionDialog.user.email}</span>'s account?</div>
+          )}
+          <div className="flex gap-2 mt-4 justify-end">
+            <Button variant="outline" onClick={() => setActionDialog(null)} disabled={processing}>Cancel</Button>
+            {actionDialog?.type === 'ban' && (
+              <Button variant="destructive" disabled={processing} onClick={() => handleBan(actionDialog.user)}>
+                {processing ? <Loader2 className="animate-spin h-4 w-4 mr-2 inline" /> : null}Ban
+              </Button>
+            )}
+            {actionDialog?.type === 'suspend' && (
+              <Button variant="default" disabled={processing || !suspendUntil} onClick={() => handleSuspend(actionDialog.user, suspendUntil)}>
+                {processing ? <Loader2 className="animate-spin h-4 w-4 mr-2 inline" /> : null}Suspend
+              </Button>
+            )}
+            {actionDialog?.type === 'unban' && (
+              <Button variant="default" disabled={processing} onClick={() => handleUnban(actionDialog.user)}>
+                {processing ? <Loader2 className="animate-spin h-4 w-4 mr-2 inline" /> : null}
+                {actionDialog.user.status === 'banned' ? 'Unban' : 'Unsuspend'}
+              </Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
