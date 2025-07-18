@@ -16,7 +16,7 @@ import { collection, query, where, orderBy, getDocs, limit, getDoc, doc } from "
 import { db } from "@/lib/firebase"
 import { ProfileCompletionBanner } from "@/components/profile-completion-banner"
 import ProfileForm from "@/components/profile-form"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/ui/sheet"
 import { deleteAccommodation } from "@/services/accommodation"
 import { useToast } from "@/hooks/use-toast"
@@ -398,6 +398,9 @@ export default function DashboardClientPage() {
       )}
       <Dialog open={showProfileModal} onOpenChange={setShowProfileModal}>
         <DialogContent className="max-w-2xl p-0">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
           <ProfileForm onSubmit={() => setShowProfileModal(false)} />
         </DialogContent>
       </Dialog>

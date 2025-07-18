@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { db } from "@/lib/firebase"
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore"
-import type { Product } from "@/types"
+import { collection, query, where, orderBy, limit, getDocs, getDoc, doc } from "firebase/firestore"
+// No Product type import; use 'any' for products
 
 export function ProductShowcase() {
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [totalCount, setTotalCount] = useState(0)
 
@@ -26,7 +26,19 @@ export function ProductShowcase() {
         )
 
         const snapshot = await getDocs(productsQuery)
-        const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        // Fetch category for each product
+        const products = await Promise.all(snapshot.docs.map(async (docSnap) => {
+          const data = docSnap.data();
+          let category = null;
+          if (data.category_id) {
+            const catRef = doc(db, 'product_categories', data.category_id);
+            const catDoc = await getDoc(catRef);
+            if (catDoc.exists()) {
+              category = { name: catDoc.data().name };
+            }
+          }
+          return { id: docSnap.id, ...data, product_categories: category };
+        }));
         setProducts(products)
       } catch (error) {
         console.error("Error fetching products:", error)
@@ -120,7 +132,7 @@ export function ProductShowcase() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{product.product_categories.name}</p>
+                  <p className="text-xs text-muted-foreground">{product.product_categories?.name || 'Uncategorized'}</p>
                   <div className="flex items-center justify-between">
                     <p className="font-bold text-green-600">ZWL {product.price.toLocaleString()}</p>
                     <Badge variant="outline" className="text-xs">

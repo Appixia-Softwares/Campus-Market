@@ -4,16 +4,44 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Heart, MessageSquare, TrendingUp, BookOpen, Laptop, Home, Dumbbell, Rocket, Flame } from "lucide-react";
 import { CATEGORY_META } from "@/lib/category-config";
+import { db } from '@/lib/firebase';
+import { collection, query, where, orderBy, limit, onSnapshot, getDocs } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 import Link from "next/link"
 import { motion } from "framer-motion"
 
-// Use CATEGORY_META for dynamic popular categories (first 4 as example)
-const QUICK_CATEGORIES = CATEGORY_META.slice(0, 4).map(cat => ({
-  name: cat.label,
-  icon: cat.icon,
-  color: "bg-primary",
-  href: `/marketplace?category=${encodeURIComponent(cat.key)}`,
-}));
+// Real-time categories from Firestore
+function usePopularCategories() {
+  const [categories, setCategories] = useState<any[]>([]);
+  useEffect(() => {
+    const q = query(
+      collection(db, 'product_categories'),
+      where('is_active', '==', true),
+      orderBy('sort_order', 'asc'),
+      limit(8) // fetch more to filter down to 4 with products
+    );
+    const unsub = onSnapshot(q, async (snapshot) => {
+      const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const filtered = [];
+      for (const cat of cats) {
+        const categoryKey = (cat as any).key ?? cat.id;
+        const productsQ = query(
+          collection(db, 'products'),
+          where('category_id', '==', categoryKey),
+          limit(1)
+        );
+        const productsSnap = await getDocs(productsQ);
+        if (!productsSnap.empty) {
+          filtered.push(cat);
+        }
+        if (filtered.length === 4) break;
+      }
+      setCategories(filtered);
+    });
+    return () => unsub();
+  }, []);
+  return categories;
+}
 
 const QUICK_ACTIONS = [
   {
@@ -47,6 +75,7 @@ const QUICK_ACTIONS = [
 ]
 
 export function QuickActions() {
+  const popularCategories = usePopularCategories();
   return (
     <div className="space-y-6">
       {/* Quick Actions */}
@@ -95,27 +124,32 @@ export function QuickActions() {
             </Badge>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {QUICK_CATEGORIES.map((category, index) => (
-              <motion.div
-                key={category.name}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Link href={category.href} aria-label={category.name}>
-                  <Card className="hover:shadow-lg hover:scale-[1.03] active:scale-95 transition-all duration-300 group cursor-pointer border-0 bg-white/80 backdrop-blur-sm">
-                    <CardContent className="p-4 text-center">
-                      <div
-                        className={`w-12 h-12 ${category.color} rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}
-                      >
-                        {category.icon && <category.icon className="h-6 w-6 text-white" />}
-                      </div>
-                      <h4 className="font-medium">{category.name}</h4>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
+            {popularCategories.map((category, index) => {
+              // Try to get icon from CATEGORY_META by matching name or key
+              const meta = CATEGORY_META.find(m => m.label === category.name || m.key === category.key);
+              const Icon = meta?.icon || Laptop;
+              return (
+                <motion.div
+                  key={category.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Link href={`/marketplace?category=${encodeURIComponent(category.key || category.id)}`} aria-label={category.name}>
+                    <Card className="hover:shadow-lg hover:scale-[1.03] active:scale-95 transition-all duration-300 group cursor-pointer border-0 bg-white/80 backdrop-blur-sm">
+                      <CardContent className="p-4 text-center">
+                        <div
+                          className={`w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}
+                        >
+                          <Icon className="h-6 w-6 text-white" />
+                        </div>
+                        <h4 className="font-medium">{category.name}</h4>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
