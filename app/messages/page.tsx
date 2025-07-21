@@ -589,7 +589,7 @@ export default function MessagesPage() {
   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-gray-900 to-purple-900 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="container py-4 md:py-8">
+      <div className="container mx-auto py-6 px-2 sm:px-0">
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-auto md:h-[calc(100vh-120px)]">
           {/* Conversations List */}
           {(!isMobile || !showChat) && (

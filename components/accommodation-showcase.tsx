@@ -71,7 +71,7 @@ export default function AccommodationShowcase() {
       </div>
 
       <motion.div
-        className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 px-2 sm:px-0"
         variants={container}
         initial="hidden"
         whileInView="show"

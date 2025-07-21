@@ -74,7 +74,7 @@ export function ProductCard({ product, onFavorite }: ProductCardProps) {
   }
 
   return (
-    <Card className="overflow-hidden group">
+    <Card className="overflow-hidden group px-2 py-2 sm:px-4 sm:py-4">
       <Link href={`/marketplace/products/${product.id}`}>
         <div className="relative aspect-square">
           <Image

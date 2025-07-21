@@ -18,8 +18,8 @@ interface HeroSectionProps {
 
 export default function HeroSection({ stats }: HeroSectionProps) {
   return (
-    <section className="relative overflow-hidden hero-gradient pt-16 md:pt-24">
-      <div className="container relative z-10">
+    <section className="relative overflow-hidden hero-gradient pt-12 sm:pt-16 md:pt-24 px-4">
+      <div className="container relative z-10 px-0 sm:px-4">
         <div className="grid gap-6 md:grid-cols-2 md:gap-10">
           <div className="flex flex-col justify-center space-y-4">
             <div className="space-y-2">
@@ -27,14 +27,14 @@ export default function HeroSection({ stats }: HeroSectionProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center rounded-full border border-green-200 dark:border-green-800 px-4 py-1 text-sm mb-4"
+                className="inline-flex items-center rounded-full border border-green-200 dark:border-green-800 px-4 py-1 text-xs sm:text-sm mb-4"
               >
-                <span className="live-badge pl-4">Live</span>
+                <span className="live-badge pl-2 sm:pl-4">Live</span>
                 <span className="ml-2 text-green-700 dark:text-green-400">Zimbabwe's #1 Student Platform</span>
               </motion.div>
 
               <motion.h1
-                className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl"
+                className="text-2xl sm:text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
@@ -42,7 +42,7 @@ export default function HeroSection({ stats }: HeroSectionProps) {
                 Zimbabwe&apos;s Student <span className="text-gradient font-extrabold">Marketplace</span>
               </motion.h1>
               <motion.p
-                className="max-w-[600px] text-muted-foreground md:text-xl"
+                className="max-w-full sm:max-w-[600px] text-muted-foreground text-base sm:text-lg md:text-xl"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}

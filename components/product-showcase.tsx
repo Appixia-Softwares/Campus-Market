@@ -111,7 +111,7 @@ export function ProductShowcase() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 px-2 sm:px-0">
           {products.map((product) => (
             <Card key={product.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
               <div className="aspect-square overflow-hidden bg-gray-100">

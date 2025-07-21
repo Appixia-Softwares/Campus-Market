@@ -269,7 +269,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 space-y-8">
+    <div className="container max-w-2xl mx-auto py-8 px-2 sm:px-0">
       {/* Sticky Save/Reset Actions */}
       {showStickyActions && (
         <div className="fixed bottom-6 right-6 z-50 flex gap-2 animate-fade-in">
