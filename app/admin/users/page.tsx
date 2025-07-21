@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, Timestamp, addDoc, collection, onSnapshot } from 'firebase/firestore';
+import { logAdminAction } from '@/lib/firebase-service';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -42,17 +43,6 @@ export default function AdminUsersPage() {
     u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Audit log helper
-  async function logAuditAction(targetId: string, action: string, details: string) {
-    await addDoc(collection(db, 'auditLogs'), {
-      userId: targetId,
-      action,
-      timestamp: Timestamp.now(),
-      details,
-      performedBy: currentAdmin?.id || currentAdmin?.email || 'unknown',
-    });
-  }
-
   // Send notification to user (in-app only)
   async function sendUserNotification(userId: string, title: string, body: string) {
     await addDoc(collection(db, 'notifications'), {
@@ -70,7 +60,13 @@ export default function AdminUsersPage() {
     setProcessing(true);
     await updateDoc(doc(db, 'users', user.id), { status: 'banned', suspendedUntil: null });
     await sendUserNotification(user.id, 'Account Banned', 'Your account has been banned by an admin. Contact support for more info.');
-    await logAuditAction(user.id, 'ban', `User ${user.full_name || user.email} was banned.`);
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: 'ban',
+      resource: 'user',
+      resourceId: user.id,
+      details: { user: user.full_name || user.email }
+    });
     setProcessing(false);
     setActionDialog(null);
   }
@@ -81,7 +77,13 @@ export default function AdminUsersPage() {
     const untilTimestamp = Timestamp.fromDate(new Date(until));
     await updateDoc(doc(db, 'users', user.id), { status: 'suspended', suspendedUntil: untilTimestamp });
     await sendUserNotification(user.id, 'Account Suspended', `Your account has been suspended until ${format(new Date(until), 'PPPpp')}. Contact support for more info.`);
-    await logAuditAction(user.id, 'suspend', `User ${user.full_name || user.email} was suspended until ${format(new Date(until), 'PPPpp')}.`);
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: 'suspend',
+      resource: 'user',
+      resourceId: user.id,
+      details: { user: user.full_name || user.email, until: format(new Date(until), 'PPPpp') }
+    });
     setProcessing(false);
     setActionDialog(null);
     setSuspendUntil("");
@@ -92,7 +94,13 @@ export default function AdminUsersPage() {
     setProcessing(true);
     await updateDoc(doc(db, 'users', user.id), { status: 'active', suspendedUntil: null });
     await sendUserNotification(user.id, 'Account Restored', 'Your account has been restored. You may now use the platform.');
-    await logAuditAction(user.id, 'unban', `User ${user.full_name || user.email} was unbanned/unsuspended.`);
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: 'unban',
+      resource: 'user',
+      resourceId: user.id,
+      details: { user: user.full_name || user.email }
+    });
     setProcessing(false);
     setActionDialog(null);
   }
@@ -178,11 +186,28 @@ export default function AdminUsersPage() {
                 )}
                 {selectedUser.role === 'admin' && <Badge variant="secondary">Admin</Badge>}
               </div>
-              <div className="w-full text-sm">
+              <div className="w-full text-sm space-y-1">
+                <div><span className="font-medium">ID:</span> {selectedUser.id}</div>
+                <div><span className="font-medium">Email:</span> {selectedUser.email}</div>
                 <div><span className="font-medium">Phone:</span> {selectedUser.phone || '-'}</div>
                 <div><span className="font-medium">University:</span> {selectedUser.university_id || '-'}</div>
                 <div><span className="font-medium">Website:</span> {selectedUser.website || '-'}</div>
                 <div><span className="font-medium">Bio:</span> {selectedUser.bio || '-'}</div>
+                <div><span className="font-medium">Role:</span> {selectedUser.role || '-'}</div>
+                <div><span className="font-medium">Status:</span> {selectedUser.status || '-'}</div>
+                <div><span className="font-medium">Created At:</span> {selectedUser.created_at ? (selectedUser.created_at.seconds ? new Date(selectedUser.created_at.seconds * 1000).toLocaleString() : new Date(selectedUser.created_at).toLocaleString()) : '-'}</div>
+                <div><span className="font-medium">Last Login:</span> {selectedUser.last_login ? (selectedUser.last_login.seconds ? new Date(selectedUser.last_login.seconds * 1000).toLocaleString() : new Date(selectedUser.last_login).toLocaleString()) : '-'}</div>
+                <div><span className="font-medium">Suspended Until:</span> {selectedUser.suspendedUntil ? (selectedUser.suspendedUntil.seconds ? new Date(selectedUser.suspendedUntil.seconds * 1000).toLocaleString() : new Date(selectedUser.suspendedUntil).toLocaleString()) : '-'}</div>
+                {/* Show any other fields dynamically */}
+                {Object.entries(selectedUser).map(([key, value]) => {
+                  if ([
+                    'id', 'full_name', 'email', 'avatar_url', 'phone', 'university_id', 'website', 'bio', 'role', 'status', 'created_at', 'last_login', 'suspendedUntil', 'verified'
+                  ].includes(key)) return null;
+                  if (typeof value === 'object' && value !== null) return null;
+                  return (
+                    <div key={key}><span className="font-medium">{key}:</span> {String(value)}</div>
+                  );
+                })}
               </div>
               <div className="flex gap-2 mt-4">
                 <Button size="sm" variant="default">Edit</Button>

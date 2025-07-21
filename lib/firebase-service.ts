@@ -245,6 +245,30 @@ export const updateProduct = async (productId: string, data: Partial<Product>) =
   }
 };
 
+// Central admin action logger
+export async function logAdminAction({
+  adminId,
+  action,
+  resource,
+  resourceId,
+  details,
+}: {
+  adminId: string;
+  action: string;
+  resource: string;
+  resourceId?: string;
+  details?: any;
+}) {
+  await addDoc(collection(db, "auditLogs"), {
+    adminId,
+    action,
+    resource,
+    resourceId: resourceId || null,
+    details: details || null,
+    timestamp: Timestamp.now(),
+  });
+}
+
 // Categories Collection
 const categoriesCollection = 'product_categories';
 

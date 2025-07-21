@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import { logAdminAction } from '@/lib/firebase-service';
+import { useAuth } from '@/lib/auth-context';
 
 interface Category {
   id: string;
@@ -32,6 +34,7 @@ export default function AdminCategoriesPage() {
   const [form, setForm] = useState({ name: "", description: "", icon: "", active: true });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const { user: currentAdmin } = useAuth();
 
   // Real-time listener for categories
   useEffect(() => {
@@ -63,12 +66,19 @@ export default function AdminCategoriesPage() {
     }
     setSaving(true);
     try {
-      await addDoc(collection(db, "product_categories"), {
+      const docRef = await addDoc(collection(db, "product_categories"), {
         name: form.name,
         description: form.description,
         icon: form.icon,
         active: form.active,
         createdAt: serverTimestamp(),
+      });
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'create',
+        resource: 'category',
+        resourceId: docRef.id,
+        details: { name: form.name, description: form.description }
       });
       setDialogOpen(false);
       setForm({ name: "", description: "", icon: "", active: true });
@@ -95,6 +105,13 @@ export default function AdminCategoriesPage() {
         icon: form.icon,
         active: form.active,
       });
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'update',
+        resource: 'category',
+        resourceId: selectedCategory.id,
+        details: { name: form.name, description: form.description }
+      });
       setEditDialogOpen(false);
       setSelectedCategory(null);
       setForm({ name: "", description: "", icon: "", active: true });
@@ -112,6 +129,13 @@ export default function AdminCategoriesPage() {
     setDeleting(true);
     try {
       await deleteDoc(doc(db, "product_categories", selectedCategory.id));
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'delete',
+        resource: 'category',
+        resourceId: selectedCategory.id,
+        details: { name: selectedCategory.name }
+      });
       setDeleteDialogOpen(false);
       setSelectedCategory(null);
       toast({ title: "Category deleted" });

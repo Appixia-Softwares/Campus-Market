@@ -22,6 +22,7 @@ import {
   Calendar,
   DollarSign,
 } from "lucide-react"
+import { logAdminAction } from '@/lib/firebase-service';
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
@@ -114,7 +115,7 @@ export default function AdminOrdersProtectedPage() {
 }
 
 function OrdersPage() {
-  const { user } = useAuth()
+  const { user: currentAdmin } = useAuth();
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("all")
@@ -122,13 +123,13 @@ function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all")
 
   useEffect(() => {
-    if (user) {
+    if (currentAdmin) {
       fetchOrders()
     }
-  }, [user])
+  }, [currentAdmin])
 
   const fetchOrders = async () => {
-    if (!user) return
+    if (!currentAdmin) return
     try {
       setLoading(true)
       // Fetch all orders, then filter for buyer or seller
@@ -136,7 +137,7 @@ function OrdersPage() {
       const snap = await getDocs(ordersRef)
       const allOrders = snap.docs.map(docu => ({ id: docu.id, ...docu.data() }))
       // Filter orders where user is buyer or seller
-      const userOrders = allOrders.filter(order => (order as any).buyer_id === user.id || (order as any).seller_id === user.id)
+      const userOrders = allOrders.filter(order => (order as any).buyer_id === currentAdmin.id || (order as any).seller_id === currentAdmin.id)
       // Fetch product, buyer, and seller info for each order
       const ordersWithDetails = await Promise.all(userOrders.map(async (order: any) => {
         const productDoc = await getDoc(doc(db, "products", order.product_id))
@@ -165,6 +166,13 @@ function OrdersPage() {
       await updateDoc(orderRef, { status: newStatus })
       setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)))
       toast.success("Order status updated")
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'update_status',
+        resource: 'order',
+        resourceId: orderId,
+        details: { newStatus }
+      });
     } catch (error) {
       console.error("Error updating order status:", error)
       toast.error("Failed to update order status")
@@ -176,15 +184,15 @@ function OrdersPage() {
     const matchesStatus = statusFilter === "all" || order.status === statusFilter
     const matchesTab =
       activeTab === "all" ||
-      (activeTab === "buying" && order.buyer.id === user?.id) ||
-      (activeTab === "selling" && order.seller.id === user?.id)
+      (activeTab === "buying" && order.buyer.id === currentAdmin?.id) ||
+      (activeTab === "selling" && order.seller.id === currentAdmin?.id)
 
     return matchesSearch && matchesStatus && matchesTab
   })
 
   const getOrderStats = () => {
-    const buying = orders.filter((order) => order.buyer.id === user?.id)
-    const selling = orders.filter((order) => order.seller.id === user?.id)
+    const buying = orders.filter((order) => order.buyer.id === currentAdmin?.id)
+    const selling = orders.filter((order) => order.seller.id === currentAdmin?.id)
 
     return {
       total: orders.length,
@@ -366,7 +374,7 @@ function OrdersPage() {
                   {filteredOrders.map((order, index) => {
                     const statusConfig = ORDER_STATUS_CONFIG[order.status as keyof typeof ORDER_STATUS_CONFIG]
                     const StatusIcon = statusConfig.icon
-                    const isBuyer = order.buyer.id === user?.id
+                    const isBuyer = order.buyer.id === currentAdmin?.id
                     const otherUser = isBuyer ? order.seller : order.buyer
 
                     return (

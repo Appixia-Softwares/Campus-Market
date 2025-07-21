@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, AlertTriangle, XCircle, Mail } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, updateDoc, doc } from "firebase/firestore";
+import { logAdminAction } from '@/lib/firebase-service';
+import { useAuth } from '@/lib/auth-context';
 
 interface Feedback {
   id: string;
@@ -21,6 +23,7 @@ export default function AdminFeedbackPage() {
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("open");
+  const { user: currentAdmin } = useAuth();
 
   useEffect(() => {
     setLoading(true);
@@ -38,6 +41,13 @@ export default function AdminFeedbackPage() {
 
   const handleStatus = async (id: string, status: string) => {
     await updateDoc(doc(db, "feedback", id), { status });
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: 'update_status',
+      resource: 'feedback',
+      resourceId: id,
+      details: { status }
+    });
   };
 
   const filtered = filter === "all" ? feedback : feedback.filter(f => f.status === filter);

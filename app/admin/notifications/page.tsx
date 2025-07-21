@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Loader2, Check, Trash2, Bell } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import { logAdminAction } from '@/lib/firebase-service';
+import { useAuth } from '@/lib/auth-context';
 
 interface Notification {
   id: string;
@@ -23,6 +25,7 @@ export default function AdminNotificationsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ title: "", content: "" });
   const [saving, setSaving] = useState(false);
+  const { user: currentAdmin } = useAuth();
 
   useEffect(() => {
     setLoading(true);
@@ -43,10 +46,17 @@ export default function AdminNotificationsPage() {
     if (!form.title.trim() || !form.content.trim()) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, "notifications"), {
+      const docRef = await addDoc(collection(db, "notifications"), {
         ...form,
         is_read: false,
         createdAt: serverTimestamp(),
+      });
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'add',
+        resource: 'notification',
+        resourceId: docRef.id,
+        details: { ...form }
       });
       setDialogOpen(false);
       setForm({ title: "", content: "" });
@@ -57,10 +67,24 @@ export default function AdminNotificationsPage() {
 
   const handleRead = async (id: string, is_read: boolean) => {
     await updateDoc(doc(db, "notifications", id), { is_read });
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: is_read ? 'mark_read' : 'mark_unread',
+      resource: 'notification',
+      resourceId: id,
+      details: { is_read }
+    });
   };
 
   const handleDelete = async (id: string) => {
     await deleteDoc(doc(db, "notifications", id));
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: 'delete',
+      resource: 'notification',
+      resourceId: id,
+      details: {}
+    });
   };
 
   return (

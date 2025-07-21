@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil, X, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { logAdminAction } from '@/lib/firebase-service';
+import { useAuth } from '@/lib/auth-context';
 
 interface ContentItem {
   id: string;
@@ -34,6 +36,7 @@ export default function ContentManager({ collectionName, label }: { collectionNa
   const [editContent, setEditContent] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteTitle, setDeleteTitle] = useState<string>("");
+  const { user: currentAdmin } = useAuth();
 
   useEffect(() => {
     const q = query(collection(db, collectionName), orderBy("order", "asc"));
@@ -50,10 +53,17 @@ export default function ContentManager({ collectionName, label }: { collectionNa
 
   async function addItem() {
     setLoading(true);
-    await addDoc(collection(db, collectionName), {
+    const docRef = await addDoc(collection(db, collectionName), {
       title: newTitle,
       content: newContent,
       order: items.length,
+    });
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: 'add',
+      resource: collectionName,
+      resourceId: docRef.id,
+      details: { title: newTitle, content: newContent }
     });
     setNewTitle("");
     setNewContent("");
@@ -62,10 +72,24 @@ export default function ContentManager({ collectionName, label }: { collectionNa
 
   async function updateItem(id: string, field: keyof Omit<ContentItem, "id">, value: string | number) {
     await updateDoc(doc(db, collectionName, id), { [field]: value });
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: 'edit',
+      resource: collectionName,
+      resourceId: id,
+      details: { field, value }
+    });
   }
 
   async function deleteItem(id: string) {
     await deleteDoc(doc(db, collectionName, id));
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: 'delete',
+      resource: collectionName,
+      resourceId: id,
+      details: {}
+    });
   }
 
   return (

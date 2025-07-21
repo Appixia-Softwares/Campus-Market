@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Edit, Trash2, Plus } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import { logAdminAction } from '@/lib/firebase-service';
+import { useAuth } from '@/lib/auth-context';
 
 interface Promotion {
   id: string;
@@ -26,6 +28,7 @@ export default function AdminMarketingPage() {
   const [form, setForm] = useState({ title: "", description: "", status: "active" });
   const [saving, setSaving] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
+  const { user: currentAdmin } = useAuth();
 
   useEffect(() => {
     setLoading(true);
@@ -45,11 +48,18 @@ export default function AdminMarketingPage() {
     if (!form.title.trim() || !form.description.trim()) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, "promotions"), {
+      const docRef = await addDoc(collection(db, "promotions"), {
         ...form,
         status: form.status,
         startDate: serverTimestamp(),
         endDate: null,
+      });
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'add',
+        resource: 'promotion',
+        resourceId: docRef.id,
+        details: { ...form }
       });
       setDialogOpen(false);
       setForm({ title: "", description: "", status: "active" });
@@ -65,6 +75,13 @@ export default function AdminMarketingPage() {
       await updateDoc(doc(db, "promotions", selectedPromotion.id), {
         ...form,
       });
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'edit',
+        resource: 'promotion',
+        resourceId: selectedPromotion.id,
+        details: { ...form }
+      });
       setDialogOpen(false);
       setSelectedPromotion(null);
       setForm({ title: "", description: "", status: "active" });
@@ -75,6 +92,13 @@ export default function AdminMarketingPage() {
 
   const handleDelete = async (id: string) => {
     await deleteDoc(doc(db, "promotions", id));
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: 'delete',
+      resource: 'promotion',
+      resourceId: id,
+      details: {}
+    });
   };
 
   const openEdit = (promo: Promotion) => {

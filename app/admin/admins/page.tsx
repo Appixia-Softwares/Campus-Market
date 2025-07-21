@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import jsPDF from "jspdf";
+import { logAdminAction } from '@/lib/firebase-service';
 
 interface AdminLog {
   id: string;
@@ -20,6 +21,7 @@ interface AdminLog {
   performedBy?: string;
   admin?: string;
   userId?: string;
+  adminId?: string;
 }
 
 // Define User type locally since it's not exported from @/types
@@ -87,10 +89,10 @@ export default function AdminAdminsPage() {
       collection(db, "auditLogs"),
       (snap) => {
         const allLogs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as AdminLog));
-        // Group logs by admin id (performedBy)
+        // Group logs by adminId (the field used by logAdminAction), fallback to admin or userId
         const grouped: Record<string, AdminLog[]> = {};
         allLogs.forEach(log => {
-          const adminId = log.admin || log.userId;
+          const adminId = log.adminId || log.admin || log.userId;
           if (!adminId) return; // Guard: skip undefined adminId
           if (!grouped[adminId]) grouped[adminId] = [];
           grouped[adminId].push(log);
@@ -133,16 +135,6 @@ export default function AdminAdminsPage() {
     });
   };
 
-  const logAdminAction = async (targetId: string, action: string, details: string) => {
-    await addDoc(collection(db, "admin_logs"), {
-      userId: targetId,
-      action,
-      timestamp: serverTimestamp(),
-      details,
-      performedBy: currentAdmin?.id || currentAdmin?.email || "unknown",
-    });
-  };
-
   const confirmAction = async () => {
     if (pendingAction && confirmDialog) {
       await pendingAction();
@@ -151,7 +143,13 @@ export default function AdminAdminsPage() {
       if (confirmDialog.action === 'remove') details = `Removed admin rights from ${confirmDialog.name || confirmDialog.email}`;
       if (confirmDialog.action === 'demote') details = `Demoted ${confirmDialog.name || confirmDialog.email} to admin`;
       if (confirmDialog.action === 'promote') details = `Promoted ${confirmDialog.name || confirmDialog.email} to superadmin`;
-      await logAdminAction(confirmDialog.id, confirmDialog.action, details);
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: confirmDialog.action,
+        resource: 'admin',
+        resourceId: confirmDialog.id,
+        details
+      });
     }
     setConfirmDialog(null);
     setPendingAction(undefined);
@@ -172,6 +170,13 @@ export default function AdminAdminsPage() {
       const userDoc = snap.docs[0];
       await updateDoc(doc(db, "users", userDoc.id), { role: "admin" });
       setInviteEmail("");
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'invite',
+        resource: 'admin',
+        resourceId: userDoc.id,
+        details: { email: inviteEmail.trim() }
+      });
     } finally {
       setInviting(false);
     }
@@ -356,7 +361,7 @@ export default function AdminAdminsPage() {
                             <li key={log.id} className="flex items-center gap-2">
                               <span className="text-muted-foreground">{toDisplayDate(log.timestamp)}</span>
                               <span className="font-medium">{log.action}</span>
-                              {log.details && <span className="text-muted-foreground">- {log.details}</span>}
+                              {log.details && <span className="text-muted-foreground">- {typeof log.details === 'object' ? JSON.stringify(log.details) : log.details}</span>}
                               {log.performedBy && <span className="text-muted-foreground">by {log.performedBy}</span>}
                             </li>
                           ))
@@ -407,7 +412,7 @@ export default function AdminAdminsPage() {
                     <li key={log.id} className="flex items-center gap-2">
                       <span className="text-muted-foreground">{toDisplayDate(log.timestamp)}</span>
                       <span className="font-medium">{log.action}</span>
-                      {log.details && <span className="text-muted-foreground">- {log.details}</span>}
+                      {log.details && <span className="text-muted-foreground">- {typeof log.details === 'object' ? JSON.stringify(log.details) : log.details}</span>}
                       {log.performedBy && <span className="text-muted-foreground">by {log.performedBy}</span>}
                     </li>
                   ))

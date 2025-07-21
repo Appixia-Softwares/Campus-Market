@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, AlertTriangle, XCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, updateDoc, doc } from "firebase/firestore";
+import { logAdminAction } from '@/lib/firebase-service';
+import { useAuth } from '@/lib/auth-context';
 
 interface Report {
   id: string;
@@ -24,6 +26,7 @@ export default function AdminReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
+  const { user: currentAdmin } = useAuth();
 
   useEffect(() => {
     setLoading(true);
@@ -41,6 +44,13 @@ export default function AdminReportsPage() {
 
   const handleStatus = async (id: string, status: string) => {
     await updateDoc(doc(db, "reports", id), { status });
+    await logAdminAction({
+      adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+      action: 'update_status',
+      resource: 'report',
+      resourceId: id,
+      details: { status }
+    });
   };
 
   const filtered = filter === "all" ? reports : reports.filter(r => r.status === filter);

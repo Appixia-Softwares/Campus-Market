@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -9,9 +9,11 @@ export function CategoryBreakdown() {
   const [data, setData] = useState<{ name: string, value: number }[]>([]);
 
   useEffect(() => {
+    let productsUnsub: (() => void) | null = null;
     const unsub = onSnapshot(collection(db, "product_categories"), (catSnap) => {
       const categories: { id: string; name?: string }[] = catSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as { name?: string }) }));
-      onSnapshot(collection(db, "products"), (prodSnap) => {
+      if (productsUnsub) productsUnsub();
+      productsUnsub = onSnapshot(collection(db, "products"), (prodSnap) => {
         const byCat: Record<string, number> = {};
         prodSnap.docs.forEach(doc => {
           const p = doc.data();
@@ -24,7 +26,10 @@ export function CategoryBreakdown() {
         setData(arr);
       });
     });
-    return () => unsub();
+    return () => {
+      unsub();
+      if (productsUnsub) productsUnsub();
+    };
   }, []);
 
   return (

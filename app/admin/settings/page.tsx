@@ -21,6 +21,7 @@ import { db } from '@/lib/firebase';
 import { Settings, Globe, User, Bell, Shield, Zap, Database } from "lucide-react"
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { logAdminAction } from '@/lib/firebase-service';
 
 
 export default function AdminSettingsPage() {
@@ -185,23 +186,50 @@ export default function AdminSettingsPage() {
   }, [showExperimentsDialog]);
 
   // Handlers for updating settings in Firestore
-  const handleChange = useCallback((field: string, value: any) => {
+  const handleChange = useCallback(async (field: string, value: any) => {
     updateSettings({ [field]: value })
     toast({ title: "Settings Updated", description: `${field} updated.`, variant: "default" })
-  }, [])
+    await logAdminAction({
+      adminId: user?.id || user?.email || 'unknown',
+      action: 'update_setting',
+      resource: 'setting',
+      resourceId: field,
+      details: { value }
+    });
+  }, [user])
 
   // User actions
   const handleBanUser = async (userId: string, banned: boolean) => {
     await updateUser(userId, { status: banned ? 'banned' : 'active' });
     toast({ title: banned ? "User Banned" : "User Unbanned" });
+    await logAdminAction({
+      adminId: user?.id || user?.email || 'unknown',
+      action: banned ? 'ban_user' : 'unban_user',
+      resource: 'user',
+      resourceId: userId,
+      details: { status: banned ? 'banned' : 'active' }
+    });
   };
   const handlePromoteUser = async (userId: string, role: string) => {
     await updateUser(userId, { role });
     toast({ title: `User role set to ${role}` });
+    await logAdminAction({
+      adminId: user?.id || user?.email || 'unknown',
+      action: 'promote_user',
+      resource: 'user',
+      resourceId: userId,
+      details: { role }
+    });
   };
   const handleDeleteUser = async (userId: string) => {
     await deleteUser(userId);
     toast({ title: "User Deleted" });
+    await logAdminAction({
+      adminId: user?.id || user?.email || 'unknown',
+      action: 'delete_user',
+      resource: 'user',
+      resourceId: userId
+    });
   };
 
   const handleAction = async () => {
@@ -216,10 +244,22 @@ export default function AdminSettingsPage() {
   // Notification actions
   const handleMarkNotifRead = async (notifId: string) => {
     await updateDoc(doc(db, "notifications", notifId), { read: true });
+    await logAdminAction({
+      adminId: user?.id || user?.email || 'unknown',
+      action: 'mark_notification_read',
+      resource: 'notification',
+      resourceId: notifId
+    });
   };
   const handleDeleteNotif = async (notifId: string) => {
     await updateDoc(doc(db, "notifications", notifId), { deleted: true }); // Or use deleteDoc to remove
     toast({ title: 'Notification Deleted' });
+    await logAdminAction({
+      adminId: user?.id || user?.email || 'unknown',
+      action: 'delete_notification',
+      resource: 'notification',
+      resourceId: notifId
+    });
   };
   const handleSendTestNotif = async () => {
     await addDoc(collection(db, "notifications"), {
@@ -231,6 +271,12 @@ export default function AdminSettingsPage() {
       createdAt: serverTimestamp(),
     });
     toast({ title: 'Test Notification Sent' });
+    await logAdminAction({
+      adminId: user?.id || user?.email || 'unknown',
+      action: 'send_test_notification',
+      resource: 'notification',
+      details: { test: true }
+    });
   };
 
   // Notification actions with confirmation
@@ -260,12 +306,24 @@ export default function AdminSettingsPage() {
   };
 
   // API Key actions (mocked)
-  const handleCreateKey = () => {
+  const handleCreateKey = async () => {
     const newKey = { id: `key${apiKeys.length + 1}`, value: `sk_live_${Math.random().toString(36).slice(2, 10)}...`, created: new Date().toISOString().slice(0, 10) };
     setApiKeys([...apiKeys, newKey]);
+    await logAdminAction({
+      adminId: user?.id || user?.email || 'unknown',
+      action: 'create_api_key',
+      resource: 'api_key',
+      details: { key: 'created' }
+    });
   };
-  const handleRevokeKey = (id: string) => {
+  const handleRevokeKey = async (id: string) => {
     setApiKeys(apiKeys.filter(k => k.id !== id));
+    await logAdminAction({
+      adminId: user?.id || user?.email || 'unknown',
+      action: 'revoke_api_key',
+      resource: 'api_key',
+      resourceId: id
+    });
   };
 
   // Search/filter state for notifications

@@ -21,6 +21,7 @@ import { useSearchParams } from "next/navigation"
 import { ModeToggle } from "@/components/mode-toggle"
 import React, { useRef } from "react"
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { logAdminAction } from '@/lib/firebase-service';
 
 interface Conversation {
   id: string
@@ -98,6 +99,7 @@ const generateWaveform = (audioUrl: string, cb: (data: number[]) => void) => {
 
 export default function MessagesPage() {
   const { user } = useAuth()
+  const currentAdmin = user;
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -354,6 +356,13 @@ export default function MessagesPage() {
       snap.forEach(async (docSnap) => {
         await updateDoc(doc(db, 'messages', docSnap.id), { read: true })
       })
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'mark_read',
+        resource: 'conversation',
+        resourceId: conversationId,
+        details: {}
+      });
     } catch (error) {
       console.error('Error marking messages as read:', error)
     }
@@ -428,6 +437,13 @@ export default function MessagesPage() {
         updated_at: new Date().toISOString(),
       })
       setNewMessage("")
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'send_message',
+        resource: 'message',
+        resourceId: selectedConversation.id,
+        details: { content: newMessage }
+      });
     } catch (error) {
       console.error('Error sending message:', error)
       toast.error('Failed to send message')
@@ -534,6 +550,13 @@ export default function MessagesPage() {
         order_id: orderId || null,
       })
       setShowNewMessage(false)
+      await logAdminAction({
+        adminId: currentAdmin?.id || currentAdmin?.email || 'unknown',
+        action: 'start_conversation',
+        resource: 'conversation',
+        resourceId: convId,
+        details: { otherUserId: otherUser.id, orderId }
+      });
     }
   }
 
