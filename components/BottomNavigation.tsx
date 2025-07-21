@@ -42,6 +42,24 @@ export default function BottomNavigation({ userId, hasListings }: { userId?: str
   }, [userId]);
 
   const pathname = usePathname() || ""
+
+  // Hide on landing, login, signup, forgot-password, reset-password, and verification pages
+  const hideOnRoutes = [
+    "/", // landing
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/verification"
+  ];
+  // Also hide on any /auth/* route (for future-proofing)
+  if (
+    hideOnRoutes.includes(pathname) ||
+    hideOnRoutes.some(route => pathname.startsWith(route + "/")) ||
+    pathname.startsWith("/auth/")
+  ) {
+    return null;
+  }
   const highlightSell = hasListings === false;
 
   // Minimal nav for users with no listings
