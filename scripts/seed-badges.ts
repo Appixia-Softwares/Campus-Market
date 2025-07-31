@@ -341,7 +341,7 @@ async function assignEarlyAdopterBadge() {
             earned_at: new Date(),
           }
           
-          await userDoc.ref.update({
+          await updateDoc(userDoc.ref, {
             badges: [...currentBadges, newBadge],
             updated_at: new Date(),
           })
