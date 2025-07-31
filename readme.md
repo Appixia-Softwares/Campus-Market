@@ -60,7 +60,7 @@
 yarn install
    ```
 3. **Set up environment variables:**
-   - Copy `.env.example` to `.env` and fill in your configuration.
+   - Copy `env.example` to `.env` and fill in your configuration.
 4. **Start the development server:**
    ```sh
    npm run dev
@@ -70,6 +70,17 @@ yarn dev
 5. **Visit** [http://localhost:3000](http://localhost:3000) **in your browser.**
 
 ---
+
+## 📚 Documentation
+
+- [**API Documentation**](./API.md) – Complete API reference and examples
+- [**Deployment Guide**](./DEPLOYMENT.md) – How to deploy to various platforms
+- [**Development Guide**](./DEVELOPMENT.md) – Local development setup and workflow
+- [**Testing Guide**](./TESTING.md) – Testing strategies and best practices
+- [**Contributing Guidelines**](./CONTRIBUTING.md) – How to contribute to the project
+- [**Code of Conduct**](./CODE_OF_CONDUCT.md) – Community guidelines
+- [**Security Policy**](./SECURITY.md) – Security practices and vulnerability reporting
+- [**Changelog**](./CHANGELOG.md) – Version history and release notes
 
 ## 🗂️ Folder Structure
 

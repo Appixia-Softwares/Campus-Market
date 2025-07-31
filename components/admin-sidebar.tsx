@@ -14,6 +14,7 @@ import {
   Folder,
   AlertTriangle,
   Building,
+  Crown,
 } from "lucide-react";
 import Link from "next/link";
 import { SidebarMenuButton, SidebarMenuItem, SidebarMenu, SidebarSeparator } from "@/components/ui/sidebar";
@@ -90,6 +91,14 @@ export default function AdminSidebar({ pathname }: { pathname: string }) {
           <Link href="/admin/messages">
             <MessageSquare className="h-4 w-4" />
             <span>Messages</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname === "/admin/official-accounts"} tooltip="Official Accounts">
+          <Link href="/admin/official-accounts">
+            <Crown className="h-4 w-4" />
+            <span>Official Accounts</span>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>

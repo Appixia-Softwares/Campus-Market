@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "migrate:firebase": "ts-node-esm scripts/migrate-to-firebase.ts",
-    "seed:firebase": "tsx scripts/seed-firebase.ts"
+    "seed:firebase": "tsx scripts/seed-firebase.ts",
+    "seed:badges": "tsx scripts/seed-badges.ts"
   },
   "dependencies": {
     "@browsermcp/mcp": "^0.1.3",

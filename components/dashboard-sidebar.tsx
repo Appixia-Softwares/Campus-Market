@@ -34,6 +34,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { UserBadgeDisplay } from "@/components/ui/badge-display"
 import { useAuth } from "@/lib/auth-context"
 import { db } from "@/lib/firebase"
 import { doc, getDoc, collection, query, where, onSnapshot, getDocs, deleteDoc } from "firebase/firestore"
@@ -60,7 +61,7 @@ interface UserProfile {
   status?: string
   role?: string
   verified?: boolean
-  phone_verified?: boolean
+  email_verified?: boolean
 }
 
 interface UserMetadata {
@@ -400,6 +401,12 @@ export default function DashboardSidebar({ isMobile }: DashboardSidebarProps) {
                           Verified
                         </Badge>
                       )}
+                      {/* Enhanced Badge Display */}
+                      <UserBadgeDisplay 
+                        user={profile} 
+                        size="sm" 
+                        maxDisplay={2}
+                      />
                     </div>
                   </div>
                 </div>
