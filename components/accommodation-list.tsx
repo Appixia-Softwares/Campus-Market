@@ -3,13 +3,14 @@
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Bath, Bed, CheckCircle, Heart, MapPin, Star, Wifi, Home, Users, KeyRound, ParkingCircle, Utensils, WashingMachine, Sparkles, CheckCircle2 } from "lucide-react"
+import { Bath, Bed, CheckCircle, Heart, MapPin, Star, Wifi, Home, Users, KeyRound, ParkingCircle, Utensils, WashingMachine, Sparkles, CheckCircle2, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { db } from "@/lib/firebase"
 import { collection, query, where, getDocs, addDoc, deleteDoc } from "firebase/firestore"
 import { useEffect } from "react"
+import DeleteListingButton from "@/components/DeleteListingButton"
 
 // Amenity icon map for DRYness
 const AMENITY_ICONS: Record<string, any> = {
@@ -44,6 +45,10 @@ export interface AccommodationListing {
   reviewCount: number
   image: string
   images?: string[] // Added images to the interface
+  seller?: {
+    id: string
+    name?: string
+  }
 }
 
 export interface AccommodationListProps {
@@ -57,8 +62,9 @@ export default function AccommodationList({ listings, isLoading, view = 'grid' }
 
   // Fetch user's favourite accommodation IDs
   useEffect(() => {
-    if (!user) return
+    if (!user?.id) return
     async function fetchFavorites() {
+      if (!user?.id) return
       const favSnap = await getDocs(query(
         collection(db, "user_favorites"),
         where("user_id", "==", user.id),
@@ -71,7 +77,7 @@ export default function AccommodationList({ listings, isLoading, view = 'grid' }
 
   // Toggle favourite status
   const toggleFavorite = async (id: string) => {
-    if (!user) return
+    if (!user?.id) return
     const favRef = collection(db, "user_favorites")
     if (favorites.includes(id)) {
       // Remove favourite
@@ -142,15 +148,26 @@ export default function AccommodationList({ listings, isLoading, view = 'grid' }
                 </Badge>
               )}
               {user && (
-              <Button
-                  variant={favorites.includes(listing.id) ? "default" : "outline"}
-                size="icon"
-                onClick={() => toggleFavorite(listing.id)}
-                  aria-label={favorites.includes(listing.id) ? "Unfavourite" : "Favourite"}
-                  className="ml-2"
-              >
-                  <Heart className={`h-5 w-5 ${favorites.includes(listing.id) ? 'fill-red-500 text-red-500' : ''}`} />
-              </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant={favorites.includes(listing.id) ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => toggleFavorite(listing.id)}
+                    aria-label={favorites.includes(listing.id) ? "Unfavourite" : "Favourite"}
+                  >
+                    <Heart className={`h-5 w-5 ${favorites.includes(listing.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  </Button>
+                  {/* Show delete button only for user's own listings */}
+                  {user.id === listing.seller?.id && (
+                    <DeleteListingButton
+                      listingId={listing.id}
+                      listingType="accommodation"
+                      userId={user.id}
+                      variant="destructive"
+                      size="icon"
+                    />
+                  )}
+                </div>
               )}
             </div>
             <div className="p-4 md:w-2/3 flex flex-col">

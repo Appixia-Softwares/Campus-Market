@@ -10,6 +10,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Bell, Shield, Palette, Globe, Download, Trash2, AlertTriangle, Moon, Sun, Monitor } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useTheme } from "next-themes"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/components/ui/use-toast"
@@ -227,16 +237,15 @@ export default function SettingsPage() {
     }
   }
 
+  const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false)
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+
   const deleteAccount = async () => {
     if (!user) return
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data.",
-    )
-
-    if (!confirmed) return
-
     try {
+      setIsDeletingAccount(true)
+      
       // In a real app, you'd want to implement proper account deletion
       // This might involve soft deletion, data anonymization, etc.
 
@@ -253,6 +262,9 @@ export default function SettingsPage() {
         description: "Failed to process account deletion",
         variant: "destructive",
       })
+    } finally {
+      setIsDeletingAccount(false)
+      setShowDeleteAccountDialog(false)
     }
   }
 
@@ -789,9 +801,14 @@ export default function SettingsPage() {
                 <p className="text-sm text-muted-foreground">
                   Permanently delete your account and all associated data. This action cannot be undone.
                 </p>
-                <Button variant="destructive" size="sm" onClick={deleteAccount}>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={() => setShowDeleteAccountDialog(true)}
+                  disabled={isDeletingAccount}
+                >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Account
+                  {isDeletingAccount ? "Deleting..." : "Delete Account"}
                 </Button>
               </div>
             </CardContent>
@@ -859,6 +876,49 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Account Confirmation Dialog */}
+      <AlertDialog open={showDeleteAccountDialog} onOpenChange={setShowDeleteAccountDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Account
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p className="font-semibold text-destructive">
+                  Are you absolutely sure you want to delete your account?
+                </p>
+                <p>This action cannot be undone and will permanently remove:</p>
+                <ul className="list-none space-y-1 text-sm text-muted-foreground">
+                  <li>• Your account and profile</li>
+                  <li>• All your listings and products</li>
+                  <li>• Messages and conversations</li>
+                  <li>• Favorites and bookmarks</li>
+                  <li>• Reviews and ratings</li>
+                  <li>• All associated data and files</li>
+                </ul>
+                <p className="text-sm font-medium text-destructive mt-3">
+                  ⚠️ This action is permanent and cannot be reversed!
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAccount}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={deleteAccount}
+              disabled={isDeletingAccount}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 border-2 border-destructive"
+            >
+              {isDeletingAccount ? "Deleting..." : "Yes, Delete My Account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

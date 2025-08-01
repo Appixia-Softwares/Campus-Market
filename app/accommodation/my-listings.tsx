@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore"
+import { collection, query, where, getDocs, orderBy, onSnapshot } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import AccommodationList from "@/components/accommodation-list"
 import { Button } from "@/components/ui/button"
@@ -12,24 +12,28 @@ export default function MyAccommodationListings() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!user) return
-    async function fetchListings() {
-      setLoading(true)
-      // Ensure user is not null before accessing user.id
-      if (!user) {
-        setListings([]);
-        return;
-      }
-      const q = query(
-        collection(db, "accommodations"),
-        where("seller.id", "==", user.id),
-        orderBy("created_at", "desc")
-      );
-      const snap = await getDocs(q);
-      setListings(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false)
-    }
-    fetchListings()
+    if (!user?.id) return
+    
+    // Set up real-time listener for user's accommodation listings
+    const q = query(
+      collection(db, "accommodations"),
+      where("seller.id", "==", user.id),
+      orderBy("created_at", "desc")
+    );
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const updatedListings = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      }));
+      setListings(updatedListings);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching listings:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [user])
 
   return (

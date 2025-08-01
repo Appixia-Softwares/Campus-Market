@@ -24,6 +24,7 @@ import {
 import { collection, query, where, getDocs, deleteDoc, updateDoc, doc, orderBy, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { ProtectedRoute } from "@/components/protected-route"
+import DeleteListingButton from "@/components/DeleteListingButton"
 
 const formatDate = (date: any) => {
   if (!date) return 'Unknown date'
@@ -141,23 +142,8 @@ function MyListingsPage() {
     }
   }
 
-  const handleDeleteProduct = async (productId: string) => {
-    try {
-      await deleteDoc(doc(db, 'products', productId))
-      setProducts((prev) => prev.filter((p) => p.id !== productId))
-      toast({
-        title: "Product deleted",
-        description: "Your product has been removed from the marketplace",
-      })
-    } catch (error) {
-      console.error("Error deleting product:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete product",
-        variant: "destructive",
-      })
-    }
-    setDeleteProductId(null)
+  const handleDeleteSuccess = (productId: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== productId))
   }
 
   const toggleProductStatus = async (productId: string, currentStatus: string) => {
@@ -230,14 +216,15 @@ function MyListingsPage() {
                     <Edit className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Button
+                <DeleteListingButton
+                  listingId={product.id}
+                  listingType="product"
+                  userId={user?.id || ""}
+                  onSuccess={() => handleDeleteSuccess(product.id)}
                   variant="ghost"
                   size="icon"
                   className="w-10 h-10 sm:w-auto sm:h-auto"
-                  onClick={() => setDeleteProductId(product.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                />
               </div>
               <Badge
                 variant={product.status === "active" ? "default" : product.status === "sold" ? "destructive" : "secondary"}
