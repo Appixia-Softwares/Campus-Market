@@ -1,4 +1,3 @@
-
 "use client"
 import { useEffect, useState } from "react"
 import { ArrowRight, BookOpen, MessageCircle, ShoppingBag, Users, TrendingUp, Shield, Star } from "lucide-react"
@@ -11,6 +10,8 @@ import VerificationSection from "@/components/verification-section"
 import PwaFeatures from "@/components/pwa-features"
 import TestimonialCarousel from "@/components/testimonial-carousel"
 import CountdownTimer from "@/components/countdown-timer"
+import CountdownBanner from "@/components/countdown-banner"
+import EmailSignupForm from "@/components/email-signup-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -78,6 +79,7 @@ export default function LandingPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [showCountdown, setShowCountdown] = useState(false)
+  const [showBanner, setShowBanner] = useState(true)
   const [stats, setStats] = useState<Stats>({
     totalProducts: 0,
     totalAccommodations: 0,
@@ -236,8 +238,13 @@ export default function LandingPage() {
 
   return (
     <div className="flex min-h-screen flex-col px-2 sm:px-0">
+      {/* Countdown Banner */}
+      {showBanner && (
+        <CountdownBanner onClose={() => setShowBanner(false)} />
+      )}
+
       {/* Navigation */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className={`sticky z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${showBanner ? 'top-16' : 'top-0'}`}>
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -293,6 +300,37 @@ export default function LandingPage() {
         <div className="animate-fadeIn">
           <HeroSection stats={stats} onMarketplaceClick={handleExploreMarketplace} />
         </div>
+
+        {/* Email Signup Section */}
+        <section className="bg-gradient-to-b from-blue-50 to-white dark:from-blue-950/20 dark:to-background py-16 relative overflow-hidden animate-fadeIn">
+          {/* Background glow */}
+          <div className="absolute inset-0 overflow-hidden">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full bg-blue-500/10 w-32 h-32 blur-3xl"
+                style={{
+                  top: `${Math.random() * 100}%`,
+                  left: `${Math.random() * 100}%`,
+                  opacity: 0.2 + Math.random() * 0.3,
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="container flex flex-col items-center justify-center gap-6 text-center relative z-10">
+            <div className="space-y-4">
+              <h2 className="text-3xl font-bold leading-tight sm:text-4xl">
+                <span className="text-gradient">Stay in the Loop!</span>
+              </h2>
+              <p className="max-w-[85%] text-lg text-muted-foreground">
+                Get notified about new features, updates, and exclusive offers for students
+              </p>
+            </div>
+            
+            <EmailSignupForm />
+          </div>
+        </section>
 
         {/* CTA Section */}
         <section className="bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background py-16 relative overflow-hidden animate-fadeIn">

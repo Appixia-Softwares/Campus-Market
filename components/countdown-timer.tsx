@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Clock, Calendar, Sparkles } from "lucide-react"
+import { Clock, Calendar, Sparkles, Mail, CheckCircle, AlertCircle, Zap, Rocket } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 interface TimeLeft {
   days: number
@@ -24,6 +26,10 @@ export default function CountdownTimer({ onClose }: CountdownTimerProps) {
   })
 
   const [isVisible, setIsVisible] = useState(false)
+  const [email, setEmail] = useState("")
+  const [isSubscribed, setIsSubscribed] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     // Set launch date to September 22nd of current year
@@ -60,6 +66,47 @@ export default function CountdownTimer({ onClose }: CountdownTimerProps) {
 
     return () => clearInterval(timer)
   }, [])
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email) {
+      setError("Please enter your email address")
+      return
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address")
+      return
+    }
+
+    setIsLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email,
+          source: 'countdown_modal'
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to subscribe')
+      }
+
+      const data = await response.json()
+      setIsSubscribed(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <motion.div
@@ -146,6 +193,108 @@ export default function CountdownTimer({ onClose }: CountdownTimerProps) {
             <p className="text-lg text-muted-foreground">
               Launching on <span className="font-semibold text-green-600 dark:text-green-400">September 22nd</span>
             </p>
+          </motion.div>
+
+          {/* Email Signup Form */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.4, duration: 0.5 }}
+            className="max-w-md mx-auto mt-8"
+          >
+            {!isSubscribed ? (
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/50 dark:to-blue-950/50 rounded-2xl p-6 border border-green-200 dark:border-green-800">
+                <div className="text-center mb-4">
+                  <motion.div
+                    animate={{ 
+                      rotate: [0, 10, -10, 0],
+                      scale: [1, 1.1, 1]
+                    }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity, 
+                      repeatType: "reverse" 
+                    }}
+                    className="inline-flex items-center gap-2 mb-2"
+                  >
+                    <Rocket className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <span className="font-semibold text-green-700 dark:text-green-300">Get Notified!</span>
+                  </motion.div>
+                  <p className="text-sm text-muted-foreground">
+                    Be the first to know when we launch this amazing feature
+                  </p>
+                </div>
+
+                <form onSubmit={handleEmailSubmit} className="space-y-4">
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10 bg-white/50 dark:bg-background/50 border-green-200 dark:border-green-800 focus:border-green-400 dark:focus:border-green-600"
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+                    disabled={isLoading || !email}
+                  >
+                    {isLoading ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+                      />
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4 mr-2" />
+                        Notify Me When Ready
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-3 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+              </div>
+            ) : (
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/50 dark:to-blue-950/50 rounded-2xl p-6 border border-green-200 dark:border-green-800 text-center"
+              >
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 5, -5, 0]
+                  }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Infinity, 
+                    repeatType: "reverse" 
+                  }}
+                  className="inline-flex items-center gap-2 mb-3"
+                >
+                  <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <span className="font-semibold text-green-700 dark:text-green-300">You're All Set!</span>
+                </motion.div>
+                <p className="text-sm text-muted-foreground">
+                  We'll notify you at <span className="font-medium">{email}</span> when we launch
+                </p>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Close Button */}
