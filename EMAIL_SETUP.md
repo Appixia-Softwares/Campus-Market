@@ -35,7 +35,10 @@ NEXT_PUBLIC_SUPABASE_URL=https://zxqgdxydzolafekafljr.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4cWdkeHlkem9sYWZla2FmbGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MzExODIsImV4cCI6MjA3MzUwNzE4Mn0.XtXy8hG5nfLrTKabyLJvFvn3BAaOmhaNyzMxPzpLrY0
 
 # Resend API Key
-RESEND_API_KEY=re_epkqnWRC_NCdUJPm1ucQigA6Ck49oHSfu
+RESEND_API_KEY=re_XorZYMSo_FydyMvRMjw8mooMaaz3Arspe
+
+# Email domain for sending emails
+EMAIL_DOMAIN=campusmart.co.zw
 
 # Admin API Key (for sending notifications)
 ADMIN_API_KEY=your-secure-admin-key-here

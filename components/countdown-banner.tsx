@@ -107,11 +107,12 @@ export default function CountdownBanner({ onClose }: CountdownBannerProps) {
                 </motion.div>
                 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                  <span className="font-bold text-sm sm:text-base">
-                    🚀 Big Thing Coming!
+                  <span className="font-bold text-sm sm:text-base flex items-center gap-1">
+                    <Rocket className="h-4 w-4" />
+                    Big Thing Coming!
                   </span>
                   <span className="text-xs sm:text-sm opacity-90">
-                    Get notified when we launch on September 22nd
+                    Get notified when we launch on September 22nd, 2025
                   </span>
                 </div>
               </div>

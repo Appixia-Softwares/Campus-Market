@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { Resend } from 'resend'
 
-const resend = new Resend('re_epkqnWRC_NCdUJPm1ucQigA6Ck49oHSfu')
+const resend = new Resend(process.env.RESEND_API_KEY || 're_XorZYMSo_FydyMvRMjw8mooMaaz3Arspe')
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,8 +33,9 @@ export async function POST(request: NextRequest) {
       try {
         const emailContent = type === 'launch' ? getLaunchEmailTemplate(subscriber.email) : getGenericEmailTemplate(subject, message, subscriber.email)
         
-        await resend.emails.send({
-          from: 'Campus Marketplace <noreply@campusmarket.co.zw>',
+    await resend.emails.send({
+      from: `Campus Marketplace <hello@${process.env.EMAIL_DOMAIN || 'campusmart.co.zw'}>`,
+      replyTo: `support@${process.env.EMAIL_DOMAIN || 'campusmart.co.zw'}`,
           to: [subscriber.email],
           subject: subject || '🚀 Campus Marketplace is Live!',
           html: emailContent
@@ -72,12 +73,15 @@ function getLaunchEmailTemplate(email: string) {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>🚀 Campus Marketplace is Live!</title>
+        <title>Campus Marketplace is Live!</title>
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6); padding: 40px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+          <div style="margin-bottom: 20px;">
+            <img src="https://campusmarket.co.zw/logo%20(2).png" alt="Campus Market Logo" style="width: 80px; height: 80px; object-fit: contain; margin: 0 auto; display: block;" />
+          </div>
           <h1 style="color: white; margin: 0; font-size: 32px; font-weight: bold;">
-            🚀 We're Live!
+            We're Live!
           </h1>
           <p style="color: rgba(255,255,255,0.9); margin: 15px 0 0 0; font-size: 18px;">
             Campus Marketplace is now officially launched!
@@ -86,7 +90,7 @@ function getLaunchEmailTemplate(email: string) {
 
         <div style="background: #f8fafc; padding: 30px; border-radius: 8px; margin-bottom: 25px;">
           <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 24px;">
-            The wait is over! 🎉
+            The wait is over!
           </h2>
           <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 16px;">
             After months of development, we're excited to announce that Campus Marketplace is now live and ready to revolutionize your campus experience!
@@ -97,11 +101,11 @@ function getLaunchEmailTemplate(email: string) {
               What's new and exciting:
             </h3>
             <ul style="margin: 0; padding-left: 20px; color: #6b7280;">
-              <li>🎯 Enhanced marketplace with better search and filters</li>
-              <li>💬 Improved messaging system for seamless communication</li>
-              <li>🔐 Advanced security features for safe transactions</li>
-              <li>📱 Mobile-optimized experience for on-the-go access</li>
-              <li>🎁 Exclusive launch day offers and discounts</li>
+              <li style="margin-bottom: 8px;">✓ Enhanced marketplace with better search and filters</li>
+              <li style="margin-bottom: 8px;">✓ Improved messaging system for seamless communication</li>
+              <li style="margin-bottom: 8px;">✓ Advanced security features for safe transactions</li>
+              <li style="margin-bottom: 8px;">✓ Mobile-optimized experience for on-the-go access</li>
+              <li style="margin-bottom: 8px;">✓ Exclusive launch day offers and discounts</li>
             </ul>
           </div>
         </div>
@@ -119,6 +123,9 @@ function getLaunchEmailTemplate(email: string) {
 
         <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center; color: #9ca3af; font-size: 14px;">
           <p style="margin: 0 0 10px 0;">
+            Questions? Just reply to this email - we'd love to hear from you!
+          </p>
+          <p style="margin: 0 0 10px 0;">
             Thank you for being part of our journey! We're excited to have you on board.
           </p>
           <p style="margin: 0;">
@@ -129,6 +136,10 @@ function getLaunchEmailTemplate(email: string) {
             <a href="https://campusmarket.co.zw" 
                style="color: #6b7280; text-decoration: underline;">
               Campus Marketplace
+            </a> |
+            <a href="mailto:support@campusmart.co.zw" 
+               style="color: #6b7280; text-decoration: underline;">
+              Contact Support
             </a>
           </p>
         </div>
@@ -148,6 +159,9 @@ function getGenericEmailTemplate(subject: string, message: string, email: string
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #10b981, #3b82f6); padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+          <div style="margin-bottom: 15px;">
+            <img src="https://campusmarket.co.zw/logo%20(2).png" alt="Campus Market Logo" style="width: 60px; height: 60px; object-fit: contain; margin: 0 auto; display: block;" />
+          </div>
           <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">
             ${subject}
           </h1>
@@ -167,6 +181,9 @@ function getGenericEmailTemplate(subject: string, message: string, email: string
         </div>
 
         <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center; color: #9ca3af; font-size: 14px;">
+          <p style="margin: 0 0 10px 0;">
+            Questions? Just reply to this email - we'd love to hear from you!
+          </p>
           <p style="margin: 0;">
             <a href="https://campusmarket.co.zw/unsubscribe?email=${email}" 
                style="color: #6b7280; text-decoration: underline;">
@@ -175,6 +192,10 @@ function getGenericEmailTemplate(subject: string, message: string, email: string
             <a href="https://campusmarket.co.zw" 
                style="color: #6b7280; text-decoration: underline;">
               Campus Marketplace
+            </a> |
+            <a href="mailto:support@campusmart.co.zw" 
+               style="color: #6b7280; text-decoration: underline;">
+              Contact Support
             </a>
           </p>
         </div>

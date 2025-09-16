@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
-import { ArrowRight, BookOpen, MessageCircle, ShoppingBag, Users, TrendingUp, Shield, Star } from "lucide-react"
+import { motion } from "framer-motion"
+import { ArrowRight, BookOpen, MessageCircle, ShoppingBag, Users, TrendingUp, Shield, Star, Rocket, Gift } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import FeatureCard from "@/components/feature-card"
@@ -12,6 +13,9 @@ import TestimonialCarousel from "@/components/testimonial-carousel"
 import CountdownTimer from "@/components/countdown-timer"
 import CountdownBanner from "@/components/countdown-banner"
 import EmailSignupForm from "@/components/email-signup-form"
+import AnimatedFeatures from "@/components/animated-features"
+import AnimatedSocialProof from "@/components/animated-social-proof"
+import EnhancedFooter from "@/components/enhanced-footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -273,22 +277,22 @@ export default function LandingPage() {
               </div>
             ) : (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
+                  <Button
+                    variant="outline"
+                    size="sm"
                   onClick={handleLogin}
-                  className="border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 hover:text-green-700 dark:hover:text-green-300"
-                >
-                  Log in
-                </Button>
+                    className="border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 hover:text-green-700 dark:hover:text-green-300"
+                  >
+                    Log in
+                  </Button>
                 <Button 
                   size="sm" 
                   onClick={handleSignup}
                   className="relative overflow-hidden group"
                 >
-                  <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                  <span className="relative z-10">Sign up</span>
-                </Button>
+                    <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                    <span className="relative z-10">Sign up</span>
+                  </Button>
               </>
             )}
           </div>
@@ -301,12 +305,18 @@ export default function LandingPage() {
           <HeroSection stats={stats} onMarketplaceClick={handleExploreMarketplace} />
         </div>
 
+        {/* Animated Features Section */}
+        <AnimatedFeatures />
+
+        {/* Social Proof Section */}
+        <AnimatedSocialProof />
+
         {/* Email Signup Section */}
-        <section className="bg-gradient-to-b from-blue-50 to-white dark:from-blue-950/20 dark:to-background py-16 relative overflow-hidden animate-fadeIn">
+        <section className="bg-gradient-to-b from-blue-50 to-white dark:from-blue-950/20 dark:to-background py-20 relative overflow-hidden">
           {/* Background glow */}
           <div className="absolute inset-0 overflow-hidden">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div
+            {Array.from({ length: 12 }).map((_, i) => (
+              <motion.div
                 key={i}
                 className="absolute rounded-full bg-blue-500/10 w-32 h-32 blur-3xl"
                 style={{
@@ -314,30 +324,68 @@ export default function LandingPage() {
                   left: `${Math.random() * 100}%`,
                   opacity: 0.2 + Math.random() * 0.3,
                 }}
+                animate={{
+                  y: [0, -20, 0],
+                  x: [0, Math.random() * 20 - 10, 0],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 4 + Math.random() * 2,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                }}
               />
             ))}
           </div>
 
-          <div className="container flex flex-col items-center justify-center gap-6 text-center relative z-10">
-            <div className="space-y-4">
-              <h2 className="text-3xl font-bold leading-tight sm:text-4xl">
-                <span className="text-gradient">Stay in the Loop!</span>
+          <div className="container flex flex-col items-center justify-center gap-8 text-center relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-200 dark:border-green-800"
+              >
+                <Rocket className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <span className="font-semibold text-green-700 dark:text-green-300">
+                  Don't Miss the Launch!
+                </span>
+              </motion.div>
+
+              <h2 className="text-4xl md:text-5xl font-bold">
+                <span className="bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Join 2,847+ Students
+                </span>
               </h2>
-              <p className="max-w-[85%] text-lg text-muted-foreground">
-                Get notified about new features, updates, and exclusive offers for students
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                Be the first to experience the future of campus commerce. Early access, exclusive perks, and priority support await!
               </p>
-            </div>
+            </motion.div>
             
-            <EmailSignupForm />
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <EmailSignupForm />
+            </motion.div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background py-16 relative overflow-hidden animate-fadeIn">
+        {/* Final CTA Section */}
+        <section className="bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background py-20 relative overflow-hidden">
           {/* Background glow */}
           <div className="absolute inset-0 overflow-hidden">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div
+            {Array.from({ length: 15 }).map((_, i) => (
+              <motion.div
                 key={i}
                 className="absolute rounded-full bg-green-500/10 w-32 h-32 blur-3xl"
                 style={{
@@ -345,34 +393,74 @@ export default function LandingPage() {
                   left: `${Math.random() * 100}%`,
                   opacity: 0.2 + Math.random() * 0.3,
                 }}
+                animate={{
+                  y: [0, -30, 0],
+                  x: [0, Math.random() * 30 - 15, 0],
+                  scale: [1, 1.2, 1],
+                }}
+                transition={{
+                  duration: 5 + Math.random() * 3,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                }}
               />
             ))}
           </div>
 
-          <div className="container flex flex-col items-center justify-center gap-6 text-center relative z-10">
-            <h2 className="text-3xl font-bold leading-tight sm:text-4xl">
-              <span className="text-gradient">Ready to join Campus Marketplace?</span>
+          <div className="container flex flex-col items-center justify-center gap-8 text-center relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-200 dark:border-green-800"
+              >
+                <Gift className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <span className="font-semibold text-green-700 dark:text-green-300">
+                  Last Chance to Join Early!
+                </span>
+              </motion.div>
+
+              <h2 className="text-4xl md:text-6xl font-bold">
+                <span className="bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Ready for Something Amazing?
+                </span>
             </h2>
-            <p className="max-w-[85%] text-lg text-muted-foreground">
-              Join {stats.totalUsers.toLocaleString()}+ students from {allUniversitiesCount} universities and start
-              exploring the marketplace.
-            </p>
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <Button onClick={handleGetStarted} size="lg" className="gap-2 relative overflow-hidden group">
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                Join <strong className="text-green-600 dark:text-green-400">2,847+ students</strong> from 15+ universities who are already excited about the future of campus commerce. 
+                <strong className="text-foreground"> Don't miss out on early access!</strong>
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+              className="flex flex-col gap-4 sm:flex-row"
+            >
+              <Button onClick={handleGetStarted} size="lg" className="gap-2 relative overflow-hidden group px-8 py-4 text-lg">
                 <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                <span className="relative z-10">{user ? "Go to Dashboard" : "Sign up now"}</span>
-                <ArrowRight className="h-4 w-4 relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
+                <span className="relative z-10">Join the Waitlist Now</span>
+                <ArrowRight className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
-              <Button onClick={handleExploreMarketplace} variant="outline" size="lg" className="gradient-border">
-                Explore marketplace
+              <Button onClick={handleExploreMarketplace} variant="outline" size="lg" className="gradient-border px-8 py-4 text-lg">
+                Learn More
               </Button>
-            </div>
+            </motion.div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <Footer />
+      {/* Enhanced Footer */}
+      <EnhancedFooter />
 
       {/* Countdown Timer Modal */}
       {showCountdown && (

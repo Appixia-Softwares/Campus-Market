@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { Resend } from 'resend'
 
-const resend = new Resend('re_epkqnWRC_NCdUJPm1ucQigA6Ck49oHSfu')
+const resend = new Resend(process.env.RESEND_API_KEY || 're_XorZYMSo_FydyMvRMjw8mooMaaz3Arspe')
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,10 +63,11 @@ export async function POST(request: NextRequest) {
 
     // Send welcome email
     try {
-      await resend.emails.send({
-        from: 'Campus Marketplace <noreply@campusmarket.co.zw>',
-        to: [email],
-        subject: '🚀 Welcome to Campus Marketplace - Big Thing Coming!',
+    await resend.emails.send({
+      from: `Campus Marketplace <hello@${process.env.EMAIL_DOMAIN || 'campusmart.co.zw'}>`,
+      replyTo: `support@${process.env.EMAIL_DOMAIN || 'campusmart.co.zw'}`,
+          to: [email],
+          subject: '🚀 Welcome to Campus Marketplace - Big Thing Coming!',
         html: `
           <!DOCTYPE html>
           <html>
@@ -77,8 +78,11 @@ export async function POST(request: NextRequest) {
             </head>
             <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="background: linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6); padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+                <div style="margin-bottom: 15px;">
+                  <img src="https://campusmarket.co.zw/logo%20(2).png" alt="Campus Market Logo" style="width: 60px; height: 60px; object-fit: contain; margin: 0 auto; display: block;" />
+                </div>
                 <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">
-                  🚀 Big Thing Coming!
+                  Big Thing Coming!
                 </h1>
                 <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
                   You're now on our exclusive launch list
@@ -91,17 +95,17 @@ export async function POST(request: NextRequest) {
                 </h2>
                 <p style="margin: 0 0 15px 0; color: #6b7280;">
                   We're working on something incredible that will revolutionize your campus experience. 
-                  You'll be among the first to know when we launch on <strong>September 22nd</strong>.
+                  You'll be among the first to know when we launch on <strong>September 22nd, 2025</strong>.
                 </p>
                 <div style="background: white; padding: 20px; border-radius: 6px; border-left: 4px solid #10b981;">
                   <p style="margin: 0; font-weight: 500; color: #1f2937;">
                     What to expect:
                   </p>
                   <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #6b7280;">
-                    <li>Exclusive early access to new features</li>
-                    <li>Special launch day offers and discounts</li>
-                    <li>Priority support and updates</li>
-                    <li>Behind-the-scenes content and sneak peeks</li>
+                    <li style="margin-bottom: 8px;">✓ Exclusive early access to new features</li>
+                    <li style="margin-bottom: 8px;">✓ Special launch day offers and discounts</li>
+                    <li style="margin-bottom: 8px;">✓ Priority support and updates</li>
+                    <li style="margin-bottom: 8px;">✓ Behind-the-scenes content and sneak peeks</li>
                   </ul>
                 </div>
               </div>
@@ -115,6 +119,9 @@ export async function POST(request: NextRequest) {
 
               <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center; color: #9ca3af; font-size: 14px;">
                 <p style="margin: 0 0 10px 0;">
+                  Questions? Just reply to this email - we'd love to hear from you!
+                </p>
+                <p style="margin: 0 0 10px 0;">
                   You're receiving this because you subscribed to our launch notifications.
                 </p>
                 <p style="margin: 0;">
@@ -125,6 +132,10 @@ export async function POST(request: NextRequest) {
                   <a href="https://campusmarket.co.zw" 
                      style="color: #6b7280; text-decoration: underline;">
                     Campus Marketplace
+                  </a> |
+                  <a href="mailto:support@campusmart.co.zw" 
+                     style="color: #6b7280; text-decoration: underline;">
+                    Contact Support
                   </a>
                 </p>
               </div>

@@ -32,14 +32,8 @@ export default function CountdownTimer({ onClose }: CountdownTimerProps) {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    // Set launch date to September 22nd of current year
-    const currentYear = new Date().getFullYear()
-    const launchDate = new Date(currentYear, 8, 22) // Month is 0-indexed, so 8 = September
-    
-    // If September 22nd has passed this year, set it for next year
-    if (launchDate < new Date()) {
-      launchDate.setFullYear(currentYear + 1)
-    }
+    // Set launch date to September 22nd, 2025
+    const launchDate = new Date(2025, 8, 22) // Month is 0-indexed, so 8 = September
 
     const calculateTimeLeft = () => {
       const now = new Date().getTime()

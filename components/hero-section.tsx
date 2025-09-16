@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ShoppingBag, ArrowRight } from "lucide-react"
+import { ShoppingBag, ArrowRight, Rocket } from "lucide-react"
 
 interface Stats {
   totalProducts: number
@@ -48,7 +48,7 @@ export default function HeroSection({ stats, onMarketplaceClick }: HeroSectionPr
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
-                Buy & sell student essentials and find affordable accommodation near your campus.
+                <Rocket className="inline h-5 w-5 mr-2" /> <strong>Something BIG is coming on September 22nd, 2025!</strong> Be the first to experience the future of campus commerce. Join thousands of students already on the waitlist.
               </motion.p>
             </div>
             <motion.div
@@ -64,7 +64,7 @@ export default function HeroSection({ stats, onMarketplaceClick }: HeroSectionPr
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                 <ShoppingBag className="h-4 w-4 relative z-10" />
-                <span className="relative z-10">Browse Marketplace</span>
+                <span className="relative z-10">Join the Waitlist</span>
                 <ArrowRight className="h-4 w-4 ml-1 relative z-10 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
               </Button>
             </motion.div>
@@ -76,8 +76,8 @@ export default function HeroSection({ stats, onMarketplaceClick }: HeroSectionPr
             >
               <span className="inline-block rounded-full bg-green-500 h-2 w-2 animate-pulse-glow"></span>
               <span>
-                Trusted by {stats?.totalUsers || 5000}+ students across {stats?.totalUniversities || 8} universities in
-                Zimbabwe
+                <strong className="text-green-600 dark:text-green-400">2,847+ students</strong> already joined the waitlist! 
+                Be among the first to experience the future of campus commerce.
               </span>
             </motion.div>
           </div>

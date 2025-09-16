@@ -21,8 +21,12 @@ export function SiteHeader() {
 
         <div className="hidden md:flex md:items-center md:gap-6 lg:gap-10">
           <Link href="/" className="flex items-center gap-2">
-            <div className="size-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-              C
+            <div className="size-8 rounded-full overflow-hidden">
+              <img 
+                src="/logo (2).png" 
+                alt="Campus Market Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <span className="hidden font-bold sm:inline-block">Campus Marketplace</span>
           </Link>
