@@ -14,9 +14,10 @@ interface Stats {
 
 interface HeroSectionProps {
   stats?: Stats
+  onMarketplaceClick?: () => void
 }
 
-export default function HeroSection({ stats }: HeroSectionProps) {
+export default function HeroSection({ stats, onMarketplaceClick }: HeroSectionProps) {
   return (
     <section className="relative overflow-hidden hero-gradient pt-12 sm:pt-16 md:pt-24 px-4">
       <div className="container relative z-10 px-0 sm:px-4">
@@ -56,14 +57,16 @@ export default function HeroSection({ stats }: HeroSectionProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Link href="/marketplace">
-                <Button size="lg" className="gap-2 relative overflow-hidden group">
-                  <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                  <ShoppingBag className="h-4 w-4 relative z-10" />
-                  <span className="relative z-10">Browse Marketplace</span>
-                  <ArrowRight className="h-4 w-4 ml-1 relative z-10 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="gap-2 relative overflow-hidden group"
+                onClick={onMarketplaceClick}
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                <ShoppingBag className="h-4 w-4 relative z-10" />
+                <span className="relative z-10">Browse Marketplace</span>
+                <ArrowRight className="h-4 w-4 ml-1 relative z-10 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+              </Button>
             </motion.div>
             <motion.div
               className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"

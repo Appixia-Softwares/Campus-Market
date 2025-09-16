@@ -10,6 +10,7 @@ import HowItWorks from "@/components/how-it-works"
 import VerificationSection from "@/components/verification-section"
 import PwaFeatures from "@/components/pwa-features"
 import TestimonialCarousel from "@/components/testimonial-carousel"
+import CountdownTimer from "@/components/countdown-timer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -76,6 +77,7 @@ interface ImageData {
 export default function LandingPage() {
   const { user } = useAuth()
   const router = useRouter()
+  const [showCountdown, setShowCountdown] = useState(false)
   const [stats, setStats] = useState<Stats>({
     totalProducts: 0,
     totalAccommodations: 0,
@@ -209,19 +211,27 @@ export default function LandingPage() {
   }, [])
 
   const handleGetStarted = () => {
-    if (user) {
-      router.push("/dashboard")
-    } else {
-      router.push("/signup")
-    }
+    setShowCountdown(true)
   }
 
   const handleExploreMarketplace = () => {
-    if (user) {
-      router.push("/marketplace")
-    } else {
-      router.push("/login")
-    }
+    setShowCountdown(true)
+  }
+
+  const handleDashboard = () => {
+    setShowCountdown(true)
+  }
+
+  const handleMarketplace = () => {
+    setShowCountdown(true)
+  }
+
+  const handleLogin = () => {
+    setShowCountdown(true)
+  }
+
+  const handleSignup = () => {
+    setShowCountdown(true)
   }
 
   return (
@@ -240,14 +250,14 @@ export default function LandingPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push("/dashboard")}
+                  onClick={handleDashboard}
                   className="border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 hover:text-green-700 dark:hover:text-green-300"
                 >
                   Dashboard
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => router.push("/marketplace")}
+                  onClick={handleMarketplace}
                   className="relative overflow-hidden group"
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
@@ -256,21 +266,22 @@ export default function LandingPage() {
               </div>
             ) : (
               <>
-                <Link href="/login">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 hover:text-green-700 dark:hover:text-green-300"
-                  >
-                    Log in
-                  </Button>
-                </Link>
-                <Link href="/signup">
-                  <Button size="sm" className="relative overflow-hidden group">
-                    <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                    <span className="relative z-10">Sign up</span>
-                  </Button>
-                </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogin}
+                  className="border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 hover:text-green-700 dark:hover:text-green-300"
+                >
+                  Log in
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleSignup}
+                  className="relative overflow-hidden group"
+                >
+                  <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                  <span className="relative z-10">Sign up</span>
+                </Button>
               </>
             )}
           </div>
@@ -280,203 +291,7 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <div className="animate-fadeIn">
-          <HeroSection stats={stats} />
-        </div>
-
-        {/* Live Stats Section */}
-        <section className="container py-12 md:py-16 animate-slideUp">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20"></div>
-              <CardContent className="relative p-6 text-center">
-                <ShoppingBag className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                <div className="text-2xl font-bold text-blue-600">{stats.totalProducts.toLocaleString()}</div>
-                <div className="text-sm text-muted-foreground">Active Products</div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20"></div>
-              <CardContent className="relative p-6 text-center">
-                <Users className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                <div className="text-2xl font-bold text-green-600">{stats.totalUsers.toLocaleString()}</div>
-                <div className="text-sm text-muted-foreground">Students</div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20"></div>
-              <CardContent className="relative p-6 text-center">
-                <TrendingUp className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                <div className="text-2xl font-bold text-purple-600">{stats.totalOrders.toLocaleString()}</div>
-                <div className="text-sm text-muted-foreground">Successful Orders</div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20"></div>
-              <CardContent className="relative p-6 text-center">
-                <Star className="h-8 w-8 mx-auto mb-2 text-orange-600" />
-                <div className="text-2xl font-bold text-orange-600">{stats.averageRating}/5</div>
-                <div className="text-sm text-muted-foreground">Average Rating</div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        {/* Featured Products */}
-        {featuredProducts.length > 0 && (
-          <section className="container py-12 md:py-16 animate-slideUp">
-            <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center mb-12">
-              <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-4xl">
-                <span className="text-gradient">Featured Products</span>
-              </h2>
-              <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-                Discover the most popular items from students across Zimbabwe
-              </p>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredProducts.map((product) => (
-                <Card key={product.id} className="group cursor-pointer hover:shadow-lg transition-all duration-300 animate-fadeIn">
-                  <div className="aspect-square relative overflow-hidden rounded-t-lg">
-                    <img
-                      src={product.image_url || "/placeholder.svg"}
-                      alt={product.title}
-                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <Badge className="absolute top-2 right-2 bg-green-600 hover:bg-green-700">
-                      {product.condition}
-                    </Badge>
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.title}</h3>
-                    <div className="text-2xl font-bold text-green-600 mb-2">${product.price}</div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      by {product.seller_name} • {product.university_name}
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{product.likes} likes</span>
-                      <span>{product.views} views</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div className="text-center mt-8">
-              <Button onClick={handleExploreMarketplace} size="lg" className="gap-2">
-                View All Products
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </section>
-        )}
-
-        {/* Airbnb-like Products (Student Accommodation) Section */}
-        {/* This section showcases accommodation listings in an Airbnb style using mock data. */}
-        <section className="container py-12 md:py-16 animate-slideUp">
-          <AccommodationShowcase />
-        </section>
-
-        {/* Marketplace Products Section */}
-        {/* This section showcases trending products in a modern, modular grid using mock data. */}
-        <section className="container py-12 md:py-16 animate-slideUp">
-          <ProductShowcase />
-        </section>
-
-        {/* Universities Section */}
-        {universities.length > 0 && (
-          <section className="bg-gradient-to-b from-green-50/50 to-white dark:from-green-950/10 dark:to-background py-16 animate-slideUp">
-            <div className="container">
-              <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center mb-12">
-                <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-4xl">
-                  <span className="text-gradient">Trusted by Students Across Zimbabwe</span>
-                </h2>
-                <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-                  Join thousands of students from top universities
-                </p>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {universities.map((university) => (
-                  <Card key={university.id} className="text-center p-6 hover:shadow-md transition-shadow animate-fadeIn">
-                    <h3 className="font-semibold text-lg mb-2">{university.short_name || university.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{university.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {university.student_count ? `${university.student_count.toLocaleString()} students` : ""}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{university.location}</p>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Features Section */}
-        <section className="container py-12 md:py-24 animate-slideUp">
-          <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center">
-            <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
-              <span className="text-gradient">Platform Features</span>
-            </h2>
-            <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-              Designed specifically for Zimbabwean university students
-            </p>
-          </div>
-
-          <div className="mx-auto mt-16 grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
-            <FeatureCard
-              icon={<ShoppingBag className="h-10 w-10" />}
-              title="Student Marketplace"
-              description={`Buy and sell textbooks, electronics, clothing, and more directly from other students. ${stats.totalProducts}+ items available.`}
-            />
-            <FeatureCard
-              icon={<MessageCircle className="h-10 w-10" />}
-              title="In-App Messaging"
-              description="Chat directly with sellers to negotiate and arrange meetups safely."
-            />
-            <FeatureCard
-              icon={<Shield className="h-10 w-10" />}
-              title="Verified Students"
-              description="Student ID verification ensures you're dealing with real university students."
-            />
-            <FeatureCard
-              icon={<BookOpen className="h-10 w-10" />}
-              title="University Network"
-              description={`Connect with students from ${allUniversitiesCount} universities across Zimbabwe.`}
-            />
-            <FeatureCard
-              icon={<Users className="h-10 w-10" />}
-              title="Campus Community"
-              description="Build connections within your university and discover local opportunities."
-            />
-            <FeatureCard
-              icon={<TrendingUp className="h-10 w-10" />}
-              title="Smart Analytics"
-              description="Track your sales, views, and engagement with detailed insights."
-            />
-          </div>
-        </section>
-
-        {/* How It Works */}
-        <div className="animate-slideUp">
-          <HowItWorks />
-        </div>
-
-        {/* Verification Section */}
-        <div className="animate-slideUp">
-          <VerificationSection />
-        </div>
-
-        {/* PWA Features */}
-        <div className="animate-slideUp">
-          <PwaFeatures />
-        </div>
-
-        {/* Testimonials */}
-        <div className="animate-slideUp">
-          <TestimonialCarousel />
+          <HeroSection stats={stats} onMarketplaceClick={handleExploreMarketplace} />
         </div>
 
         {/* CTA Section */}
@@ -520,6 +335,11 @@ export default function LandingPage() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Countdown Timer Modal */}
+      {showCountdown && (
+        <CountdownTimer onClose={() => setShowCountdown(false)} />
+      )}
     </div>
   )
 }
