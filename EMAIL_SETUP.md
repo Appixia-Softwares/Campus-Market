@@ -38,7 +38,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 RESEND_API_KEY=re_XorZYMSo_FydyMvRMjw8mooMaaz3Arspe
 
 # Email domain for sending emails
-EMAIL_DOMAIN=campusmart.co.zw
+EMAIL_DOMAIN=email.campusmarket.co.zw
 
 # Admin API Key (for sending notifications)
 ADMIN_API_KEY=your-secure-admin-key-here

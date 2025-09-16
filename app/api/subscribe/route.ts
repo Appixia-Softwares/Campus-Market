@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
     // Send welcome email
     try {
     await resend.emails.send({
-      from: `Campus Marketplace <hello@${process.env.EMAIL_DOMAIN || 'campusmart.co.zw'}>`,
-      replyTo: `support@${process.env.EMAIL_DOMAIN || 'campusmart.co.zw'}`,
+      from: `Campus Marketplace <hello@${process.env.EMAIL_DOMAIN || 'email.campusmarket.co.zw'}>`,
+      replyTo: `support@campusmarket.co.zw`,
           to: [email],
           subject: '🚀 Welcome to Campus Marketplace - Big Thing Coming!',
         html: `
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
                      style="color: #6b7280; text-decoration: underline;">
                     Campus Marketplace
                   </a> |
-                  <a href="mailto:support@campusmart.co.zw" 
+                  <a href="mailto:support@campusmarket.co.zw" 
                      style="color: #6b7280; text-decoration: underline;">
                     Contact Support
                   </a>

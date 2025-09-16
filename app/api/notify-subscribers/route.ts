@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
         const emailContent = type === 'launch' ? getLaunchEmailTemplate(subscriber.email) : getGenericEmailTemplate(subject, message, subscriber.email)
         
     await resend.emails.send({
-      from: `Campus Marketplace <hello@${process.env.EMAIL_DOMAIN || 'campusmart.co.zw'}>`,
-      replyTo: `support@${process.env.EMAIL_DOMAIN || 'campusmart.co.zw'}`,
+      from: `Campus Marketplace <hello@${process.env.EMAIL_DOMAIN || 'email.campusmarket.co.zw'}>`,
+      replyTo: `support@campusmarket.co.zw`,
           to: [subscriber.email],
           subject: subject || '🚀 Campus Marketplace is Live!',
           html: emailContent
@@ -137,7 +137,7 @@ function getLaunchEmailTemplate(email: string) {
                style="color: #6b7280; text-decoration: underline;">
               Campus Marketplace
             </a> |
-            <a href="mailto:support@campusmart.co.zw" 
+            <a href="mailto:support@campusmarket.co.zw" 
                style="color: #6b7280; text-decoration: underline;">
               Contact Support
             </a>
@@ -193,7 +193,7 @@ function getGenericEmailTemplate(subject: string, message: string, email: string
                style="color: #6b7280; text-decoration: underline;">
               Campus Marketplace
             </a> |
-            <a href="mailto:support@campusmart.co.zw" 
+            <a href="mailto:support@campusmarket.co.zw" 
                style="color: #6b7280; text-decoration: underline;">
               Contact Support
             </a>
